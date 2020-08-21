@@ -28,17 +28,17 @@ import pyperclip #クリップボード
 # local source
 #from const import *
 
-#title_tag = 'h1'
-#css_select = 'img[data-src]'
-#target_attr = 'data-src'
+#title_css_select = 'h1'
+#img_css_select = 'img[data-src]'
+#img_attr = 'data-src'
 
-#title_tag = 'h1'
-#css_select = 'noscript .vimg'
-#target_attr = 'src'
+#title_css_select = 'html body main h1'
+#img_css_select = 'html body main noscript img.vimg'
+#img_attr = 'src'
 
-title_tag = 'title'
-css_select = 'div .photoItem img'
-target_attr = 'src'
+title_css_select = 'html head title'
+img_css_select = 'html body div .photoItem img'
+img_attr = 'src'
 
 target_url = 'https://www.hot-ishikawa.jp/photo/'
 output_file = './result.txt'
@@ -51,16 +51,16 @@ def HTML2imglist(base_url):
 	res.raise_for_status()
 	html = res.text
 	soup = bs4.BeautifulSoup(html, 'html.parser')
-	for title in soup.select(title_tag):
-		print(title)
+	for title in soup.select(title_css_select):
+		print(title.string)
 	with open(output_file, 'w', encoding='utf-8') as imglist_file:
-		buff = str(title) + '\n' #クリップボード用変数にタイトル追加
-		for img in soup.select(css_select):
-			print(img)
-			absolute_path = str(img[target_attr])
+		buff = str(title.string) + '\n' #クリップボード用変数にタイトル追加
+		for img in soup.select(img_css_select):
+			absolute_path = str(img[img_attr])
 			parse = urlparse(absolute_path)
 			if len(parse.scheme) == 0: #絶対パスかチェックする
 				absolute_path = urljoin(base_url, absolute_path)
+			print(absolute_path)
 			buff += absolute_path + '\n' #クリップボード用変数にurl追加
 		imglist_file.write(buff) #ファイルへの保存
 		pyperclip.copy(buff) #クリップボードへのコピー
