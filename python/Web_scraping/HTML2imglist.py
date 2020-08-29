@@ -1,10 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-Name: HTML2imglist.py
-Purpose:Webサイトから画像のURLリストを作ってホワイトボードにコピーする
-Description:ファイルにも保存する
-"""
+##
+# @file HTML2imglist.py
+# @version 1.0.0
+# @author Ryosuke Igarashi(HN:igapon)
+# @date 2020/08/26
+# @brief Webサイトから画像のURLリストを作る
+# @details Webサイトから画像のURLリストを作ってホワイトボードにコピーし、ファイルにも保存する
+# @warning 
+# @note 
+
 __author__ = "Ryosuke Igarashi(HN:igapon)"
 __copyright__ = "Copyright (c) 2020 igapon"
 __credits__ = ["Ryosuke Igarashi"]
@@ -30,6 +35,7 @@ import pyperclip #クリップボード
 
 # local source
 #from const import *
+from makezip import *
 
 #title_css_select = 'h1'
 #img_css_select = 'img[data-src]'
@@ -45,19 +51,29 @@ img_attr = 'src'
 
 target_url = 'https://www.hot-ishikawa.jp/photo/'
 output_file = './result.txt'
-folder_name = 'folder01'
-folder_path = '.\\' + folder_name + '\\*'
+folder_path = '.\\folder01'
+msg_error_exit = 'エラー終了します。'
 html = '''
 sample html
 '''
 
-def HTML2imglist(base_url, title, img_urllist):
+## 
+# @brief 指定したURLからタイトルと画像URLリストを読み込みホワイトボードとファイルに書き込む
+# @param base_url IN 対象のURL
+# @param title OUT タイトルを返す
+# @param file_urllist OUT 画像URLリストを返す
+# @return True 成功 / False 失敗(引数チェックエラーで中断)
+# @details title_css_selectで指定した値をタイトル扱いする。img_css_selectで指定したタグのimg_attrで指定した属性を画像URL扱いする。title_css_selectとimg_css_selectは、CSSセレクタで指定する。
+# @warning 
+# @note 
+def HTML2imglist(base_url, title, file_urllist):
+    
 	#引数チェック
 	if 0 == len(base_url):
 		print(sys._getframe().f_code.co_name + '引数base_urlが空です。')
 		return False
-	if False == isinstance(img_urllist, list):
-		print(sys._getframe().f_code.co_name + '引数img_urllistがlistではないです。')
+	if False == isinstance(file_urllist, list):
+		print(sys._getframe().f_code.co_name + '引数file_urllistがlistではないです。')
 		return False
 	
 	res = requests.get(base_url)
@@ -74,47 +90,63 @@ def HTML2imglist(base_url, title, img_urllist):
 			parse = urlparse(absolute_path)
 			if len(parse.scheme) == 0: #絶対パスかチェックする
 				absolute_path = urljoin(base_url, absolute_path)
-			img_urllist.append(absolute_path)
+			file_urllist.append(absolute_path)
 			print(absolute_path)
 			buff += absolute_path + '\n' #クリップボード用変数にurl追加
 		imglist_file.write(buff) #ファイルへの保存
 		pyperclip.copy(buff) #クリップボードへのコピー
 	return True
 
-def renameimg(src_imgfile_pathlist, dst_imgfile_pathlist):
+## 
+# @brief 指定したURLリストから、ファイル名+拡張子部分を抽出したリストを作る
+# @param file_urllist IN 基にするURLリスト
+# @param dst_file_namelist OUT ファイル名+拡張子部分を抽出したリスト
+# @return True 成功 / False 失敗(引数チェックエラーで中断)
+# @details file_urllistで指定したファイルURLリストから、ファイル名+拡張子部分を抽出してdst_file_nakelistに作成して返す
+# @warning 
+# @note 
+def getfilenamefromurl(file_urllist, dst_file_namelist):
 	#引数チェック
-	if 0 == len(src_imgfile_pathlist):
-		print(sys._getframe().f_code.co_name + '引数src_imgfile_pathlistが空です。')
+	if 0 == len(file_urllist):
+		print(sys._getframe().f_code.co_name + '引数file_urllistが空です。')
 		return False
-	if False == isinstance(dst_imgfile_pathlist, list):
-		print(sys._getframe().f_code.co_name + '引数dst_imgfile_pathlistがlistではないです。')
+	if False == isinstance(dst_file_namelist, list):
+		print(sys._getframe().f_code.co_name + '引数dst_file_namelistがlistではないです。')
+		return False
+	
+	for src_img_url in file_urllist:
+		dst_img_filename = src_img_url.rsplit('/', 1)[1].replace('?', '_')
+		print(dst_img_filename)
+		dst_file_namelist.append(dst_img_filename)
+	return True
+
+## 
+# @brief 指定したファイルパスリストから、ファイル名部分をナンバリングし直したファイルパスリストを作る
+# @param src_file_pathlist IN 基にするファイルパスリスト
+# @param dst_file_pathlist OUT ナンバリングし直したファイルパスリスト
+# @return True 成功 / False 失敗(引数チェックエラーで中断)
+# @details src_file_pathlistで指定したファイルパスリストから、ファイル名部分をナンバリングし直したファイル名に付け直したファイルパスリストをdst_file_pathlistに作成して返す
+# @warning 
+# @note 
+def renameimg(src_file_pathlist, dst_file_pathlist):
+	#引数チェック
+	if 0 == len(src_file_pathlist):
+		print(sys._getframe().f_code.co_name + '引数src_file_pathlistが空です。')
+		return False
+	if False == isinstance(dst_file_pathlist, list):
+		print(sys._getframe().f_code.co_name + '引数dst_file_pathlistがlistではないです。')
 		return False
 	
 	count = 0
-	for src_img_path in src_imgfile_pathlist:
-		print(src_img_path)
+	for src_file_path in src_file_pathlist:
+		print(src_file_path)
 		count+=1
-		root, ext = os.path.splitext(src_img_path)
-		path, file = os.path.split(src_img_path)
+		root, ext = os.path.splitext(src_file_path)
+		path, file = os.path.split(src_file_path)
 		dst_img_path = path + '\\' + '{:03d}'.format(count) + ext
 		print(dst_img_path)
-		dst_imgfile_pathlist.append(dst_img_path)
-		os.rename(src_img_path, dst_img_path)
-	return True
-
-def makezipfile(zipfile_path, imgfile_pathlist):
-	#引数チェック
-	if 0 == len(zipfile_path):
-		print(sys._getframe().f_code.co_name + '引数zipfile_pathが空です。')
-		return False
-	if False == isinstance(imgfile_pathlist, list):
-		print(sys._getframe().f_code.co_name + '引数imgfile_pathlistがlistではないです。')
-		return False
-	
-	zip = zipfile.ZipFile(zipfile_path, 'w', zipfile.ZIP_DEFLATED)
-	for img_path in imgfile_pathlist:
-		zip.write(img_path)
-	zip.close()
+		dst_file_pathlist.append(dst_img_path)
+		os.rename(src_file_path, dst_img_path)
 	return True
 
 if __name__ == '__main__': #インポート時には動かない
@@ -124,34 +156,59 @@ if __name__ == '__main__': #インポート時には動かない
 		#0は固定でスクリプト名
 		#1.対象のURL
 		target_url = sys.argv[1]
-	print(target_url)
+		#folder_path = sys.argv[1]
+	elif 1==len(sys.argv):
+		target_url = 'https://www.hot-ishikawa.jp/photo/'
+		folder_path = '.\\folder01'
+	else:
+		print('引数が不正です。')
+		print(msg_error_exit)
+		sys.exit(ret)
+	if folder_path[len(folder_path)-1]=='\\':
+		files_path = folder_path + '*'
+	else:
+		files_path = folder_path + '\\*'
+	print(files_path)
 	
-	#画像ファイルのURLリストを作成
-	img_urllist = []
+	#ファイルのURLリストを作成
+	file_urllist = []
 	title = ''
-	ret = HTML2imglist(target_url, title, img_urllist)
+	ret = HTML2imglist(target_url, title, file_urllist)
 	if False == ret:
-		print('エラー終了します。')
+		print(msg_error_exit)
 		sys.exit(ret)
 	
-	#画像ファイルのダウンロード
+	#ファイルのダウンロード
 	#irvineでダウンロードする。
+	os.system('echo ダウンロード完了まで待つ')
+	os.system('PAUSE')
 	
-	#画像ファイルリストの作成
-	#画像ファイルの順序がファイル名順ではない場合、正しい順序のファイル名リストを作る必要がある。
-	#img_urllistからsrc_imgfile_pathlistを作成する
-	
-	#ダウンロードした画像ファイルのファイル名付け直し
-	src_imgfile_pathlist = glob.glob(folder_path)
-	dst_imgfile_pathlist = []
-	ret = renameimg(src_imgfile_pathlist, dst_imgfile_pathlist)
+	#ファイルリストの作成
+	#ファイルの順序がファイル名順ではない場合、正しい順序のファイル名リストを作る必要がある。
+	#file_urllistからdst_file_namelistを作成する
+	dst_file_namelist = []
+	src_file_pathlist = []
+	ret = getfilenamefromurl(file_urllist, dst_file_namelist)
 	if False == ret:
-		print('エラー終了します。')
+		print(msg_error_exit)
+		sys.exit(ret)
+	if folder_path[len(folder_path)-1]=='\\':
+		for file_name in dst_file_namelist:
+			src_file_pathlist.append(folder_path + file_name)
+	else:
+		for file_name in dst_file_namelist:
+			src_file_pathlist.append(folder_path + '\\' + file_name)
+	
+	#ダウンロードしたファイルのファイル名付け直し
+	file_pathlist = []
+	ret = renameimg(src_file_pathlist, file_pathlist)
+	if False == ret:
+		print(msg_error_exit)
 		sys.exit(ret)
 	
 	#圧縮ファイル作成
-	ret = makezipfile(folder_name + '.zip', dst_imgfile_pathlist)
+	ret = makezipfile(folder_path + '.zip', file_pathlist)
 	if False == ret:
-		print('エラー終了します。')
+		print(msg_error_exit)
 		sys.exit(ret)
 
