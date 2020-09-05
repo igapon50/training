@@ -23,7 +23,9 @@ __status__ = "Development" #"Prototype" or "Development" or "Production"
 import sys #終了時のエラー有無
 import re #正規表現モジュール
 import zipfile #zipファイル
+import pathlib #相対パス絶対パス変換
 import os #ファイルパス分解
+import shutil #高水準のファイル操作
 import glob #ファイル一覧取得
 from urllib.parse import urlparse #URLパーサー
 from urllib.parse import urljoin #URL結合
@@ -180,7 +182,7 @@ if __name__ == '__main__': #インポート時には動かない
 	
 	#ファイルのダウンロード
 	#irvineでダウンロードする。
-	os.system('echo ダウンロード完了まで待つ')
+	print('ダウンロード完了まで待つ')
 	os.system('PAUSE')
 	
 	#ファイルリストの作成
@@ -212,3 +214,12 @@ if __name__ == '__main__': #インポート時には動かない
 		print(msg_error_exit)
 		sys.exit(ret)
 
+	#ファイルの削除
+	print('ファイル削除します(フォルダごと削除して、フォルダを作り直します)')
+	os.system('PAUSE')
+	shutil.rmtree(folder_path)
+	if folder_path[len(folder_path)-1]=='\\':
+		os.mkdir(folder_path)
+	else:
+		os.mkdir(folder_path + '\\')
+	
