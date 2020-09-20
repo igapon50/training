@@ -62,7 +62,7 @@ sample html
 ## 
 # @brief 指定したURLからタイトルと画像URLリストを読み込みホワイトボードとファイルに書き込む
 # @param base_url IN 対象のURL
-# @param title OUT タイトルを返す
+# @param title OUT タイトルリストを返す
 # @param file_urllist OUT 画像URLリストを返す
 # @return True 成功 / False 失敗(引数チェックエラーで中断)
 # @details title_css_selectで指定した値をタイトル扱いする。img_css_selectで指定したタグのimg_attrで指定した属性を画像URL扱いする。title_css_selectとimg_css_selectは、CSSセレクタで指定する。
@@ -83,8 +83,8 @@ def HTML2imglist(base_url, title, file_urllist):
 	html = res.text
 	soup = bs4.BeautifulSoup(html, 'html.parser')
 	for title_tag in soup.select(title_css_select):
-		title = title_tag.string
-		print(title)
+		title.append(title_tag.string)
+		print(title_tag.string)
 	with open(output_file, 'w', encoding='utf-8') as imglist_file:
 		buff = str(title) + '\n' #クリップボード用変数にタイトル追加
 		for img in soup.select(img_css_select):
@@ -106,7 +106,7 @@ def HTML2imglist(base_url, title, file_urllist):
 # @return True 成功 / False 失敗(引数チェックエラーで中断)
 # @details file_urllistで指定したファイルURLリストから、ファイル名+拡張子部分を抽出してdst_file_nakelistに作成して返す
 # @warning 
-# @note 
+# @note ファイル名に"?"がある場合は"_"に置換する
 def getfilenamefromurl(file_urllist, dst_file_namelist):
 	#引数チェック
 	if 0 == len(file_urllist):
@@ -150,7 +150,7 @@ def renameimg(src_file_pathlist, dst_file_pathlist):
 		dst_file_pathlist.append(dst_img_path)
 		os.rename(src_file_path, dst_img_path)
 	return True
-
+	
 if __name__ == '__main__': #インポート時には動かない
 	#引数チェック
 	if 2==len(sys.argv):
@@ -174,7 +174,7 @@ if __name__ == '__main__': #インポート時には動かない
 	
 	#ファイルのURLリストを作成
 	file_urllist = []
-	title = ''
+	title = []
 	ret = HTML2imglist(target_url, title, file_urllist)
 	if False == ret:
 		print(msg_error_exit)
@@ -213,9 +213,17 @@ if __name__ == '__main__': #インポート時には動かない
 	if False == ret:
 		print(msg_error_exit)
 		sys.exit(ret)
-
+	
+	#圧縮ファイル名付け直し
+	zipfilename = '.\\' + re.sub(r'[\\/:*?"<>|]+','',str(title)) #禁則文字を削除する
+	print('圧縮ファイル名を付け直します(タイトル)')
+	print(zipfilename)
+	os.system('PAUSE')
+	os.rename(folder_path + '.zip', zipfilename + '.zip')
+	
 	#ファイルの削除
 	print('ファイル削除します(フォルダごと削除して、フォルダを作り直します)')
+	print(folder_path)
 	os.system('PAUSE')
 	shutil.rmtree(folder_path)
 	if folder_path[len(folder_path)-1]=='\\':
