@@ -51,9 +51,10 @@ title_css_select = 'html head title'
 img_css_select = 'html body div .photoItem img'
 img_attr = 'src'
 
-target_url = 'https://www.hot-ishikawa.jp/photo/'
-output_file = './result.txt'
-folder_path = '.\\folder01'
+HEADERS_DIC = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.97 Safari/537.36"}
+DEFAULT_TARGET_URL = 'https://www.hot-ishikawa.jp/photo/'
+RESULT_FILE_PATH = './result.txt' #タイトルと、ダウンロードするファイルのURLの列挙を書き込むファイル
+OUTPUT_FOLDER_PATH = '.\\folder01' #ダウンロードしたファイルの保存パス、
 msg_error_exit = 'エラー終了します。'
 html = '''
 sample html
@@ -69,7 +70,6 @@ sample html
 # @warning 
 # @note 
 def HTML2imglist(base_url, title, file_urllist):
-    
 	#引数チェック
 	if 0 == len(base_url):
 		print(sys._getframe().f_code.co_name + '引数base_urlが空です。')
@@ -78,19 +78,19 @@ def HTML2imglist(base_url, title, file_urllist):
 		print(sys._getframe().f_code.co_name + '引数file_urllistがlistではないです。')
 		return False
 	
-	res = requests.get(base_url)
+	res = requests.get(base_url, headers=HEADERS_DIC)
 	res.raise_for_status()
 	html = res.text
 	soup = bs4.BeautifulSoup(html, 'html.parser')
 	for title_tag in soup.select(title_css_select):
 		title.append(title_tag.string)
 		print(title_tag.string)
-	with open(output_file, 'w', encoding='utf-8') as imglist_file:
+	with open(RESULT_FILE_PATH, 'w', encoding='utf-8') as imglist_file:
 		buff = str(title) + '\n' #クリップボード用変数にタイトル追加
 		for img in soup.select(img_css_select):
 			absolute_path = str(img[img_attr])
 			parse = urlparse(absolute_path)
-			if len(parse.scheme) == 0: #絶対パスかチェックする
+			if 0 == len(parse.scheme): #絶対パスかチェックする
 				absolute_path = urljoin(base_url, absolute_path)
 			file_urllist.append(absolute_path)
 			print(absolute_path)
@@ -152,20 +152,26 @@ def renameimg(src_file_pathlist, dst_file_pathlist):
 	return True
 	
 if __name__ == '__main__': #インポート時には動かない
+	target_url = DEFAULT_TARGET_URL
+	folder_path = OUTPUT_FOLDER_PATH
 	#引数チェック
 	if 2==len(sys.argv):
 		#Pythonに以下の2つ引数を渡す想定
 		#0は固定でスクリプト名
 		#1.対象のURL
 		target_url = sys.argv[1]
-		#folder_path = sys.argv[1]
-	elif 1==len(sys.argv):
-		target_url = 'https://www.hot-ishikawa.jp/photo/'
-		folder_path = '.\\folder01'
+	elif 1 == len(sys.argv):
+		#引数がなければ、ホワイトボードからURLを得る
+		paste_url = pyperclip.paste()
+		if 0 < len(target_url):
+			parse = urlparse(paste_url)
+			if 0 < len(parse.scheme):
+				target_url = paste_url
 	else:
 		print('引数が不正です。')
 		print(msg_error_exit)
 		sys.exit(ret)
+	print(target_url)
 	if folder_path[len(folder_path)-1]=='\\':
 		files_path = folder_path + '*'
 	else:
