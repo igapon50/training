@@ -32,6 +32,9 @@ from urllib.parse import urljoin #URL結合
 
 # 3rd party packages
 import requests #HTTP通信
+import urllib3
+from urllib3.util.retry import Retry
+#from requests.adapters import HTTPAdapter
 import bs4 #Beautiful Soup
 import pyperclip #クリップボード
 
@@ -56,9 +59,6 @@ DEFAULT_TARGET_URL = 'https://www.hot-ishikawa.jp/photo/'
 RESULT_FILE_PATH = './result.txt' #タイトルと、ダウンロードするファイルのURLの列挙を書き込むファイル
 OUTPUT_FOLDER_PATH = '.\\folder01' #ダウンロードしたファイルの保存パス、
 msg_error_exit = 'エラー終了します。'
-html = '''
-sample html
-'''
 
 ## 
 # @brief 指定したURLからタイトルと画像URLリストを読み込みホワイトボードとファイルに書き込む
@@ -78,10 +78,14 @@ def HTML2imglist(base_url, title, file_urllist):
 		print(sys._getframe().f_code.co_name + '引数file_urllistがlistではないです。')
 		return False
 	
-	res = requests.get(base_url, headers=HEADERS_DIC)
-	res.raise_for_status()
-	html = res.text
-	soup = bs4.BeautifulSoup(html, 'html.parser')
+	retries = Retry(connect=5, read=2, redirect=5)
+	http = urllib3.PoolManager(retries=retries)
+	res = http.request('GET', base_url, timeout=2, headers=HEADERS_DIC)
+#	res = requests.get(base_url, headers=HEADERS_DIC)
+#	res.raise_for_status() #200以外の時例外を出して処理を終了する
+#	html = res.text
+#	soup = bs4.BeautifulSoup(html, 'html.parser')
+	soup = bs4.BeautifulSoup(res.data, 'html.parser')
 	for title_tag in soup.select(title_css_select):
 		title.append(title_tag.string)
 		print(title_tag.string)
@@ -117,7 +121,7 @@ def getfilenamefromurl(file_urllist, dst_file_namelist):
 		return False
 	
 	for src_img_url in file_urllist:
-		dst_img_filename = src_img_url.rsplit('/', 1)[1].replace('?', '_')
+		dst_img_filename = src_img_url.rsplit('/', 1)[1].replace('?', '_') #禁則文字の変換
 		print(dst_img_filename)
 		dst_file_namelist.append(dst_img_filename)
 	return True
