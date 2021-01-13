@@ -46,6 +46,10 @@ from makezip import *
 #img_css_select = 'img[data-src]'
 #img_attr = 'data-src'
 
+#title_css_select = 'html head title'
+#img_css_select = 'html body div .content a'
+#img_attr = 'href'
+
 #title_css_select = 'html body main h1'
 #img_css_select = 'html body main noscript img.vimg'
 #img_attr = 'src'
@@ -80,7 +84,7 @@ def HTML2imglist(base_url, title, file_urllist):
 	
 	retries = Retry(connect=5, read=2, redirect=5)
 	http = urllib3.PoolManager(retries=retries)
-	res = http.request('GET', base_url, timeout=2, headers=HEADERS_DIC)
+	res = http.request('GET', base_url, timeout=10, headers=HEADERS_DIC)
 #	res = requests.get(base_url, headers=HEADERS_DIC)
 #	res.raise_for_status() #200以外の時例外を出して処理を終了する
 #	html = res.text
