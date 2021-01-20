@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ##
-# @file HTML2imglist.py
+# @file imglist2zip.py
 # @version 1.0.0
 # @author Ryosuke Igarashi(HN:igapon)
-# @date 2020/08/26
-# @brief Webサイトから画像のURLリストを作る
-# @details Webサイトから画像のURLリストを作ってホワイトボードにコピーし、ファイルにも保存する
+# @date 2021/01/21
+# @brief imglistファイルからファイル名リストを作りそのファイルでzipファイルを作る
+# @details imglistファイルからファイル名リストを作りそのファイルでzipファイルを作る
 # @warning 
 # @note 
 
@@ -42,76 +42,42 @@ import pyperclip #クリップボード
 #from const import *
 from makezip import *
 
-#title_css_select = 'h1'
-#img_css_select = 'img[data-src]'
-#img_attr = 'data-src'
-
-#title_css_select = 'html head title'
-#img_css_select = 'html body div.kijibox p a'
-#img_attr = 'href'
-
-#title_css_select = 'html head title'
-#img_css_select = 'html body noscript img.list-img'
-#img_attr = 'src'
-
-#title_css_select = 'html head title'
-#img_css_select = 'html body div .content a'
-#img_attr = 'href'
-
-#title_css_select = 'html body main h1'
-#img_css_select = 'html body main noscript img.vimg'
-#img_attr = 'src'
-
-title_css_select = 'html head title'
-img_css_select = 'html body div .photoItem img'
-img_attr = 'src'
-
-HEADERS_DIC = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.97 Safari/537.36"}
-DEFAULT_TARGET_URL = 'https://www.hot-ishikawa.jp/photo/'
 RESULT_FILE_PATH = './result.txt' #タイトルと、ダウンロードするファイルのURLの列挙を書き込むファイル
 OUTPUT_FOLDER_PATH = '.\\folder01' #ダウンロードしたファイルの保存パス、
 msg_error_exit = 'エラー終了します。'
 
 ## 
-# @brief 指定したURLからタイトルと画像URLリストを読み込みクリップボードとファイルに書き込む
-# @param base_url IN 対象のURL
+# @brief 指定したファイルからタイトルと画像URLリストを読み込み、クリップボードに書き込む
+# @param imglist_filepath IN 対象のファイルパス
 # @param title OUT タイトルリストを返す
-# @param file_urllist OUT 画像URLリストを返す
+# @param file_urllist OUT 画像ファイル名リストを返す
 # @return True 成功 / False 失敗(引数チェックエラーで中断)
-# @details title_css_selectで指定した値をタイトル扱いする。img_css_selectで指定したタグのimg_attrで指定した属性を画像URL扱いする。title_css_selectとimg_css_selectは、CSSセレクタで指定する。
+# @details 
 # @warning 
 # @note 
-def HTML2imglist(base_url, title, file_urllist):
+def imglist2filelist(imglist_filepath, title, file_urllist):
 	#引数チェック
-	if 0 == len(base_url):
-		print(sys._getframe().f_code.co_name + '引数base_urlが空です。')
+	if 0 == len(imglist_filepath):
+		print(sys._getframe().f_code.co_name + '引数imglist_filepathが空です。')
 		return False
 	if False == isinstance(file_urllist, list):
 		print(sys._getframe().f_code.co_name + '引数file_urllistがlistではないです。')
 		return False
 	
-	retries = Retry(connect=5, read=2, redirect=5)
-	http = urllib3.PoolManager(retries=retries)
-	res = http.request('GET', base_url, timeout=10, headers=HEADERS_DIC)
-#	res = requests.get(base_url, headers=HEADERS_DIC)
-#	res.raise_for_status() #200以外の時例外を出して処理を終了する
-#	html = res.text
-#	soup = bs4.BeautifulSoup(html, 'html.parser')
-	soup = bs4.BeautifulSoup(res.data, 'html.parser')
-	for title_tag in soup.select(title_css_select):
-		title.append(title_tag.string)
-		print(title_tag.string)
-	with open(RESULT_FILE_PATH, 'w', encoding='utf-8') as imglist_file:
+	with open(imglist_filepath, 'r', encoding='utf-8') as imglist_file:
+		line = imglist_file.readline()
+		title.append(line.rstrip('\n')) #タイトル追加
 		buff = str(title[0]) + '\n' #クリップボード用変数にタイトル追加
-		for img in soup.select(img_css_select):
-			absolute_path = str(img[img_attr])
+		line = imglist_file.readline()
+		while line:
+			absolute_path = str(line.rstrip('\n'))
 			parse = urlparse(absolute_path)
 			if 0 == len(parse.scheme): #絶対パスかチェックする
-				absolute_path = urljoin(base_url, absolute_path)
+				return False
 			file_urllist.append(absolute_path)
 			print(absolute_path)
 			buff += absolute_path + '\n' #クリップボード用変数にurl追加
-		imglist_file.write(buff) #ファイルへの保存
+			line = imglist_file.readline()
 		pyperclip.copy(buff) #クリップボードへのコピー
 	return True
 
@@ -168,26 +134,26 @@ def renameimg(src_file_pathlist, dst_file_pathlist):
 	return True
 	
 if __name__ == '__main__': #インポート時には動かない
-	target_url = DEFAULT_TARGET_URL
+	imglist_filepath = RESULT_FILE_PATH
 	folder_path = OUTPUT_FOLDER_PATH
 	#引数チェック
 	if 2==len(sys.argv):
 		#Pythonに以下の2つ引数を渡す想定
 		#0は固定でスクリプト名
-		#1.対象のURL
-		target_url = sys.argv[1]
+		#1.対象のファイルパス
+		imglist_filepath = sys.argv[1]
 	elif 1 == len(sys.argv):
-		#引数がなければクリップボードからURLを得る
-		if 0 < len(target_url):
+		#引数がなければデフォルト、デフォルトがなければクリップボードからファイルパスを得る
+		if 0 == len(imglist_filepath):
 			paste_url = pyperclip.paste()
 			parse = urlparse(paste_url)
 			if 0 < len(parse.scheme):
-				target_url = paste_url
+				imglist_filepath = paste_url
 	else:
 		print('引数が不正です。')
 		print(msg_error_exit)
 		sys.exit(ret)
-	print(target_url)
+	print(imglist_filepath)
 	if folder_path[len(folder_path)-1]=='\\':
 		files_path = folder_path + '*'
 	else:
@@ -197,12 +163,59 @@ if __name__ == '__main__': #インポート時には動かない
 	#ファイルのURLリストを作成
 	file_urllist = []
 	title = []
-	ret = HTML2imglist(target_url, title, file_urllist)
+	ret = imglist2filelist(imglist_filepath, title, file_urllist)
 	if False == ret:
 		print(msg_error_exit)
 		sys.exit(ret)
 	
 	#ファイルのダウンロード
 	#irvineでダウンロードする。
-	print('irvineにペーストして、ダウンロード完了まで待つ')
-	#os.system('PAUSE')
+	print('ファイル名をナンバリングして圧縮ファイルを作ります')
+	os.system('PAUSE')
+	
+	#ファイルリストの作成
+	#ファイルの順序がファイル名順ではない場合、正しい順序のファイル名リストを作る必要がある。
+	#file_urllistからdst_file_namelistを作成する
+	dst_file_namelist = []
+	src_file_pathlist = []
+	ret = getfilenamefromurl(file_urllist, dst_file_namelist)
+	if False == ret:
+		print(msg_error_exit)
+		sys.exit(ret)
+	if folder_path[len(folder_path)-1]=='\\':
+		for file_name in dst_file_namelist:
+			src_file_pathlist.append(folder_path + file_name)
+	else:
+		for file_name in dst_file_namelist:
+			src_file_pathlist.append(folder_path + '\\' + file_name)
+	
+	#ダウンロードしたファイルのファイル名付け直し
+	file_pathlist = []
+	ret = renameimg(src_file_pathlist, file_pathlist)
+	if False == ret:
+		print(msg_error_exit)
+		sys.exit(ret)
+	
+	#圧縮ファイル作成
+	ret = makezipfile(folder_path + '.zip', file_pathlist)
+	if False == ret:
+		print(msg_error_exit)
+		sys.exit(ret)
+	
+	#圧縮ファイル名付け直し
+	zipfilename = '.\\' + re.sub(r'[\\/:*?"<>|]+','',str(title[0])) #禁則文字を削除する
+	print('圧縮ファイル名を付け直します(タイトル)')
+	print(zipfilename)
+	os.system('PAUSE')
+	os.rename(folder_path + '.zip', zipfilename + '.zip')
+	
+	#ファイルの削除
+	print('ファイル削除します(フォルダごと削除して、フォルダを作り直します)')
+	print(folder_path)
+	os.system('PAUSE')
+	shutil.rmtree(folder_path)
+	if folder_path[len(folder_path)-1]=='\\':
+		os.mkdir(folder_path)
+	else:
+		os.mkdir(folder_path + '\\')
+	
