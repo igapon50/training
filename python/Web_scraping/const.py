@@ -1,0 +1,38 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+##
+# @file const.py
+# @version 1.0.0
+# @author Ryosuke Igarashi(HN:igapon)
+# @date 2021/01/23
+# @brief 共通な定数を定義する
+# @details 共通な定数を定義する
+# @warning 
+# @note 
+
+msg_error_exit = 'エラー終了します。'
+HEADERS_DIC = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.97 Safari/537.36"}
+DEFAULT_TARGET_URL = 'https://www.hot-ishikawa.jp/photo/'
+
+RESULT_FILE_PATH = './result.txt' #タイトルと、ダウンロードするファイルのURLの列挙を書き込むファイル
+OUTPUT_FOLDER_PATH = '.\\folder01' #ダウンロードしたファイルの保存パス
+
+#title_css_select = 'h1'
+#img_css_select = 'img[data-src]'
+#img_attr = 'data-src'
+
+title_css_select = 'html head title'
+img_css_select = 'html body noscript img.list-img'
+img_attr = 'src'
+
+#title_css_select = 'html head title'
+#img_css_select = 'html body div .content a'
+#img_attr = 'href'
+
+#title_css_select = 'html body main h1'
+#img_css_select = 'html body main noscript img.vimg'
+#img_attr = 'src'
+
+#title_css_select = 'html head title'
+#img_css_select = 'html body div .photoItem img'
+#img_attr = 'src'

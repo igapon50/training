@@ -39,12 +39,8 @@ import bs4 #Beautiful Soup
 import pyperclip #クリップボード
 
 # local source
-#from const import *
+from const import *
 from makezip import *
-
-RESULT_FILE_PATH = './result.txt' #タイトルと、ダウンロードするファイルのURLの列挙を書き込むファイル
-OUTPUT_FOLDER_PATH = '.\\folder01' #ダウンロードしたファイルの保存パス、
-msg_error_exit = 'エラー終了します。'
 
 ## 
 # @brief 指定したファイルからタイトルと画像URLリストを読み込み、クリップボードに書き込む
@@ -67,7 +63,6 @@ def imglist2filelist(imglist_filepath, title, file_urllist):
 	with open(imglist_filepath, 'r', encoding='utf-8') as imglist_file:
 		line = imglist_file.readline()
 		title.append(line.rstrip('\n')) #タイトル追加
-		buff = str(title[0]) + '\n' #クリップボード用変数にタイトル追加
 		line = imglist_file.readline()
 		while line:
 			absolute_path = str(line.rstrip('\n'))
@@ -75,10 +70,7 @@ def imglist2filelist(imglist_filepath, title, file_urllist):
 			if 0 == len(parse.scheme): #絶対パスかチェックする
 				return False
 			file_urllist.append(absolute_path)
-			print(absolute_path)
-			buff += absolute_path + '\n' #クリップボード用変数にurl追加
 			line = imglist_file.readline()
-		pyperclip.copy(buff) #クリップボードへのコピー
 	return True
 
 ## 
@@ -188,6 +180,13 @@ if __name__ == '__main__': #インポート時には動かない
 	else:
 		for file_name in dst_file_namelist:
 			src_file_pathlist.append(folder_path + '\\' + file_name)
+	
+	#ファイルの存在確認
+	for src_file_path in src_file_pathlist:
+		if False == os.path.isfile(src_file_path):
+			print('ファイル[' + src_file_path + ']が存在しません。')
+			print(msg_error_exit)
+			sys.exit(ret)
 	
 	#ダウンロードしたファイルのファイル名付け直し
 	file_pathlist = []
