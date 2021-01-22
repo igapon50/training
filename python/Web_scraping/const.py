@@ -21,9 +21,9 @@ OUTPUT_FOLDER_PATH = '.\\folder01' #ダウンロードしたファイルの保�
 #img_css_select = 'img[data-src]'
 #img_attr = 'data-src'
 
-title_css_select = 'html head title'
-img_css_select = 'html body noscript img.list-img'
-img_attr = 'src'
+#title_css_select = 'html head title'
+#img_css_select = 'html body noscript img.list-img'
+#img_attr = 'src'
 
 #title_css_select = 'html head title'
 #img_css_select = 'html body div .content a'
@@ -33,6 +33,6 @@ img_attr = 'src'
 #img_css_select = 'html body main noscript img.vimg'
 #img_attr = 'src'
 
-#title_css_select = 'html head title'
-#img_css_select = 'html body div .photoItem img'
-#img_attr = 'src'
+title_css_select = 'html head title'
+img_css_select = 'html body div .photoItem img'
+img_attr = 'src'
