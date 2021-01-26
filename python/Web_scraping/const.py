@@ -22,6 +22,10 @@ OUTPUT_FOLDER_PATH = '.\\folder01' #ダウンロードしたファイルの保�
 #img_attr = 'data-src'
 
 #title_css_select = 'html head title'
+#img_css_select = 'html body div.kijibox p a'
+#img_attr = 'href'
+
+#title_css_select = 'html head title'
 #img_css_select = 'html body noscript img.list-img'
 #img_attr = 'src'
 
