@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ##
-# @file imglist2zip.py
+# @file HTML2zip.py
 # @version 1.0.0
 # @author Ryosuke Igarashi(HN:igapon)
 # @date 2021/01/26
-# @brief imglistファイルからファイル名リストを作り、ダウンロードされていたらzipファイルにまとめる。
-# @details imglistファイルからファイル名リストを作り、ダウンロードされていたらzipファイルにまとめる。
+# @brief Webサイトから画像のURLリストを作り、ダウンロードされていたらzipファイルにまとめる。
+# @details Webサイトから画像のURLリストを作り、ダウンロードされていたらzipファイルにまとめる。
 # @warning 
 # @note 
 
@@ -16,22 +16,41 @@ from func import *
 
 if __name__ == '__main__': #インポート時には動かない
 	imglist_filepath = RESULT_FILE_PATH
+	target_url = DEFAULT_TARGET_URL
 	folder_path = OUTPUT_FOLDER_PATH
 	#引数チェック
 	if 2==len(sys.argv):
 		#Pythonに以下の2つ引数を渡す想定
 		#0は固定でスクリプト名
-		#1.対象のファイルパス
-		imglist_filepath = sys.argv[1]
+		#1.対象のURL
+		target_url = sys.argv[1]
 	elif 1 == len(sys.argv):
-		#引数がなければ、デフォルトファイルパスを用いる
-		if 0 == len(imglist_filepath):
-			imglist_filepath = RESULT_FILE_PATH
+		#引数がなければ、クリップボードからURLを得る
+		paste_str = pyperclip.paste()
+		if 0 < len(paste_str):
+			parse = urlparse(paste_str)
+			if 0 < len(parse.scheme):
+				target_url = paste_str
+		#クリップボードが空なら、デフォルトURLを用いる
 	else:
 		print('引数が不正です。')
 		print(msg_error_exit)
 		sys.exit(ret)
-	print(imglist_filepath)
+	print(target_url)
+	
+	#ファイルのURLリストを作成
+	file_urllist = []
+	title = []
+	ret = HTML2imglist(target_url, imglist_filepath, title, file_urllist)
+	if False == ret:
+		print(msg_error_exit)
+		sys.exit(ret)
+	
+	#ファイルのダウンロード
+	#irvineでダウンロードする。
+	print('URLリストをクリップボードにコピー済み、irvineにペーストして、ダウンロード完了まで待つ')
+	print(title[0])
+	os.system('PAUSE')
 	
 	#ファイルのURLリストを作成
 	file_urllist = []
@@ -40,13 +59,7 @@ if __name__ == '__main__': #インポート時には動かない
 	if False == ret:
 		print(msg_error_exit)
 		sys.exit(ret)
-	
-	#ファイルのダウンロード
-	#irvineでダウンロードする。
-	print('ファイルリストを読み込み済み、irvineでダウンロード完了まで待つ')
-	print(title[0])
-	os.system('PAUSE')
-	
+
 	#ファイルリストの作成
 	#ファイルの順序がファイル名順ではない場合、正しい順序のファイル名リストを作る必要がある。
 	#file_urllistからdst_file_namelistを作成する
