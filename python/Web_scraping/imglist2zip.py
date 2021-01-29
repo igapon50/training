@@ -18,7 +18,7 @@ if __name__ == '__main__': #インポート時には動かない
 	imglist_filepath = RESULT_FILE_PATH
 	folder_path = OUTPUT_FOLDER_PATH
 	#引数チェック
-	if 2==len(sys.argv):
+	if 2 == len(sys.argv):
 		#Pythonに以下の2つ引数を渡す想定
 		#0は固定でスクリプト名
 		#1.対象のファイルパス
@@ -42,8 +42,9 @@ if __name__ == '__main__': #インポート時には動かない
 		sys.exit(ret)
 	
 	#ファイルのダウンロード
-	#irvineでダウンロードする。
 	print('ファイルリストを読み込み済み、irvineでダウンロード完了まで待つ')
+	print('irvineにペーストして、ダウンロード完了まで待つ')
+	print('ファイルのURLリストを編集すれば、名前の付け直しと圧縮するファイルを調整可能')
 	print(title[0])
 	os.system('PAUSE')
 	

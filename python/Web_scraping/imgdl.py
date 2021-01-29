@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ##
-# @file HTML2zip.py
+# @file imgdl.py
 # @version 1.0.0
 # @author Ryosuke Igarashi(HN:igapon)
 # @date 2021/01/26
@@ -51,7 +51,7 @@ if __name__ == '__main__': #インポート時には動かない
 	print('irvineにペーストして、ダウンロード完了まで待つ')
 	print('ファイルのURLリストを編集すれば、名前の付け直しと圧縮するファイルを調整可能')
 	print(title[0])
-	os.system('PAUSE')
+	#os.system('PAUSE')
 	
 	#ファイルのURLリストを作成
 	file_urllist = []
@@ -76,6 +76,20 @@ if __name__ == '__main__': #インポート時には動かない
 	else:
 		for file_name in dst_file_namelist:
 			src_file_pathlist.append(folder_path + '\\' + file_name)
+	
+	#2つの配列から辞書型に変換
+	dic = {key: val for key, val in zip(file_urllist, src_file_pathlist)}
+	
+	#ファイルのダウンロード
+	for file_url in file_urllist:
+		try:
+			images = download_image(file_url, 10)
+			with open(dic[file_url], "wb") as img_file:
+				img_file.write(images)
+		except KeyboardInterrupt:
+			break
+		except Exception as err:
+			print(err)
 	
 	#ファイルの存在確認
 	for src_file_path in src_file_pathlist:

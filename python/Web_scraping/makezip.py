@@ -16,12 +16,12 @@ from func import *
 
 if __name__ == '__main__': #インポート時には動かない
 	#引数チェック
-	if 2==len(sys.argv):
+	if 2 == len(sys.argv):
 		#Pythonに以下の2つ引数を渡す想定
 		#0は固定でスクリプト名
 		#1.圧縮したいファイル群が入っているフォルダー
 		folder_path = sys.argv[1]
-	elif 1==len(sys.argv):
+	elif 1 == len(sys.argv):
 		folder_path = OUTPUT_FOLDER_PATH
 	else:
 		print('引数が不正です。')

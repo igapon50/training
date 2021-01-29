@@ -72,6 +72,37 @@ def HTML2imglist(base_url, imglist_filepath, title, file_urllist):
 	return True
 	
 ## 
+# @brief 指定したファイルからタイトルと画像URLリストを読み込み、クリップボードに書き込む
+# @param imglist_filepath IN 対象のファイルパス
+# @return True 成功 / False 失敗(エラーで中断)
+# @details 
+# @warning 
+# @note 
+def imglist2clip(imglist_filepath):
+	#引数チェック
+	if 0 == len(imglist_filepath):
+		print(sys._getframe().f_code.co_name + '引数imglist_filepathが空です。')
+		return False
+	if False == os.path.isfile(imglist_filepath):
+		print(sys._getframe().f_code.co_name + '引数imglist_filepath=[' + imglist_filepath + ']のファイルが存在しません。')
+		return False
+	
+	with open(imglist_filepath, 'r', encoding='utf-8') as imglist_file:
+		line = imglist_file.readline()
+		buff = line.rstrip('\n') + '\n' #クリップボード用変数にタイトル追加
+		line = imglist_file.readline()
+		while line:
+			absolute_path = str(line.rstrip('\n'))
+			parse = urlparse(absolute_path)
+			if 0 == len(parse.scheme): #絶対パスかチェックする
+				return False
+			print(absolute_path)
+			buff += absolute_path + '\n' #クリップボード用変数にurl追加
+			line = imglist_file.readline()
+		pyperclip.copy(buff) #クリップボードへのコピー
+	return True
+	
+## 
 # @brief 指定したファイルからタイトルと画像URLリストを読み込む
 # @param imglist_filepath IN 対象のファイルパス
 # @param title OUT タイトルリストを返す
@@ -107,7 +138,7 @@ def imglist2filelist(imglist_filepath, title, file_urllist):
 # @param file_urllist IN 基にするURLリスト
 # @param dst_file_namelist OUT ファイル名+拡張子部分を抽出したリスト
 # @return True 成功 / False 失敗(引数チェックエラーで中断)
-# @details file_urllistで指定したファイルURLリストから、ファイル名+拡張子部分を抽出してdst_file_nakelistに作成して返す
+# @details file_urllistで指定したファイルURLリストから、ファイル名+拡張子部分を抽出してdst_file_namelistに作成して返す
 # @warning 
 # @note ファイル名に"?"がある場合は"_"に置換する
 def getfilenamefromurl(file_urllist, dst_file_namelist):
@@ -124,6 +155,26 @@ def getfilenamefromurl(file_urllist, dst_file_namelist):
 		print(dst_img_filename)
 		dst_file_namelist.append(dst_img_filename)
 	return True
+
+## 
+# @brief 指定したURLのimageをgetして返す
+# @param url IN 基にするURL
+# @param timeout IN タイムアウト時間[s]
+# @return dst_file_namelist 読み込んだimageのバイナリデータ
+# @details 
+# @warning 
+# @note ファイル名に"?"がある場合は"_"に置換する
+def download_image(file_url, timeout = 10):
+	response = requests.get(file_url, allow_redirects=False, timeout=timeout)
+	if response.status_code != 200:
+		e = Exception("HTTP status: " + response.status_code)
+		raise e
+	
+	content_type = response.headers["content-type"]
+	if 'image' not in content_type:
+		e = Exception("Content-Type: " + content_type)
+		raise e
+	return response.content
 
 ## 
 # @brief 指定したファイルパスリストから、ファイル名部分をナンバリングし直したファイルパスリストを作る
