@@ -77,6 +77,10 @@ pip install awscli
 
 ### 参考(AWS_S3)
 - [Boto3 Docs](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html#)
+  ([S3.ServiceResource](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#service-resource)
+  /[S3.Bucket](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Bucket)
+  /[S3.Object](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Object)
+  )
 - [Windows のデータを Amazon S3 へバックアップする](https://codebookshelf.com/2017/06/windows-%E3%81%AE%E3%83%87%E3%83%BC%E3%82%BF%E3%82%92-amazon-s3-%E3%81%B8%E3%83%90%E3%83%83%E3%82%AF%E3%82%A2%E3%83%83%E3%83%97%E3%81%99%E3%82%8B/)
 - [boto3を使ってS3をごにょごにょする](https://qiita.com/is_ryo/items/e16527db5800854cd95f)
 - [Boto3 で S3 のオブジェクトを操作する（高レベルAPIと低レベルAPI）](https://qiita.com/sokutou-metsu/items/5ba7531117224ee5e8af)
