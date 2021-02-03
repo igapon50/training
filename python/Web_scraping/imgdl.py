@@ -79,7 +79,9 @@ if __name__ == '__main__': #インポート時には動かない
 	
 	#2つの配列から辞書型に変換
 	dic = {key: val for key, val in zip(file_urllist, src_file_pathlist)}
-	
+	#フォルダーがなければ作成する
+	if not os.path.isdir(folder_path):
+		os.makedirs(folder_path)
 	#ファイルのダウンロード
 	for file_url in file_urllist:
 		try:
