@@ -41,17 +41,17 @@ from const import *
 # @details
 # @warning 
 # @note 
-def writefile_listall(bucket, filepath):
+def get_bucket_filelist(bucket, result_path):
 	#引数チェック
-	if 0 == len(bucket):
+	if bucket is None:
 		print(sys._getframe().f_code.co_name + 'bucket')
 		return False
-	if 0 == len(filepath):
-		print(sys._getframe().f_code.co_name + 'filepath')
+	if 0 == len(result_path):
+		print(sys._getframe().f_code.co_name + 'result_path')
 		return False
 
 	print(bucket.name)
-	with open(filepath, 'w', encoding='utf-8') as write_file:
+	with open(result_path, 'w', encoding='utf-8') as write_file:
 		buff = bucket.name + '\n' #ファイル書き込み用変数にバケット名追加
 		for obj_summary in bucket.objects.all():
 			buff += obj_summary.key
@@ -62,19 +62,45 @@ def writefile_listall(bucket, filepath):
 		write_file.write(buff) #ファイルへの保存
 	return True
 
-
 ##
-# @brief 指定したフォルダ以下のオブジェクト情報を書き込む
-# @param path IN 読み込むフォルダ名
+# @brief 指定したフォルダ以下のオブジェクト情報を取得する
+# @param target_path IN オブジェクト情報を読み込むルートフォルダ
+# @param result_path IN オブジェクト情報を書き込むファイルパス
 # @return True 成功 / False 失敗(引数チェックエラーで中断)
 # @details
 # @warning
 # @note
-def listup_files(path):
-   #yield [os.path.abspath(p) for p in glob.glob(path, recursive=True)]
-   #yield [os.path.basename(p.rstrip(os.sep)) for p in glob.glob(path, recursive=True)]
-	for p in glob.glob(path, recursive=True):
-		#yield os.path.basename(p.rstrip(os.sep))
+def get_local_filelist(target_path, result_path):
+	if 0 == len(target_path):
+		print(sys._getframe().f_code.co_name + 'target_path')
+		return False
+	if 0 == len(result_path):
+		print(sys._getframe().f_code.co_name + 'result_path')
+		return False
+
+	with open(result_path, 'w', encoding='utf-8') as write_file:
+		temp_path = os.path.join(target_path, '**')
+		buff = temp_path + '\n'
+		for x in listup_files(temp_path): #ファイル判定
+			if os.path.isfile(x):
+				p = pathlib.Path(x)
+				dt = datetime.datetime.fromtimestamp(p.stat().st_mtime)
+				buff += x.strip(target_path) + '\t'\
+						+ str(dt) + '\t'\
+						+ str(os.path.getsize(x)) + 'byte\n'
+			else: #フォルダの時
+				buff += x.strip(target_path) + '\n'
+		write_file.write(buff) #ファイルへの保存
+	return True
+##
+# @brief 指定したフォルダ以下のファイルパスリストを取得する
+# @param temp_path IN 読み込むルートフォルダ
+# @return True 成功 / False 失敗(引数チェックエラーで中断)
+# @details
+# @warning
+# @note
+def listup_files(temp_path):
+	for p in glob.glob(temp_path, recursive=True):
 	    yield p
 
 ##

@@ -23,3 +23,5 @@ msg_error_exit = 'エラー終了します。'
 RESULT_FILE_PATH = './result.txt' #書き込むファイル
 OUTPUT_FOLDER_PATH = '.\\folder01' #ローカルの保存パス
 AWS_S3_BUCKET_NAME = 'private-igapon'
+BUCKET_FILELIST_PATH = './result_bucket.txt'
+TARGET_FILELIST_PATH = './result_target.txt'
