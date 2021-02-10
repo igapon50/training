@@ -163,16 +163,17 @@ def getfilenamefromurl(file_urllist, dst_file_namelist):
 # @return dst_file_namelist 読み込んだimageのバイナリデータ
 # @details 
 # @warning 
-# @note ファイル名に"?"がある場合は"_"に置換する
-def download_image(file_url, timeout = 10):
-	response = requests.get(file_url, allow_redirects=False, timeout=timeout)
-	if response.status_code != 200:
-		e = Exception("HTTP status: " + response.status_code)
+# @note 
+def download_image(file_url, timeout = 30):
+	#response = requests.get(file_url, allow_redirects=False, timeout=timeout)
+	response = requests.get(file_url, timeout=timeout)
+	if response.status_code != requests.codes.ok:
+		e = Exception("HTTP status: " + str(response.status_code) + " " + file_url + " " + response.url)
 		raise e
 	
 	content_type = response.headers["content-type"]
 	if 'image' not in content_type:
-		e = Exception("Content-Type: " + content_type)
+		e = Exception("Content-Type: " + content_type + " " + file_url + " " + response.url)
 		raise e
 	return response.content
 

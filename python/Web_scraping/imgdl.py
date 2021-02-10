@@ -85,7 +85,7 @@ if __name__ == '__main__': #インポート時には動かない
 	#ファイルのダウンロード
 	for file_url in file_urllist:
 		try:
-			images = download_image(file_url, 10)
+			images = download_image(file_url)
 			with open(dic[file_url], "wb") as img_file:
 				img_file.write(images)
 		except KeyboardInterrupt:
