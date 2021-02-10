@@ -163,10 +163,10 @@ def getfilenamefromurl(file_urllist, dst_file_namelist):
 # @return dst_file_namelist 読み込んだimageのバイナリデータ
 # @details 
 # @warning 
-# @note 
+# @note サーバー落ちているとリダイレクトでエラー画像になることがあるのでリダイレクトFalse
 def download_image(file_url, timeout = 30):
-	#response = requests.get(file_url, allow_redirects=False, timeout=timeout)
-	response = requests.get(file_url, timeout=timeout)
+	response = requests.get(file_url, allow_redirects=False, timeout=timeout)
+	#response = requests.get(file_url, timeout=timeout)
 	if response.status_code != requests.codes.ok:
 		e = Exception("HTTP status: " + str(response.status_code) + " " + file_url + " " + response.url)
 		raise e
