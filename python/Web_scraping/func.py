@@ -123,6 +123,7 @@ def imglist2filelist(imglist_filepath, title, file_urllist):
 	with open(imglist_filepath, 'r', encoding='utf-8') as imglist_file:
 		line = imglist_file.readline()
 		title.append(line.rstrip('\n')) #タイトル追加
+		#line = imglist_file.readline() #空読みで一行読み捨てする(内容がわかる画像を最初に表示するタイプのサイトで読み捨てする)
 		line = imglist_file.readline()
 		while line:
 			absolute_path = str(line.rstrip('\n'))
