@@ -26,6 +26,22 @@ DEFAULT_TARGET_URL = 'https://www.hot-ishikawa.jp/photo/'
 RESULT_FILE_PATH = './result.txt' #タイトルと、ダウンロードするファイルのURLの列挙を書き込むファイル
 OUTPUT_FOLDER_PATH = '.\\folder01' #ダウンロードしたファイルの保存パス
 
+#title_css_select = 'html head title'
+#img_css_select = 'html body section.entry-content img'
+#img_attr = 'src'
+
+#title_css_select = 'html head title'
+#img_css_select = 'html body main div.content img.content-img'
+#img_attr = 'src'
+
+#title_css_select = 'html head title'
+#img_css_select = 'html body section.entry-content img.alignnone'
+#img_attr = 'src'
+
+#title_css_select = 'html head title'
+#img_css_select = 'html body section.entry-content img'
+#img_attr = 'src'
+
 #title_css_select = 'h1'
 #img_css_select = 'img[data-src]'
 #img_attr = 'data-src'
