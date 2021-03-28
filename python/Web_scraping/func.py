@@ -167,14 +167,12 @@ def getfilenamefromurl(file_urllist, dst_file_namelist):
 # @note サーバー落ちているとリダイレクトでエラー画像になることがあるのでリダイレクトFalse
 def download_image(file_url, timeout = 30):
 	response = requests.get(file_url, allow_redirects=False, timeout=timeout)
-	#response = requests.get(file_url, timeout=timeout)
 	if response.status_code != requests.codes.ok:
-		e = Exception("HTTP status: " + str(response.status_code) + " " + file_url + " " + response.url)
+		e = Exception("HTTP status: " + str(response.status_code))
 		raise e
-	
 	content_type = response.headers["content-type"]
 	if 'image' not in content_type:
-		e = Exception("Content-Type: " + content_type + " " + file_url + " " + response.url)
+		e = Exception("Content-Type: " + content_type)
 		raise e
 	return response.content
 

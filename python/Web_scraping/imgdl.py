@@ -92,8 +92,8 @@ if __name__ == '__main__': #インポート時には動かない
 		except KeyboardInterrupt:
 			break
 		except Exception as err:
+			print(file_url + ' ', end='') #改行なし
 			print(err)
-			print(' ' + file_url)
 	
 	#ファイルの存在確認
 	for src_file_path in src_file_pathlist:
