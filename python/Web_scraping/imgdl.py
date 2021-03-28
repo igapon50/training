@@ -5,8 +5,8 @@
 # @version 1.0.0
 # @author Ryosuke Igarashi(HN:igapon)
 # @date 2021/01/26
-# @brief Webサイトから画像のURLリストを作り、ダウンロードされていたらzipファイルにまとめる。
-# @details Webサイトから画像のURLリストを作り、ダウンロードされていたらzipファイルにまとめる。
+# @brief Webサイトから画像のURLリストを作り、ダウンロードしてzipファイルにまとめる。
+# @details Webサイトから画像のURLリストを作り、ダウンロードしてzipファイルにまとめる。
 # @warning 
 # @note 
 
@@ -86,12 +86,14 @@ if __name__ == '__main__': #インポート時には動かない
 	for file_url in file_urllist:
 		try:
 			images = download_image(file_url)
-			with open(dic[file_url], "wb") as img_file:
-				img_file.write(images)
+			if False == os.path.isfile(dic[file_url]): #ファイルの存在チェック
+				with open(dic[file_url], "wb") as img_file:
+					img_file.write(images)
 		except KeyboardInterrupt:
 			break
 		except Exception as err:
 			print(err)
+			print(' ' + file_url)
 	
 	#ファイルの存在確認
 	for src_file_path in src_file_pathlist:
