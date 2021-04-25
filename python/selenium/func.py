@@ -61,10 +61,15 @@ def HTML2imglist_SeleniumFireFox(base_url, imglist_filepath, title, file_urllist
 
 	# Webページにアクセスする
 	driver.get(base_url)
+	# 指定した要素が表示されるまで、明示的に30秒待機する
+	element = WebDriverWait(driver, 30).until(
+		EC.presence_of_element_located((By.CSS_SELECTOR, img_css_select))
+	)
+	driver.implicitly_wait(1)  # 秒
 	# ソースコードを取得
 	page_source = driver.page_source
 	# ブラウザを終了する(全てのウィンドウを閉じる）
-	driver.quit()
+	driver.close()
 	soup = bs4.BeautifulSoup(page_source, 'html.parser')
 	for title_tag in soup.select(title_css_select):
 		title.append(title_tag.string)
