@@ -14,13 +14,6 @@
 from const import *
 from func import *
 
-# ブラウザの起動
-#driver = webdriver.Chrome(ChromeDriverManager().install())
-driver = webdriver.Firefox(executable_path=GeckoDriverManager().install())
-#driver = webdriver.Ie(IEDriverManager().install())
-#driver = webdriver.Edge(EdgeChromiumDriverManager().install())
-#driver = webdriver.Opera(executable_path=OperaDriverManager().install())
-
 if __name__ == '__main__': #インポート時には動かない
 	imglist_filepath = RESULT_FILE_PATH
 	target_url = DEFAULT_TARGET_URL
@@ -48,7 +41,7 @@ if __name__ == '__main__': #インポート時には動かない
 	#ファイルのURLリストを作成
 	file_urllist = []
 	title = []
-	ret = HTML2imglist(target_url, imglist_filepath, title, file_urllist)
+	ret = HTML2imglist_SeleniumFireFox(target_url, imglist_filepath, title, file_urllist)
 	if False == ret:
 		print(msg_error_exit)
 		sys.exit(ret)

@@ -31,6 +31,9 @@ import pyperclip #クリップボード
 # Selenium
 import chromedriver_binary
 from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 #from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.firefox import GeckoDriverManager
 #from webdriver_manager.microsoft import IEDriverManager
@@ -59,13 +62,23 @@ def HTML2imglist_SeleniumFireFox(base_url, imglist_filepath, title, file_urllist
 		print(sys._getframe().f_code.co_name + '引数file_urllistがlistではないです。')
 		return False
 
+	# ブラウザの起動
+	# driver = webdriver.Chrome(ChromeDriverManager().install())
+	driver = webdriver.Firefox(executable_path=GeckoDriverManager().install())
+	# driver = webdriver.Ie(IEDriverManager().install())
+	# driver = webdriver.Edge(EdgeChromiumDriverManager().install())
+	# driver = webdriver.Opera(executable_path=OperaDriverManager().install())
+
 	# Webページにアクセスする
 	driver.get(base_url)
 	# 指定した要素が表示されるまで、明示的に30秒待機する
-	element = WebDriverWait(driver, 30).until(
-		EC.presence_of_element_located((By.CSS_SELECTOR, img_css_select))
-	)
-	driver.implicitly_wait(1)  # 秒
+	try:
+		element = WebDriverWait(driver, 30).until(
+			EC.presence_of_element_located((By.CSS_SELECTOR, title_css_select))
+		)
+	finally:
+		driver.quit()
+	#driver.implicitly_wait(1)  # 秒
 	# ソースコードを取得
 	page_source = driver.page_source
 	# ブラウザを終了する(全てのウィンドウを閉じる）
