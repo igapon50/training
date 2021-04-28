@@ -75,9 +75,11 @@ def HTML2imglist_SeleniumFireFox(base_url, imglist_filepath, title, file_urllist
     # 指定した要素が表示されるまで、明示的に30秒待機する
     try:
         element = WebDriverWait(driver, 30).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, img_css_select))
+            EC.presence_of_element_located((By.ID, 'image-container'))
+            #EC.presence_of_element_located((By.CSS_SELECTOR, img_css_select))
         )
     finally:
+        driver.implicitly_wait(1)
         # ソースコードを取得
         page_source = driver.page_source
         soup = bs4.BeautifulSoup(page_source, 'html.parser')
