@@ -75,7 +75,7 @@ def HTML2imglist_SeleniumFireFox(base_url, imglist_filepath, title, file_urllist
     # 指定した要素が表示されるまで、明示的に30秒待機する
     try:
         element = WebDriverWait(driver, 30).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, title_css_select))
+            EC.presence_of_element_located((By.CSS_SELECTOR, img_css_select))
         )
     finally:
         # ソースコードを取得
@@ -97,7 +97,7 @@ def HTML2imglist_SeleniumFireFox(base_url, imglist_filepath, title, file_urllist
             imglist_file.write(buff)  # ファイルへの保存
             pyperclip.copy(buff)  # クリップボードへのコピー
         driver.quit()  # ドライバを終了し、関連するすべてのウィンドウを閉じます。
-        driver.close()  # ブラウザを終了する(全てのウィンドウを閉じる）
+#        driver.close()  # ブラウザを終了する(全てのウィンドウを閉じる）
     return True
 
 
