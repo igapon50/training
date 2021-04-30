@@ -1,0 +1,5 @@
+@startuml
+Main ->> PartA:Create()
+Main ->> PartB:Create()
+Main ->> ImplimantsClassA:コンストラクタ(PartA, PartB)
+@enduml

@@ -1,0 +1,33 @@
+@startuml
+skinparam classAttributeIconSize 0
+interface InterFaceClassA
+{
+	+ Name: string
+	+ MethodA():void
+}
+note right:InterFaceClassAのメモ
+
+class ImplimantsClassA implements InterFaceClassA
+{
+	+ Value: int
+	- {static} DefaultValue: int
+	+ MethodB():void
+}
+note right of ImplimantsClassA:ImplimantsClassAはInterFaceClassAの実装クラス
+
+class PartA
+{
+	+ Name: string
+}
+note bottom:PartAクラスのメモ
+
+class PartB
+{
+	+ Name: string
+}
+note bottom:PartBクラスのメモ
+
+ImplimantsClassA "1" o-- "1..*" PartA
+ImplimantsClassA "1" *-- "0..*" PartB
+
+@enduml
