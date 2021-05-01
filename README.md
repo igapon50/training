@@ -19,7 +19,18 @@
 <!-- CREATED_BY_LEADYOU_README_GENERATOR -->
 
 # 開発環境
-PyCharm(統合開発環境)
+## Chocolaty
+- Windowsキーを押す
+- 検索ボックスに「cmd」と入力
+- Ctrl + Shift + Enterを押し(管理者として実行)、以下のコマンドを実行する
+```commandline:cmd.exe（管理者として実行）
+@powershell -NoProfile -ExecutionPolicy Bypass -Command "iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))" && SET PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin
+```
+
+### 参考
+- [chocolatey基本情報まとめ](https://qiita.com/NaoyaOura/items/1081884068fe3ea79570)
+
+## PyCharm(統合開発環境)
 - Windowsキーを押す
 - 検索ボックスに「cmd」と入力
 - Ctrl + Shift + Enterを押し(管理者として実行)、以下のコマンドを実行する
@@ -30,8 +41,12 @@ choco install pycharm-community
 - zipを解凍してsetup.exeを起動
 - 日本語化するアプリケーションとして"C:\Program Files (x86)\JetBrains\PyCharm Community Edition 2020.3.3\bin\pycharm64.exe"を選択
 
-Doxygen(Doxygen形式)
+### 参考
+- [PyCharmインストール（Windows編）](https://startappdevfrom35.com/pycharminstallforwindows/)
+- [pycharmの日本語化](https://qiita.com/y-sato19/items/46bc0f8c8f91f51564e0)
+- [Git リポジトリをセットアップする](https://pleiades.io/help/pycharm/set-up-a-git-repository.html)
 
+## Doxygen(Doxygen形式)
 - Windowsキーを押す
 - 検索ボックスに「cmd」と入力
 - Ctrl + Shift + Enterを押し(管理者として実行)、以下のコマンドを実行する
@@ -39,16 +54,49 @@ Doxygen(Doxygen形式)
 choco install doxygen.install
 ```
 
-### 参考(開発環境)
-- [PyCharmインストール（Windows編）](https://startappdevfrom35.com/pycharminstallforwindows/)
-- [pycharmの日本語化](https://qiita.com/y-sato19/items/46bc0f8c8f91f51564e0)
-- [Git リポジトリをセットアップする](https://pleiades.io/help/pycharm/set-up-a-git-repository.html)
+### 参考
 - [Doxygen.jp](http://www.doxygen.jp/)
 - [Doxygen リファレンスメモ](https://cercopes-z.com/Doxygen/)
 
-## python/Web_scraping
+## PlantUML(java除く)
+- Windowsキーを押す
+- 検索ボックスに「cmd」と入力
+- Ctrl + Shift + Enterを押し(管理者として実行)、以下のコマンドを実行する
+```commandline
+choco install plantuml
+choco install graphviz
+```
+- 以下のBATファイルで、拡張子puのファイルからUML図を作成する
+```commandline:CreateUML.bat
+@echo off
+if "%1"=="" (
+java -jar C:\ProgramData\chocolatey\lib\plantuml\tools\plantuml.jar C:\ProgramData\chocolatey\bin\dot.exe *.pu
+) else (
+java -jar C:\ProgramData\chocolatey\lib\plantuml\tools\plantuml.jar C:\ProgramData\chocolatey\bin\dot.exe %1
+)
+```
+
+### 参考
+- [PlantUML使い方メモ](https://qiita.com/opengl-8080/items/98c510b8ca060bdd2ea3)
+
+## Selenium
+- Windowsキーを押す
+- 検索ボックスに「cmd」と入力
+- Ctrl + Shift + Enterを押し(管理者として実行)、以下のコマンドを実行する
+```commandline
+pip install chromedriver-binary
+pip install selenium
+pip install webdriver-manager
+```
+
+### 参考
+- [【Selenium】ChromeDriverを自動更新するPythonライブラリが便利](https://yuki.world/python-selenium-chromedriver-auto-update/)
+- [【Python/Selenium】ChromeDriverバージョンエラー対処法](https://yuki.world/python-chrome-driver-version-error/)
+
+
+# python/Web_scraping
 スクレイピングで、画像URLリストを作り、その画像をダウンロードして、ファイル名をナンバリングして、zipファイルにアーカイブする。
-- imgdl：クリップボードからURLを読み込み、スクレイピングして、画像URLリストを作り、その画像をダウンロードして、ファイル名をナンバリングして、zipファイルに保存する
+- imgdl：クリップボードからURLを読み込み、urllib.requestでWeb情報を取得し、スクレイピングして、画像URLリストを作り、その画像をダウンロードして、ファイル名をナンバリングして、zipファイルに保存する
 - HTML2zip：画像のダウンロード処理だけ行わない他はimgdlと同じ(ダウンロードは外部ツールを使う)
 - HTML2imglist：クリップボードからURLを読み込み、スクレイピングして、画像URLリストを作り、クリップボードとファイルに保存する
 - imglist2clip：ファイルから読み込み、クリップボードにコピーする
@@ -56,13 +104,22 @@ choco install doxygen.install
 - makezip：ダウンロードフォルダ(folder01)以下を、zipファイルに保存する
 - folder01Rename：folder01以下のファイルについて、ファイル名の先頭に連番3桁を挿入する
 
-### 参考(Web_scraping)
+### 参考
 - [note.nkmk.me Python関連記事まとめ](https://note.nkmk.me/python-post-summary/)
 - [querySelectorAll CSSセレクタ](https://developer.mozilla.org/ja/docs/Web/API/Element/querySelectorAll)
 - [Python URL操作](https://villhell.com/2019/07/30/python-url/)
 - [README作成補助](https://qiita.com/Kyome/items/2112e9d1871ec0a367ea?utm_source=Qiita%E3%83%8B%E3%83%A5%E3%83%BC%E3%82%B9&utm_campaign=615586dc3e-Qiita_newsletter_425_08_26_2020_COPY_02&utm_medium=email&utm_term=0_e44feaa081-615586dc3e-33718969)
 - [Irvine](http://hp.vector.co.jp/authors/VA024591/doc/manual.html)
 
+## python/selenium
+[python/Web_scraping](https://github.com/igapon50/training/tree/develop#pythonweb_scraping)
+では、Web情報の取得にurllib.requestを使用したが、ここではseleniumを使用する
+- imgdl：クリップボードからURLを読み込み、FireFoxでWeb情報を取得し、スクレイピングして、画像URLリストを作り、その画像をダウンロードして、ファイル名をナンバリングして、zipファイルに保存する
+
+### 参考
+- [【完全版】PythonとSeleniumでブラウザを自動操作(クローリング／スクレイピング)するチートシート](https://tanuhack.com/selenium/)
+- [PythonでSeleniumを操作する](https://kurozumi.github.io/selenium-python/index.html)
+- [Selenium クリックリファレンスAPI(逆引き)](https://www.seleniumqref.com/api/webdriver_gyaku.html)
 
 ## python/AWS_S3
 AWS S3バケットへのデータバックアップとリストアする
