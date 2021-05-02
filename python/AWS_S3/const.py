@@ -25,3 +25,4 @@ OUTPUT_FOLDER_PATH = '.\\folder01' #ローカルの保存パス
 AWS_S3_BUCKET_NAME = 'private-igapon'
 BUCKET_FILELIST_PATH = './result_bucket.txt'
 TARGET_FILELIST_PATH = './result_target.txt'
+UPLOAD_FILELIST = './result_upload.txt'

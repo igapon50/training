@@ -93,6 +93,20 @@ pip install webdriver-manager
 - [【Selenium】ChromeDriverを自動更新するPythonライブラリが便利](https://yuki.world/python-selenium-chromedriver-auto-update/)
 - [【Python/Selenium】ChromeDriverバージョンエラー対処法](https://yuki.world/python-chrome-driver-version-error/)
 
+## python/AWS_S3
+AWS S3バケットへのデータバックアップとリストアする
+- Windowsキーを押す
+- 検索ボックスに「cmd」と入力
+- Ctrl + Shift + Enterを押し(管理者として実行)、以下のコマンドを実行する
+```commandline:title
+python.exe -m pip install --upgrade pip
+pip install boto3
+pip install awscli
+```
+
+### 参考(AWS_S3)
+- [Windows のデータを Amazon S3 へバックアップする](https://codebookshelf.com/2017/06/windows-%E3%81%AE%E3%83%87%E3%83%BC%E3%82%BF%E3%82%92-amazon-s3-%E3%81%B8%E3%83%90%E3%83%83%E3%82%AF%E3%82%A2%E3%83%83%E3%83%97%E3%81%99%E3%82%8B/)
+
 
 # python/Web_scraping
 スクレイピングで、画像URLリストを作り、その画像をダウンロードして、ファイル名をナンバリングして、zipファイルにアーカイブする。
@@ -111,7 +125,7 @@ pip install webdriver-manager
 - [README作成補助](https://qiita.com/Kyome/items/2112e9d1871ec0a367ea?utm_source=Qiita%E3%83%8B%E3%83%A5%E3%83%BC%E3%82%B9&utm_campaign=615586dc3e-Qiita_newsletter_425_08_26_2020_COPY_02&utm_medium=email&utm_term=0_e44feaa081-615586dc3e-33718969)
 - [Irvine](http://hp.vector.co.jp/authors/VA024591/doc/manual.html)
 
-## python/selenium
+# python/selenium
 [python/Web_scraping](https://github.com/igapon50/training/tree/develop#pythonweb_scraping)
 では、Web情報の取得にurllib.requestを使用したが、ここではseleniumを使用する
 - imgdl：クリップボードからURLを読み込み、FireFoxでWeb情報を取得し、スクレイピングして、画像URLリストを作り、その画像をダウンロードして、ファイル名をナンバリングして、zipファイルに保存する
@@ -121,24 +135,17 @@ pip install webdriver-manager
 - [PythonでSeleniumを操作する](https://kurozumi.github.io/selenium-python/index.html)
 - [Selenium クリックリファレンスAPI(逆引き)](https://www.seleniumqref.com/api/webdriver_gyaku.html)
 
-## python/AWS_S3
-AWS S3バケットへのデータバックアップとリストアする
-- Windowsキーを押す
-- 検索ボックスに「cmd」と入力
-- Ctrl + Shift + Enterを押し(管理者として実行)、以下のコマンドを実行する
-```commandline:title
-python.exe -m pip install --upgrade pip
-pip install boto3
-pip install awscli
-```
+# python/AWS_S3
+aws s3 syncコマンドは、とりあえずおいといて、AWS S3のバケットと、ローカルフォルダを同期したり操作する。削除は反映できないけど。
+- listall：S3バケットとローカルフォルダのオブジェクト情報を取得して、結果ファイルに書き出す
+- uploadS3：S3バケットとローカルフォルダのオブジェクト情報を取得して、localよりbucketの日付が古いファイルをアップロードする
 
-### 参考(AWS_S3)
+### 参考
 - [Boto3 Docs](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html#)
   ([S3.ServiceResource](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#service-resource)
   /[S3.Bucket](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Bucket)
   /[S3.Object](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Object)
   )
-- [Windows のデータを Amazon S3 へバックアップする](https://codebookshelf.com/2017/06/windows-%E3%81%AE%E3%83%87%E3%83%BC%E3%82%BF%E3%82%92-amazon-s3-%E3%81%B8%E3%83%90%E3%83%83%E3%82%AF%E3%82%A2%E3%83%83%E3%83%97%E3%81%99%E3%82%8B/)
 - [boto3を使ってS3をごにょごにょする](https://qiita.com/is_ryo/items/e16527db5800854cd95f)
 - [Boto3 で S3 のオブジェクトを操作する（高レベルAPIと低レベルAPI）](https://qiita.com/sokutou-metsu/items/5ba7531117224ee5e8af)
 - [Boto3でS3のリスト出力をするときは、list_objects_v2ではなくBucket().objects.filterを使おう](https://qiita.com/elyunim26/items/a513226b76b3cb8928c2)

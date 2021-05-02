@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ##
-# @file listall.py
+# @file uploadS3.py
 # @version 1.0.0
 # @author Ryosuke Igarashi(HN:igapon)
 # @date 2021/05/02
-# @brief AWS S3の指定バケットのオブジェクト情報をファイルに書き込む
+# @brief AWS S3の指定バケットにローカルのファイル群をアップロードする
 # @details 
 # @warning 
 # @note 
@@ -43,6 +43,12 @@ if __name__ == '__main__':  # インポート時には動かない
     # ローカルの情報を取得する
     local_dic = {'Book\\test.txt': 100}
     ret = get_local_filelist(OUTPUT_FOLDER_PATH, TARGET_FILELIST_PATH, local_dic)
+    if not ret:
+        print(msg_error_exit)
+        sys.exit(ret)
+
+    # localよりbucketの日付が古いファイルをアップロードする
+    ret = bucket_upload(bucket_dic, local_dic, UPLOAD_FILELIST)
     if not ret:
         print(msg_error_exit)
         sys.exit(ret)

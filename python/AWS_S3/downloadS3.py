@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ##
-# @file listall.py
+# @file downloadS3.py
 # @version 1.0.0
 # @author Ryosuke Igarashi(HN:igapon)
 # @date 2021/05/02
-# @brief AWS S3の指定バケットのオブジェクト情報をファイルに書き込む
+# @brief AWS S3の指定バケットのファイル群をローカルにダウンロードする
 # @details 
 # @warning 
 # @note 
@@ -46,4 +46,7 @@ if __name__ == '__main__':  # インポート時には動かない
     if not ret:
         print(msg_error_exit)
         sys.exit(ret)
+
+    # 情報を比較してdownloadするファイルリストを作成する
+    # ファイルリストに従いdownloadする
     sys.exit(ret)
