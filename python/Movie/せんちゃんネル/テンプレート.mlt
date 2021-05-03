@@ -1,0 +1,234 @@
+<?xml version="1.0" standalone="no"?>
+<mlt LC_NUMERIC="C" version="7.0.0" title="Shotcut version UNSTABLE-21.02.09" producer="main_bin">
+  <profile description="automatic" width="1920" height="1080" progressive="1" sample_aspect_num="1" sample_aspect_den="1" display_aspect_num="1920" display_aspect_den="1080" frame_rate_num="18750" frame_rate_den="937" colorspace="601"/>
+  <producer id="producer1" in="00:00:00.000" out="00:00:18.140">
+    <property name="length">00:00:18.190</property>
+    <property name="eof">pause</property>
+    <property name="resource">C:\Git\igapon50\traning\python\Movie\せんちゃんネル/Clouds - 35573.mp4</property>
+    <property name="audio_index">1</property>
+    <property name="video_index">0</property>
+    <property name="mute_on_pause">0</property>
+    <property name="mlt_service">avformat-novalidate</property>
+    <property name="seekable">1</property>
+    <property name="aspect_ratio">1</property>
+    <property name="creation_time">2021-03-06T02:06:49</property>
+    <property name="global_feed">1</property>
+    <property name="xml">was here</property>
+    <property name="shotcut:hash">97e8d19532c15b7954398111c39c8a01</property>
+  </producer>
+  <producer id="producer2" in="00:00:00.000" out="00:00:59.968">
+    <property name="length">00:01:00.050</property>
+    <property name="eof">pause</property>
+    <property name="resource">C:\Git\igapon50\traning\python\Movie\せんちゃんネル/晴れの日.mp3</property>
+    <property name="audio_index">0</property>
+    <property name="video_index">-1</property>
+    <property name="mute_on_pause">0</property>
+    <property name="mlt_service">avformat-novalidate</property>
+    <property name="seekable">1</property>
+    <property name="global_feed">1</property>
+    <property name="xml">was here</property>
+    <property name="shotcut:hash">7dee00bd26e8d992717d3efd70fa3d2b</property>
+  </producer>
+  <playlist id="main_bin">
+    <property name="xml_retain">1</property>
+    <entry producer="producer1" in="00:00:00.000" out="00:00:18.140"/>
+    <entry producer="producer2" in="00:00:00.000" out="00:00:59.968"/>
+  </playlist>
+  <producer id="black" in="00:00:00.000" out="00:02:44.726">
+    <property name="length">00:02:44.776</property>
+    <property name="eof">pause</property>
+    <property name="resource">0</property>
+    <property name="aspect_ratio">1</property>
+    <property name="mlt_service">color</property>
+    <property name="mlt_image_format">rgb24a</property>
+    <property name="set.test_audio">0</property>
+  </producer>
+  <playlist id="background">
+    <entry producer="black" in="00:00:00.000" out="00:02:44.726"/>
+  </playlist>
+  <producer id="producer6" in="00:00:00.000" out="00:00:18.140">
+    <property name="length">00:00:18.190</property>
+    <property name="eof">pause</property>
+    <property name="resource">C:\Git\igapon50\traning\python\Movie\せんちゃんネル/Clouds - 35573.mp4</property>
+    <property name="audio_index">1</property>
+    <property name="video_index">0</property>
+    <property name="mute_on_pause">0</property>
+    <property name="mlt_service">avformat-novalidate</property>
+    <property name="seekable">1</property>
+    <property name="aspect_ratio">1</property>
+    <property name="creation_time">2021-03-06T02:06:49</property>
+    <property name="global_feed">1</property>
+    <property name="xml">was here</property>
+    <property name="shotcut:hash">97e8d19532c15b7954398111c39c8a01</property>
+    <property name="shotcut:caption">Clouds - 35573.mp4</property>
+    <filter id="filter0" out="00:00:09.745">
+      <property name="argument">せんちゃんネル</property>
+      <property name="geometry">0 0 1920 1080 1</property>
+      <property name="family">Verdana</property>
+      <property name="size">1080</property>
+      <property name="weight">500</property>
+      <property name="style">normal</property>
+      <property name="fgcolour">#ffffffff</property>
+      <property name="bgcolour">#00000000</property>
+      <property name="olcolour">#aa000000</property>
+      <property name="pad">0</property>
+      <property name="halign">center</property>
+      <property name="valign">bottom</property>
+      <property name="outline">3</property>
+      <property name="mlt_service">dynamictext</property>
+      <property name="shotcut:filter">dynamicText</property>
+      <property name="shotcut:usePointSize">0</property>
+      <property name="shotcut:animIn">00:00:00.000</property>
+      <property name="shotcut:animOut">00:00:00.000</property>
+    </filter>
+  </producer>
+  <producer id="producer11" in="00:00:00.000" out="00:00:18.140">
+    <property name="length">00:00:18.190</property>
+    <property name="eof">pause</property>
+    <property name="resource">C:\Git\igapon50\traning\python\Movie\せんちゃんネル/Clouds - 35573.mp4</property>
+    <property name="audio_index">1</property>
+    <property name="video_index">0</property>
+    <property name="mute_on_pause">0</property>
+    <property name="mlt_service">avformat-novalidate</property>
+    <property name="seekable">1</property>
+    <property name="aspect_ratio">1</property>
+    <property name="creation_time">2021-03-06T02:06:49</property>
+    <property name="global_feed">1</property>
+    <property name="xml">was here</property>
+    <property name="shotcut:hash">97e8d19532c15b7954398111c39c8a01</property>
+    <property name="shotcut:caption">Clouds - 35573.mp4</property>
+    <filter id="filter4" out="00:00:10.894">
+      <property name="argument">またみてね♪
+
+せんちゃんネル</property>
+      <property name="geometry">0 0 1920 1080 1</property>
+      <property name="family">Verdana</property>
+      <property name="size">360</property>
+      <property name="weight">500</property>
+      <property name="style">normal</property>
+      <property name="fgcolour">#ffffffff</property>
+      <property name="bgcolour">#00000000</property>
+      <property name="olcolour">#aa000000</property>
+      <property name="pad">0</property>
+      <property name="halign">center</property>
+      <property name="valign">bottom</property>
+      <property name="outline">3</property>
+      <property name="mlt_service">dynamictext</property>
+      <property name="shotcut:filter">dynamicText</property>
+      <property name="shotcut:usePointSize">0</property>
+      <property name="shotcut:animIn">00:00:00.000</property>
+      <property name="shotcut:animOut">00:00:00.000</property>
+    </filter>
+  </producer>
+  <playlist id="playlist0">
+    <property name="shotcut:video">1</property>
+    <property name="shotcut:name">V1</property>
+    <entry producer="producer6" in="00:00:00.000" out="00:00:09.045"/>
+    <blank length="00:02:25.237"/>
+    <entry producer="producer11" in="00:00:00.500" out="00:00:10.894"/>
+  </playlist>
+  <producer id="producer12" in="00:00:00.000" out="00:00:59.968">
+    <property name="length">00:01:00.050</property>
+    <property name="eof">pause</property>
+    <property name="resource">C:\Git\igapon50\traning\python\Movie\せんちゃんネル/晴れの日.mp3</property>
+    <property name="audio_index">0</property>
+    <property name="video_index">-1</property>
+    <property name="mute_on_pause">0</property>
+    <property name="mlt_service">avformat-novalidate</property>
+    <property name="seekable">1</property>
+    <property name="global_feed">1</property>
+    <property name="xml">was here</property>
+    <property name="shotcut:hash">7dee00bd26e8d992717d3efd70fa3d2b</property>
+    <property name="shotcut:caption">晴れの日.mp3</property>
+    <filter id="filter5" out="00:00:59.968">
+      <property name="window">75</property>
+      <property name="max_gain">20dB</property>
+      <property name="level">-10</property>
+      <property name="mlt_service">volume</property>
+      <property name="shotcut:animIn">00:00:00.000</property>
+      <property name="shotcut:animOut">00:00:00.000</property>
+    </filter>
+  </producer>
+  <producer id="producer13" in="00:00:00.000" out="00:00:59.968">
+    <property name="length">00:01:00.050</property>
+    <property name="eof">pause</property>
+    <property name="resource">C:\Git\igapon50\traning\python\Movie\せんちゃんネル/晴れの日.mp3</property>
+    <property name="audio_index">0</property>
+    <property name="video_index">-1</property>
+    <property name="mute_on_pause">0</property>
+    <property name="mlt_service">avformat-novalidate</property>
+    <property name="seekable">1</property>
+    <property name="global_feed">1</property>
+    <property name="xml">was here</property>
+    <property name="shotcut:hash">7dee00bd26e8d992717d3efd70fa3d2b</property>
+    <property name="shotcut:caption">晴れの日.mp3</property>
+    <filter id="filter6" out="00:00:59.968">
+      <property name="window">75</property>
+      <property name="max_gain">20dB</property>
+      <property name="level">-10</property>
+      <property name="mlt_service">volume</property>
+      <property name="shotcut:animIn">00:00:00.000</property>
+      <property name="shotcut:animOut">00:00:00.000</property>
+    </filter>
+  </producer>
+  <producer id="producer14" in="00:00:00.000" out="00:00:59.968">
+    <property name="length">00:01:00.050</property>
+    <property name="eof">pause</property>
+    <property name="resource">C:\Git\igapon50\traning\python\Movie\せんちゃんネル/晴れの日.mp3</property>
+    <property name="audio_index">0</property>
+    <property name="video_index">-1</property>
+    <property name="mute_on_pause">0</property>
+    <property name="mlt_service">avformat-novalidate</property>
+    <property name="seekable">1</property>
+    <property name="global_feed">1</property>
+    <property name="xml">was here</property>
+    <property name="shotcut:hash">7dee00bd26e8d992717d3efd70fa3d2b</property>
+    <property name="shotcut:caption">晴れの日.mp3</property>
+    <filter id="filter7" out="00:00:44.676">
+      <property name="window">75</property>
+      <property name="max_gain">20dB</property>
+      <property name="level">-10</property>
+      <property name="mlt_service">volume</property>
+      <property name="shotcut:animIn">00:00:00.000</property>
+      <property name="shotcut:animOut">00:00:00.000</property>
+    </filter>
+  </producer>
+  <playlist id="playlist1">
+    <property name="shotcut:audio">1</property>
+    <property name="shotcut:name">A1</property>
+    <entry producer="producer12" in="00:00:00.000" out="00:00:59.968"/>
+    <entry producer="producer13" in="00:00:00.000" out="00:00:59.968"/>
+    <entry producer="producer14" in="00:00:00.000" out="00:00:44.676"/>
+  </playlist>
+  <tractor id="tractor6" title="Shotcut version UNSTABLE-21.02.09" global_feed="1" in="00:00:00.000" out="00:02:44.726">
+    <property name="shotcut">1</property>
+    <property name="shotcut:projectAudioChannels">2</property>
+    <property name="shotcut:projectFolder">1</property>
+    <property name="shotcut:scaleFactor">0.814792</property>
+    <track producer="background"/>
+    <track producer="playlist0"/>
+    <track producer="playlist1" hide="video"/>
+    <transition id="transition12">
+      <property name="a_track">0</property>
+      <property name="b_track">1</property>
+      <property name="mlt_service">mix</property>
+      <property name="always_active">1</property>
+      <property name="sum">1</property>
+    </transition>
+    <transition id="transition13">
+      <property name="a_track">0</property>
+      <property name="b_track">1</property>
+      <property name="version">0.9</property>
+      <property name="mlt_service">frei0r.cairoblend</property>
+      <property name="threads">0</property>
+      <property name="disable">1</property>
+    </transition>
+    <transition id="transition14">
+      <property name="a_track">0</property>
+      <property name="b_track">2</property>
+      <property name="mlt_service">mix</property>
+      <property name="always_active">1</property>
+      <property name="sum">1</property>
+    </transition>
+  </tractor>
+</mlt>
