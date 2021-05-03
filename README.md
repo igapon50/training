@@ -34,7 +34,7 @@
 - Windowsキーを押す
 - 検索ボックスに「cmd」と入力
 - Ctrl + Shift + Enterを押し(管理者として実行)、以下のコマンドを実行する
-```commandline:title
+```commandline:cmd.exe（管理者として実行）
 choco install pycharm-community
 ```
 - 日本語化のために[Pleiadesプラグインをダウンロード](http://mergedoc.osdn.jp/)
@@ -50,7 +50,7 @@ choco install pycharm-community
 - Windowsキーを押す
 - 検索ボックスに「cmd」と入力
 - Ctrl + Shift + Enterを押し(管理者として実行)、以下のコマンドを実行する
-```commandline:title
+```commandline:cmd.exe（管理者として実行）
 choco install doxygen.install
 ```
 
@@ -62,12 +62,12 @@ choco install doxygen.install
 - Windowsキーを押す
 - 検索ボックスに「cmd」と入力
 - Ctrl + Shift + Enterを押し(管理者として実行)、以下のコマンドを実行する
-```commandline
+```commandline:cmd.exe（管理者として実行）
 choco install plantuml
 choco install graphviz
 ```
 - 以下のBATファイルで、拡張子puのファイルからUML図を作成する
-```commandline:CreateUML.bat
+```commandline:cmd.exe（管理者として実行）
 @echo off
 if "%1"=="" (
 java -jar C:\ProgramData\chocolatey\lib\plantuml\tools\plantuml.jar C:\ProgramData\chocolatey\bin\dot.exe *.pu
@@ -83,7 +83,7 @@ java -jar C:\ProgramData\chocolatey\lib\plantuml\tools\plantuml.jar C:\ProgramDa
 - Windowsキーを押す
 - 検索ボックスに「cmd」と入力
 - Ctrl + Shift + Enterを押し(管理者として実行)、以下のコマンドを実行する
-```commandline
+```commandline:cmd.exe（管理者として実行）
 pip install chromedriver-binary
 pip install selenium
 pip install webdriver-manager
@@ -98,7 +98,7 @@ AWS S3バケットへのデータバックアップとリストアする
 - Windowsキーを押す
 - 検索ボックスに「cmd」と入力
 - Ctrl + Shift + Enterを押し(管理者として実行)、以下のコマンドを実行する
-```commandline:title
+```commandline:cmd.exe（管理者として実行）
 python.exe -m pip install --upgrade pip
 pip install boto3
 pip install awscli
@@ -107,6 +107,19 @@ pip install awscli
 ### 参考(AWS_S3)
 - [Windows のデータを Amazon S3 へバックアップする](https://codebookshelf.com/2017/06/windows-%E3%81%AE%E3%83%87%E3%83%BC%E3%82%BF%E3%82%92-amazon-s3-%E3%81%B8%E3%83%90%E3%83%83%E3%82%AF%E3%82%A2%E3%83%83%E3%83%97%E3%81%99%E3%82%8B/)
 
+## Python/Movie
+- Windowsキーを押す
+- 検索ボックスに「cmd」と入力
+- Ctrl + Shift + Enterを押し(管理者として実行)、以下のコマンドを実行する
+```commandline:cmd.exe（管理者として実行）
+choco install ffmpeg
+pip install soundfile
+pip install numpy
+```
+
+### 参考
+- [Pythonでのwavファイル操作](https://qiita.com/Dsuke-K/items/2ad4945a81644db1e9ff)
+- [PythonでYouTube用動画のカットとテロップ挿入を自動化してみた！](https://kajimublog.com/python-video-cut/)
 
 # python/Web_scraping
 スクレイピングで、画像URLリストを作り、その画像をダウンロードして、ファイル名をナンバリングして、zipファイルにアーカイブする。
@@ -150,3 +163,11 @@ aws s3 syncコマンドは、とりあえずおいといて、AWS S3のバケッ
 - [Boto3 で S3 のオブジェクトを操作する（高レベルAPIと低レベルAPI）](https://qiita.com/sokutou-metsu/items/5ba7531117224ee5e8af)
 - [Boto3でS3のリスト出力をするときは、list_objects_v2ではなくBucket().objects.filterを使おう](https://qiita.com/elyunim26/items/a513226b76b3cb8928c2)
 - [AWS SDK for Python (Boto3) で S3 のオブジェクトの所有者情報を取得する際に気をつけること](https://blog.serverworks.co.jp/boto3-python-s3-object)
+
+
+# python/Movie
+動画から無音部分をカットするために、有音部分を切り出す
+- movieCutter：指定したmovファイルから、有音部分のmovを切り出す
+
+### 参考
+- [PythonでYouTube用動画のカットとテロップ挿入を自動化してみた！](https://kajimublog.com/python-video-cut/)
