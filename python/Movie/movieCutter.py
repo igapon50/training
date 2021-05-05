@@ -74,28 +74,6 @@ if __name__ == '__main__':  # インポート時には動かない
         silences.append({"from": entered, "to": len(list_overThreshold), "suffix": "cut"})
 
     cut_blocks = []
-    # # 瞬間的に音がなっている箇所はカットする
-    # min_keep_duration = 0.2
-    # cut_blocks = []
-    # blocks = silences
-    # while 1:
-    #     if len(blocks) == 1:
-    #         cut_blocks.append(blocks[0])
-    #         break
-    #
-    #     block = blocks[0]
-    #     next_blocks = [block]
-    #     for i, list_silent in enumerate(blocks):
-    #         if i == 0:
-    #             continue
-    #         interval = (list_silent["from"] - block["to"]) / frequency
-    #         if interval < min_keep_duration:
-    #             block["to"] = list_silent["to"]
-    #             next_blocks.append(list_silent)
-    #
-    #     cut_blocks.append(block)
-    #     blocks = list(filter(lambda b: b not in next_blocks, blocks))
-
     list_block = silences  # 無音部分のリスト：[{"from": 始点, "to": 終点}, {"from": ...}, ...]
     cut_blocks = [list_block[0]]
     for i, v in enumerate(list_block):
@@ -120,27 +98,8 @@ if __name__ == '__main__':  # インポート時には動かない
         if i == len(cut_blocks) - 1 and block["to"] < len(data):
             keep_blocks.append({"from": block["to"], "to": len(data), "suffix": "keep"})
 
-    padding_time = 0.2
-    # # 残す箇所を元の動画から切り出す
-    # mov_file = os.path.join("/gdrive", "My Drive", "audio-cut-exp", "navi_a.mov")
-    # out_dir = os.path.join("/gdrive", "My Drive", "audio-cut-exp", "{}".format(int(time.time())))
-    # os.mkdir(out_dir)
-    # for i, block in enumerate(all_blocks):
-    #     fr = block["from"] / frequency
-    #     to = block["to"] / frequency
-    #     duration = to - fr
-    #     out_path = os.path.join(out_dir, "{:2d}_{}.mov".format(i, block["suffix"]))
-    #     !ffmpeg -ss {fr} -i "{mov_file}" -t {duration} "{out_path}"
-    #
-    # # 残す箇所の前後に余白を加えて「間」を作る
-    # padding_time = 0.2
-    # fr = max(block["from"] / frequency - padding_time, 0)
-    # to = min(block["to"] / frequency + padding_time, len(data) / frequency)
-    # duration = to - fr
-    # out_path = os.path.join(out_dir, "{:2d}_{}.mov".format(i, block["suffix"]))
-    # !ffmpeg -ss {fr} -i "{mov_file}" -t {duration} "{out_path}"
-
     # 出力用テキストファイルパス
+    padding_time = 0.2  # [秒]カットしない無音部分の長さ
     list_files_path = []
 
     # list_keep 残す動画部分のリスト：[{"from": 始点, "to": 終点}, {"from": ...}, ...]
@@ -153,5 +112,3 @@ if __name__ == '__main__':  # インポート時には動かない
         # 動画出力
         command_output = ["ffmpeg", "-i", in_path, "-ss", str(fr), "-t", str(duration), out_path]
         subprocess.run(command_output, shell=True, stdin=subprocess.DEVNULL)
-
-    # os.system('PAUSE')
