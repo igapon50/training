@@ -1,0 +1,105 @@
+@startuml
+skinparam classAttributeIconSize 0
+class TobaRichMenus
+{
+	+ sheet:sheet（スプレッドシートTOBARICHMENUS_SPREADSHEET_IDのシート名TOBARICHMENUS_SHEET_NAME）
+	+ header:TobaRichMenu（スプレッドシートのヘッダー）
+	+ keys:string[]（コマンド配列）
+	+ menus:辞書型（コマンドと応答文）
+	+ getReturnText(richMenu):string（リッチメニューコマンドを引数に応答文を取得する）
+	+ setReturnText(rechMenu, returnText):bool（リッチメニューコマンドに応答文を登録する）
+	+ updateSheet():void（リッチメニューの応答文をスプレッドシートに反映する）
+}
+note Top of TobaRichMenus:リッチメニューのキャッシュ用スプレッドシートクラス（リッチメニューの全コマンドとその応答文を保持する）
+
+class TobaRichMenu
+{
+	+ richMenu: string（リッチメニュータイトル）
+	+ returnText: string（応答文タイトル）
+}
+note bottom of TobaRichMenu:リッチメニューのキャッシュ用スプレッドシートのヘッダーを保持するクラス
+
+TobaRichMenus "1" *-- "*" TobaRichMenu
+
+class Forcasts
+{
+	+ sheet:sheet（スプレッドシートFORECAST_SPREADSHEET_IDのシート名FORECAST_SHEET_NAME）
+	+ forcasts:Forcast[]（6時間予報の配列）
+	+ getClosestDayForcast(date):string（指定日予報の取得）
+}
+note Top of Forcasts:天気予報用スプレッドシートの日時予報を保持するクラス
+
+class Forcast
+{
+	+ time:date（日時）
+	+ weather:string（天気）
+	+ prob:string（湿度）
+	+ temp:string（気温）
+	+ windBlow:string（風向）
+	+ windSpeed:string（風力m/s）
+}
+note bottom of Forcast:天気予報用スプレッドシートの6時間予報を保持するクラス
+
+Forcasts "1" *-- "*" Forcast
+
+class TobaDays
+{
+	+ sheet:sheet（スプレッドシートSCHEDULE_SPREADSHEET_IDのシート名SCHEDULE_SHEET_NAME）
+	+ header:TobaDay（日程情報のヘッダー）
+	+ days:TobaDay[]（日程情報の配列）
+	+ getNextLineBotDay(void):TobaDay（今日以降で最初の有効イベントなTobaDayインスタンスを返す）
+	+ getNamesString(string[]):string[]（メンバーリストから、名前文字列を作る）
+	+ getLineBotList(void):int[]（有効イベントの行番号配列）
+	+ getLineBotInformation(void):string[]（有効イベントの情報）
+}
+note Top of TobaDays:日程情報用スプレッドシートの全体を保持するクラス
+
+class TobaDay
+{
+	+ day:date(日時)
+	+ week:string（曜日）
+	+ eventName:string（イベント名）
+	+ sum:int（参加合計人数）
+	+ lineBotCtrl:string（有効フラグ）
+	+ member[]:辞書型（メンバー名を引数に出欠）
+	+ getParticipantMemberIndexList(void):string[]（参加メンバーリスト）
+	+ getNoAnswerMemberIndexList(void):string[]（未回答メンバーリスト）
+	
+}
+note bottom of TobaDay:日程情報用スプレッドシートの一日程分の情報を保持するクラス
+
+TobaDays "1" *-- "*" TobaDay
+
+class TobaMembers
+{
+	+ sheet:sheet（スプレッドシートMEMBER_SPREADSHEET_IDのシート名MEMBER_SHEET_NAME）
+	+ header:TobaMember（名簿情報のヘッダー）
+	+ members:TobaMember[]（名簿情報の配列）
+	+ getLineBotTransferEMailList(void):string[]（転送Emailアドレス配列を取得する）
+}
+note Top of TobaMembers:名簿用スプレッドシートの全体を保持するクラス
+
+class TobaMember
+{
+	+ name:string（氏名）
+	+ birthday:date（誕生日）
+	+ age:int（年齢）
+	+ licenseDeadline:date（免許期限）
+	+ smartPhoneEMail:string（スマホメールアドレス）
+	+ homeEMail:string（家メールアドレス）
+	+ officeEMail:string（会社メールアドレス）
+	+ homePhoneNumber:string（電話番号）
+	+ officePhoneNumber:string（会社電話番号）
+	+ officeName:string（会社名）
+	+ officePostalCode:string（会社郵便番号）
+	+ officeAddress:string（会社住所）
+	+ homePostalCode:string（郵便番号）
+	+ homeAddress:string（住所）
+	+ bloodType:string（血液型）
+	+ lineBotTransferEMail:string（転送Emailアドレス）
+}
+note bottom of TobaMember:名簿用スプレッドシートの一人分の情報を保持するクラス
+
+TobaMembers "1" *-- "*" TobaMember
+
+@enduml

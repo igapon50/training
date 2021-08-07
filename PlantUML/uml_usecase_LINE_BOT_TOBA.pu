@@ -1,0 +1,49 @@
+@startuml
+left to right direction
+"管理者" as Admin
+"LINEボット" as Bot
+"GASトリガー" as Trigger
+"チームメンバー" as Use
+package 名簿スプレッドシート {
+  usecase "自分の名簿更新" as UC1
+  usecase "本年度免許更新のメンバーを調べて連絡" as UC2
+  usecase "転送メールアドレスの取得" as UC3
+  usecase "出艇申告情報の取得" as UC4
+}
+package 日程情報スプレッドシート {
+  usecase "日程情報の登録" as UC11
+  usecase "出欠記入" as UC12
+  usecase "日程情報の取得" as UC13
+  usecase "次回日程の取得" as UC14
+  usecase "次回日程の出席者取得" as UC15
+  usecase "次回日程の未記入者取得" as UC16
+}
+package 天気予報スプレッドシート {
+  usecase "指定日の天気予報取得" as UC21
+  usecase "tenki.jpから10日間天気予報を取得して、スクレイピングして、スプレッドシートを更新" as UC22
+}
+package リッチメニュー応答文のキャッシュ用スプレッドシート {
+  usecase "取得したリッチメニュー応答文で、スプレッドシートを更新" as UC31
+  usecase "日程情報の取得" as UC32
+  usecase "次回日程の天気予報を取得" as UC33
+  usecase "次回日程の出席者取得" as UC34
+  usecase "次回日程の未記入者取得" as UC35
+}
+Admin --> UC2
+Bot --> UC3
+Use --> UC1
+Admin --> UC4
+Admin --> UC11
+Use --> UC12
+Trigger --> UC13
+Trigger --> UC14
+Trigger --> UC15
+Trigger --> UC16
+Trigger --> UC21
+Trigger --> UC22
+Trigger --> UC31
+Bot --> UC32
+Bot --> UC33
+Bot --> UC34
+Bot --> UC35
+@enduml
