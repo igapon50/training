@@ -1,25 +1,25 @@
 @startuml
 skinparam classAttributeIconSize 0
-class TobaRichMenus
+class RichMenus
 {
-	+ sheet:sheet（スプレッドシートTOBARICHMENUS_SPREADSHEET_IDのシート名TOBARICHMENUS_SHEET_NAME）
-	+ header:TobaRichMenu（スプレッドシートのヘッダー）
+	+ sheet:sheet（スプレッドシートRICHMENUS_SPREADSHEET_IDのシート名RICHMENUS_SHEET_NAME）
+	+ header:RichMenu（スプレッドシートのヘッダー）
 	+ keys:string[]（コマンド配列）
 	+ menus:辞書型（コマンドと応答文）
 	+ getReturnText(richMenu):string（リッチメニューコマンドを引数に応答文を取得する）
 	+ setReturnText(rechMenu, returnText):bool（リッチメニューコマンドに応答文を登録する）
 	+ updateSheet():void（リッチメニューの応答文をスプレッドシートに反映する）
 }
-note Top of TobaRichMenus:リッチメニューのキャッシュ用スプレッドシートクラス（リッチメニューの全コマンドとその応答文を保持する）
+note Top of RichMenus:リッチメニューのキャッシュ用スプレッドシートクラス（リッチメニューの全コマンドとその応答文を保持する）
 
-class TobaRichMenu
+class RichMenu
 {
 	+ richMenu: string（リッチメニュータイトル）
 	+ returnText: string（応答文タイトル）
 }
-note bottom of TobaRichMenu:リッチメニューのキャッシュ用スプレッドシートのヘッダーを保持するクラス
+note bottom of RichMenu:リッチメニューのキャッシュ用スプレッドシートのヘッダーを保持するクラス
 
-TobaRichMenus "1" *-- "*" TobaRichMenu
+RichMenus "1" *-- "*" RichMenu
 
 class Forcasts
 {
@@ -42,19 +42,19 @@ note bottom of Forcast:天気予報用スプレッドシートの6時間予報を保持するクラス
 
 Forcasts "1" *-- "*" Forcast
 
-class TobaDays
+class Schedules
 {
 	+ sheet:sheet（スプレッドシートSCHEDULE_SPREADSHEET_IDのシート名SCHEDULE_SHEET_NAME）
-	+ header:TobaDay（日程情報のヘッダー）
-	+ days:TobaDay[]（日程情報の配列）
-	+ getNextLineBotDay(void):TobaDay（今日以降で最初の有効イベントなTobaDayインスタンスを返す）
+	+ header:Schedule（日程情報のヘッダー）
+	+ days:Schedule[]（日程情報の配列）
+	+ getNextLineBotDay(void):Schedule（今日以降で最初の有効イベントなScheduleインスタンスを返す）
 	+ getNamesString(string[]):string[]（メンバーリストから、名前文字列を作る）
 	+ getLineBotList(void):int[]（有効イベントの行番号配列）
 	+ getLineBotInformation(void):string[]（有効イベントの情報）
 }
-note Top of TobaDays:日程情報用スプレッドシートの全体を保持するクラス
+note Top of Schedules:日程情報用スプレッドシートの全体を保持するクラス
 
-class TobaDay
+class Schedule
 {
 	+ day:date(日時)
 	+ week:string（曜日）
@@ -66,20 +66,20 @@ class TobaDay
 	+ getNoAnswerMemberIndexList(void):string[]（未回答メンバーリスト）
 	
 }
-note bottom of TobaDay:日程情報用スプレッドシートの一日程分の情報を保持するクラス
+note bottom of Schedule:日程情報用スプレッドシートの一日程分の情報を保持するクラス
 
-TobaDays "1" *-- "*" TobaDay
+Schedules "1" *-- "*" Schedule
 
-class TobaMembers
+class Members
 {
 	+ sheet:sheet（スプレッドシートMEMBER_SPREADSHEET_IDのシート名MEMBER_SHEET_NAME）
-	+ header:TobaMember（名簿情報のヘッダー）
-	+ members:TobaMember[]（名簿情報の配列）
+	+ header:Member（名簿情報のヘッダー）
+	+ members:Member[]（名簿情報の配列）
 	+ getLineBotTransferEMailList(void):string[]（転送Emailアドレス配列を取得する）
 }
-note Top of TobaMembers:名簿用スプレッドシートの全体を保持するクラス
+note Top of Members:名簿用スプレッドシートの全体を保持するクラス
 
-class TobaMember
+class Member
 {
 	+ name:string（氏名）
 	+ birthday:date（誕生日）
@@ -98,8 +98,8 @@ class TobaMember
 	+ bloodType:string（血液型）
 	+ lineBotTransferEMail:string（転送Emailアドレス）
 }
-note bottom of TobaMember:名簿用スプレッドシートの一人分の情報を保持するクラス
+note bottom of Member:名簿用スプレッドシートの一人分の情報を保持するクラス
 
-TobaMembers "1" *-- "*" TobaMember
+Members "1" *-- "*" Member
 
 @enduml

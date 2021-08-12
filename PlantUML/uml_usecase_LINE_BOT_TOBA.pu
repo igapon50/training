@@ -23,7 +23,7 @@ package 天気予報スプレッドシート {
   usecase "tenki.jpから10日間天気予報を取得して、スクレイピングして、スプレッドシートを更新" as UC22
 }
 package リッチメニュー応答文のキャッシュ用スプレッドシート {
-  usecase "取得したリッチメニュー応答文で、スプレッドシートを更新" as UC31
+  usecase "新しいリッチメニュー応答文で、スプレッドシートを更新" as UC31
   usecase "日程情報の取得" as UC32
   usecase "次回日程の天気予報を取得" as UC33
   usecase "次回日程の出席者取得" as UC34
