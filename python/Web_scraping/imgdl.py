@@ -35,7 +35,7 @@ if __name__ == '__main__':  # インポート時には動かない
     else:
         print('引数が不正です。')
         print(msg_error_exit)
-        sys.exit(ret)
+        sys.exit()
     print(target_url)
 
     # ファイルのURLリストを作成
