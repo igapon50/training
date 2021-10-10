@@ -43,7 +43,6 @@ from webdriver_manager.firefox import GeckoDriverManager
 # local source
 from const import *
 
-
 ##
 # @brief (Selenium_FireFox版)指定したURLからタイトルと画像URLリストを読み込みクリップボードとファイルに書き込む
 # @param base_url IN 対象のURL
@@ -51,7 +50,7 @@ from const import *
 # @param title OUT タイトルリストを返す
 # @param file_urllist OUT 画像URLリストを返す
 # @return True 成功 / False 失敗(引数チェックエラーで中断)
-# @details title_css_selectで指定した値をタイトル扱いする。img_css_selectで指定したタグのimg_attrで指定した属性を画像URL扱いする。title_css_selectとimg_css_selectは、CSSセレクタで指定する。
+# @details img_css_selectで指定したタグのimg_attrで指定した属性を画像URL扱いする。img_css_selectは、CSSセレクタで指定する。
 # @warning
 # @note
 def HTML2imglist_SeleniumFireFox(base_url, imglist_filepath, title, file_urllist):
@@ -110,7 +109,7 @@ def HTML2imglist_SeleniumFireFox(base_url, imglist_filepath, title, file_urllist
 # @param title OUT タイトルリストを返す
 # @param file_urllist OUT 画像URLリストを返す
 # @return True 成功 / False 失敗(引数チェックエラーで中断)
-# @details title_css_selectで指定した値をタイトル扱いする。img_css_selectで指定したタグのimg_attrで指定した属性を画像URL扱いする。title_css_selectとimg_css_selectは、CSSセレクタで指定する。
+# @details img_css_selectで指定したタグのimg_attrで指定した属性を画像URL扱いする。img_css_selectは、CSSセレクタで指定する。
 # @warning 
 # @note 
 def HTML2imglist(base_url, imglist_filepath, title, file_urllist):
