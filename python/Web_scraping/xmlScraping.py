@@ -100,8 +100,6 @@ class XmlScraping:
                 self.image_attr = image_attr
             self.request()
 
-            self.css_image_selector = 'img.vimg[src*="jpg"]'
-
     # 値オブジェクトを取得する
     def get_value_objects(self
                           ) -> 'XmlScrapingValue 値オブジェクト':
@@ -114,7 +112,6 @@ class XmlScraping:
         http = urllib3.PoolManager(retries=retries)
         res = http.request('GET', self.target_url, timeout=10, headers=HEADERS_DIC)
         soup = bs4.BeautifulSoup(res.data, 'html.parser')
-        soup
         title = str(soup.title.string)
         image_list: list = []
         for img in soup.select(self.css_image_selector):
@@ -138,9 +135,9 @@ class XmlScraping:
         if self.xmlScrapingValue is None:
             return False
         with open(save_path, 'w', encoding='utf-8') as work_file:
-            buff = self.target_url + '\n'  # サイトURL追加
-            buff += self.css_image_selector + '\n'  # cssセレクタ追加
-            buff += self.image_attr + '\n'  # 属性追加
+            buff = self.xmlScrapingValue.target_url + '\n'  # サイトURL追加
+            buff += self.xmlScrapingValue.css_image_selector + '\n'  # cssセレクタ追加
+            buff += self.xmlScrapingValue.image_attr + '\n'  # 属性追加
             buff += self.xmlScrapingValue.title + '\n'  # タイトル追加
             for absolute_path in self.xmlScrapingValue.image_list:
                 buff += absolute_path + '\n'  # 画像URL追加
@@ -191,6 +188,20 @@ class XmlScraping:
         with open(load_path, 'rb') as work_file:
             self.xmlScrapingValue = pickle.load(work_file)
             return True
+
+    # xmlScrapingをクリップボードにコピー
+    def clip_copy(self
+                  ) -> 'bool 成功/失敗=True/False':
+        if self.xmlScrapingValue is None:
+            return False
+        buff = self.xmlScrapingValue.target_url + '\n'  # サイトURL追加
+        buff += self.xmlScrapingValue.css_image_selector + '\n'  # cssセレクタ追加
+        buff += self.xmlScrapingValue.image_attr + '\n'  # 属性追加
+        buff += self.xmlScrapingValue.title + '\n'  # タイトル追加
+        for absolute_path in self.xmlScrapingValue.image_list:
+            buff += absolute_path + '\n'  # 画像URL追加
+        pyperclip.copy(buff)  # クリップボードへのコピー
+        return True
 
 
 # 検証コード
