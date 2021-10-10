@@ -4,7 +4,7 @@
 # @file func.py
 # @version 1.0.0
 # @author Ryosuke Igarashi(HN:igapon)
-# @date 2021/04/26
+# @date 2021/10/10
 # @brief 関数群
 # @details 
 # @warning 
@@ -99,112 +99,6 @@ def HTML2imglist_SeleniumFireFox(base_url, imglist_filepath, title, file_urllist
             pyperclip.copy(buff)  # クリップボードへのコピー
         driver.quit()  # ドライバを終了し、関連するすべてのウィンドウを閉じます。
 #        driver.close()  # ブラウザを終了する(全てのウィンドウを閉じる）
-    return True
-
-
-##
-# @brief 指定したURLからタイトルと画像URLリストを読み込みクリップボードとファイルに書き込む
-# @param base_url IN 対象のURL
-# @param imglist_filepath IN URLリストを保存するファイルパス
-# @param title OUT タイトルリストを返す
-# @param file_urllist OUT 画像URLリストを返す
-# @return True 成功 / False 失敗(引数チェックエラーで中断)
-# @details img_css_selectで指定したタグのimg_attrで指定した属性を画像URL扱いする。img_css_selectは、CSSセレクタで指定する。
-# @warning 
-# @note 
-def HTML2imglist(base_url, imglist_filepath, title, file_urllist):
-    # 引数チェック
-    if 0 == len(base_url):
-        print(sys._getframe().f_code.co_name + '引数base_urlが空です。')
-        return False
-    if not isinstance(file_urllist, list):
-        print(sys._getframe().f_code.co_name + '引数file_urllistがlistではないです。')
-        return False
-
-    retries = Retry(connect=5, read=2, redirect=5)
-    http = urllib3.PoolManager(retries=retries)
-    res = http.request('GET', base_url, timeout=10, headers=HEADERS_DIC)
-    soup = bs4.BeautifulSoup(res.data, 'html.parser')
-    title_tag = soup.title
-    title.append(title_tag.string)
-    print(title_tag.string)
-    with open(imglist_filepath, 'w', encoding='utf-8') as imglist_file:
-        buff = str(title[0]) + '\n'  # クリップボード用変数にタイトル追加
-        for img in soup.select(img_css_select):
-            absolute_path = str(img[img_attr])
-            parse = urlparse(absolute_path)
-            if 0 == len(parse.scheme):  # 絶対パスかチェックする
-                absolute_path = urljoin(base_url, absolute_path)
-            file_urllist.append(absolute_path)
-            print(absolute_path)
-            buff += absolute_path + '\n'  # クリップボード用変数にurl追加
-        imglist_file.write(buff)  # ファイルへの保存
-        pyperclip.copy(buff)  # クリップボードへのコピー
-    return True
-
-
-## 
-# @brief 指定したファイルからタイトルと画像URLリストを読み込み、クリップボードに書き込む
-# @param imglist_filepath IN 対象のファイルパス
-# @return True 成功 / False 失敗(エラーで中断)
-# @details 
-# @warning 
-# @note 
-def imglist2clip(imglist_filepath):
-    # 引数チェック
-    if 0 == len(imglist_filepath):
-        print(sys._getframe().f_code.co_name + '引数imglist_filepathが空です。')
-        return False
-    if not os.path.isfile(imglist_filepath):
-        print(sys._getframe().f_code.co_name + '引数imglist_filepath=[' + imglist_filepath + ']のファイルが存在しません。')
-        return False
-
-    with open(imglist_filepath, 'r', encoding='utf-8') as imglist_file:
-        line = imglist_file.readline()
-        buff = line.rstrip('\n') + '\n'  # クリップボード用変数にタイトル追加
-        line = imglist_file.readline()
-        while line:
-            absolute_path = str(line.rstrip('\n'))
-            parse = urlparse(absolute_path)
-            if 0 == len(parse.scheme):  # 絶対パスかチェックする
-                return False
-            print(absolute_path)
-            buff += absolute_path + '\n'  # クリップボード用変数にurl追加
-            line = imglist_file.readline()
-        pyperclip.copy(buff)  # クリップボードへのコピー
-    return True
-
-
-## 
-# @brief 指定したファイルからタイトルと画像URLリストを読み込む
-# @param imglist_filepath IN 対象のファイルパス
-# @param title OUT タイトルリストを返す
-# @param file_urllist OUT 画像ファイル名リストを返す
-# @return True 成功 / False 失敗(引数チェックエラーで中断)
-# @details 
-# @warning 
-# @note 
-def imglist2filelist(imglist_filepath, title, file_urllist):
-    # 引数チェック
-    if 0 == len(imglist_filepath):
-        print(sys._getframe().f_code.co_name + '引数imglist_filepathが空です。')
-        return False
-    if not isinstance(file_urllist, list):
-        print(sys._getframe().f_code.co_name + '引数file_urllistがlistではないです。')
-        return False
-
-    with open(imglist_filepath, 'r', encoding='utf-8') as imglist_file:
-        line = imglist_file.readline()
-        title.append(line.rstrip('\n'))  # タイトル追加
-        # line = imglist_file.readline() #空読みで一行読み捨てする(内容がわかる画像を最初に表示するタイプのサイトで読み捨てする)
-        line = imglist_file.readline()
-        while line:
-            absolute_path = str(line.rstrip('\n'))
-            parse = urlparse(absolute_path)
-            if 0 == len(parse.scheme):  # 絶対パスかチェックする
-                return False
-            file_urllist.append(absolute_path)
-            line = imglist_file.readline()
     return True
 
 

@@ -4,7 +4,7 @@
 # @file imglist2dl.py
 # @version 1.0.0
 # @author Ryosuke Igarashi(HN:igapon)
-# @date 2021/05/21
+# @date 2021/10/10
 # @brief imglistファイルからファイル名リストを作り、ダウンロードする。
 # @details imglistファイルからファイル名リストを作り、ダウンロードする。
 # @warning 
@@ -13,6 +13,7 @@
 # local source
 from const import *
 from func import *
+from xmlScraping import *
 
 if __name__ == '__main__':  # インポート時には動かない
     imglist_filepath = RESULT_FILE_PATH
@@ -30,30 +31,23 @@ if __name__ == '__main__':  # インポート時には動かない
     else:
         print('引数が不正です。')
         print(msg_error_exit)
-        sys.exit(ret)
+        sys.exit()
     print(imglist_filepath)
 
     # ファイルのURLリストを作成
-    file_urllist = []
-    title = []
-    ret = imglist2filelist(imglist_filepath, title, file_urllist)
-    if not ret:
+    xmlScraping = XmlScraping()
+    if not xmlScraping:
         print(msg_error_exit)
-        sys.exit(ret)
-
-    # ファイルのダウンロード
-    print('ファイルリストを読み込み済み、irvineでダウンロード完了まで待つ')
-    print('irvineにペーストして、ダウンロード完了まで待つ')
-    print('ファイルのURLリストを編集すれば、名前の付け直しと圧縮するファイルを調整可能')
-    print(title[0])
-    os.system('PAUSE')
+        sys.exit(xmlScraping)
+    xmlScraping.load_text(RESULT_FILE_PATH + '1.txt')
+    file_url_list = xmlScraping.get_image_list()
 
     # ファイルリストの作成
     # ファイルの順序がファイル名順ではない場合、正しい順序のファイル名リストを作る必要がある。
     # file_urllistからdst_file_namelistを作成する
     dst_file_namelist = []
     src_file_pathlist = []
-    ret = getfilenamefromurl(file_urllist, dst_file_namelist)
+    ret = getfilenamefromurl(file_url_list, dst_file_namelist)
     if not ret:
         print(msg_error_exit)
         sys.exit(ret)
@@ -65,12 +59,12 @@ if __name__ == '__main__':  # インポート時には動かない
             src_file_pathlist.append(folder_path + '\\' + file_name)
 
     # 2つの配列から辞書型に変換
-    dic = {key: val for key, val in zip(file_urllist, src_file_pathlist)}
+    dic = {key: val for key, val in zip(file_url_list, src_file_pathlist)}
     # フォルダーがなければ作成する
     if not os.path.isdir(folder_path):
         os.makedirs(folder_path)
     # ファイルのダウンロード
-    for file_url in file_urllist:
+    for file_url in file_url_list:
         try:
             if not os.path.isfile(dic[file_url]):  # ファイルの存在チェック
                 images = download_image(file_url)

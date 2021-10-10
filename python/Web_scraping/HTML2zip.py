@@ -4,7 +4,7 @@
 # @file HTML2zip.py
 # @version 1.0.0
 # @author Ryosuke Igarashi(HN:igapon)
-# @date 2021/01/26
+# @date 2021/10/10
 # @brief Webサイトから画像のURLリストを作り、ダウンロードされていたらzipファイルにまとめる。
 # @details Webサイトから画像のURLリストを作り、ダウンロードされていたらzipファイルにまとめる。
 # @warning 
@@ -13,6 +13,7 @@
 # local source
 from const import *
 from func import *
+from xmlScraping import *
 
 if __name__ == '__main__':  # インポート時には動かない
     imglist_filepath = RESULT_FILE_PATH
@@ -35,38 +36,33 @@ if __name__ == '__main__':  # インポート時には動かない
     else:
         print('引数が不正です。')
         print(msg_error_exit)
-        sys.exit(ret)
+        sys.exit()
     print(target_url)
 
     # ファイルのURLリストを作成
-    file_urllist = []
-    title = []
-    ret = HTML2imglist(target_url, imglist_filepath, title, file_urllist)
-    if not ret:
+    xmlScraping = XmlScraping(target_url, img_css_select, img_attr)
+    if not xmlScraping:
         print(msg_error_exit)
-        sys.exit(ret)
+        sys.exit(xmlScraping)
+    xmlScraping.save_text(RESULT_FILE_PATH + '1.txt')
+    xmlScraping.save_pickle(RESULT_FILE_PATH + '1.pkl')
+    file_url_list = xmlScraping.get_image_list()
+    title = xmlScraping.get_title()
+    xmlScraping.clip_copy()
 
     # ファイルのダウンロード
     print('タイトルとURLリストをクリップボードにコピーし、ファイルに保存済み')
     print('irvineにペーストして、ダウンロード完了まで待つ')
     print('ファイルのURLリストを編集すれば、名前の付け直しと圧縮するファイルを調整可能')
-    print(title[0])
+    print(title)
     os.system('PAUSE')
-
-    # ファイルのURLリストを作成
-    file_urllist = []
-    title = []
-    ret = imglist2filelist(imglist_filepath, title, file_urllist)
-    if not ret:
-        print(msg_error_exit)
-        sys.exit(ret)
 
     # ファイルリストの作成
     # ファイルの順序がファイル名順ではない場合、正しい順序のファイル名リストを作る必要がある。
     # file_urllistからdst_file_namelistを作成する
     dst_file_namelist = []
     src_file_pathlist = []
-    ret = getfilenamefromurl(file_urllist, dst_file_namelist)
+    ret = getfilenamefromurl(file_url_list, dst_file_namelist)
     if not ret:
         print(msg_error_exit)
         sys.exit(ret)
@@ -98,7 +94,7 @@ if __name__ == '__main__':  # インポート時には動かない
         sys.exit(ret)
 
     # 圧縮ファイル名付け直し
-    zipfilename = '.\\' + re.sub(r'[\\/:*?"<>|]+', '', str(title[0]))  # 禁則文字を削除する
+    zipfilename = '.\\' + re.sub(r'[\\/:*?"<>|]+', '', title)  # 禁則文字を削除する
     print('圧縮ファイル名を付け直します(タイトル)')
     print(zipfilename)
     # os.system('PAUSE')

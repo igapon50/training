@@ -4,7 +4,7 @@
 # @file makezip.py
 # @version 1.0.0
 # @author Ryosuke Igarashi(HN:igapon)
-# @date 2021/01/26
+# @date 2021/10/10
 # @brief 指定フォルダ内のファイル群をzip圧縮する
 # @details 指定フォルダ内のファイル群をzip圧縮する
 # @warning 
@@ -26,7 +26,7 @@ if __name__ == '__main__':  # インポート時には動かない
     else:
         print('引数が不正です。')
         print(msg_error_exit)
-        sys.exit(ret)
+        sys.exit()
     if folder_path[len(folder_path) - 1] == '\\':
         files_path = folder_path + '*'
     else:

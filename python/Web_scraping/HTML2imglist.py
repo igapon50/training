@@ -4,7 +4,7 @@
 # @file HTML2imglist.py
 # @version 1.0.0
 # @author Ryosuke Igarashi(HN:igapon)
-# @date 2021/01/26
+# @date 2021/10/10
 # @brief Webサイトから画像のURLリストを作る
 # @details Webサイトから画像のURLリストを作ってホワイトボードにコピーし、ファイルにも保存する
 # @warning 
@@ -13,6 +13,7 @@
 # local source
 from const import *
 from func import *
+from xmlScraping import *
 
 if __name__ == '__main__':  # インポート時には動かない
     imglist_filepath = RESULT_FILE_PATH
@@ -35,20 +36,23 @@ if __name__ == '__main__':  # インポート時には動かない
     else:
         print('引数が不正です。')
         print(msg_error_exit)
-        sys.exit(ret)
+        sys.exit()
     print(target_url)
 
     # ファイルのURLリストを作成
-    file_urllist = []
-    title = []
-    ret = HTML2imglist(target_url, imglist_filepath, title, file_urllist)
-    if not ret:
+    xmlScraping = XmlScraping(target_url, img_css_select, img_attr)
+    if not xmlScraping:
         print(msg_error_exit)
-        sys.exit(ret)
+        sys.exit(xmlScraping)
+    xmlScraping.save_text(RESULT_FILE_PATH + '1.txt')
+    xmlScraping.save_pickle(RESULT_FILE_PATH + '1.pkl')
+    file_url_list = xmlScraping.get_image_list()
+    title = xmlScraping.get_title()
+    xmlScraping.clip_copy()
 
     # ファイルのダウンロード
     print('タイトルとURLリストをクリップボードにコピーし、ファイルに保存済み')
     print('irvineにペーストして、ダウンロード完了まで待つ')
     print('ファイルのURLリストを編集すれば、名前の付け直しと圧縮するファイルを調整可能')
-    print(title[0])
+    print(title)
 # os.system('PAUSE')

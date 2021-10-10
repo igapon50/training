@@ -4,7 +4,7 @@
 # @file imglist2clip.py
 # @version 1.0.0
 # @author Ryosuke Igarashi(HN:igapon)
-# @date 2021/01/26
+# @date 2021/10/10
 # @brief imglistファイルを読み込んでクリップボードにコピーする
 # @details imglistファイルを読み込んでクリップボードにコピーする
 # @warning 
@@ -13,6 +13,7 @@
 # local source
 from const import *
 from func import *
+from xmlScraping import *
 
 if __name__ == '__main__':  # インポート時には動かない
     imglist_filepath = RESULT_FILE_PATH
@@ -33,14 +34,16 @@ if __name__ == '__main__':  # インポート時には動かない
     else:
         print('引数が不正です。')
         print(msg_error_exit)
-        sys.exit(ret)
+        sys.exit()
     print(imglist_filepath)
 
     # ファイルのURLリストを作成
-    ret = imglist2clip(imglist_filepath)
-    if not ret:
+    xmlScraping = XmlScraping()
+    if not xmlScraping:
         print(msg_error_exit)
-        sys.exit(ret)
+        sys.exit(xmlScraping)
+    xmlScraping.load_text(RESULT_FILE_PATH + '1.txt')
+    file_url_list = xmlScraping.get_image_list()
 
     # ファイルのダウンロード
     print('タイトルとURLリストをクリップボードにコピーしました。')
