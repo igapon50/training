@@ -80,16 +80,16 @@ class crawling:
                  target_url: 'str 対象となるサイトURL' = None,
                  css_image_selector: 'str スクレイピングする際のCSSセレクタ' = None,
                  image_attr: 'str スクレイピングする際の属性' = None,
-                 xml_scraping_value:  'crawlingValue 値オブジェクト' = None,
+                 crawling_value: 'crawlingValue 値オブジェクト' = None,
                  ):
-        if xml_scraping_value is not None:
-            self.crawlingValue = xml_scraping_value
-            if xml_scraping_value.target_url is not None:
-                self.target_url = xml_scraping_value.target_url
-            if xml_scraping_value.css_image_selector is not None:
-                self.css_image_selector = xml_scraping_value.css_image_selector
-            if xml_scraping_value.image_attr is not None:
-                self.image_attr = xml_scraping_value.image_attr
+        if crawling_value is not None:
+            self.crawlingValue = crawling_value
+            if crawling_value.target_url is not None:
+                self.target_url = crawling_value.target_url
+            if crawling_value.css_image_selector is not None:
+                self.css_image_selector = crawling_value.css_image_selector
+            if crawling_value.image_attr is not None:
+                self.image_attr = crawling_value.image_attr
         else:
             if target_url is not None:
                 self.target_url = target_url
