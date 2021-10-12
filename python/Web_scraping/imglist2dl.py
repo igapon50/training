@@ -13,7 +13,7 @@
 # local source
 from const import *
 from func import *
-from xmlScraping import *
+from crawling import *
 
 if __name__ == '__main__':  # インポート時には動かない
     imglist_filepath = RESULT_FILE_PATH
@@ -35,12 +35,12 @@ if __name__ == '__main__':  # インポート時には動かない
     print(imglist_filepath)
 
     # ファイルのURLリストを作成
-    xmlScraping = XmlScraping()
-    if not xmlScraping:
+    crawling = crawling()
+    if not crawling:
         print(msg_error_exit)
-        sys.exit(xmlScraping)
-    xmlScraping.load_text(RESULT_FILE_PATH + '1.txt')
-    file_url_list = xmlScraping.get_image_list()
+        sys.exit(crawling)
+    crawling.load_text(RESULT_FILE_PATH + '1.txt')
+    file_url_list = crawling.get_image_list()
 
     # ファイルリストの作成
     # ファイルの順序がファイル名順ではない場合、正しい順序のファイル名リストを作る必要がある。

@@ -56,3 +56,6 @@ OUTPUT_FOLDER_PATH = '.\\folder01'  # ダウンロードしたファイルの保
 
 img_css_select = 'html body div .photoItem img'
 img_attr = 'src'
+
+# img_css_select = 'html body article noscript img'
+# img_attr = 'src'

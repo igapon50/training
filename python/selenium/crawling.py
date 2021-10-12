@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ##
-# @file xmlScraping.py
+# @file crawling.py
 # @version 1.0.0
 # @author Ryosuke Igarashi(HN:igapon)
 # @date 2021/10/10
@@ -32,11 +32,11 @@ sys.setrecursionlimit(10000)
 
 ##
 # @brief Value Objects
-# @details XmlScrapingクラスの値オブジェクト。
+# @details crawlingクラスの値オブジェクト。
 # @warning
 # @note
 @dataclass(frozen=True)
-class XmlScrapingValue:
+class crawlingValue:
     target_url: str
     css_image_selector: str
     image_attr: str
@@ -64,13 +64,13 @@ class XmlScrapingValue:
 
 
 ##
-# @brief 指定のサイトを読み込んで、指定のCSSセレクタでパースして、XmlScrapingValueを構成する
+# @brief 指定のサイトを読み込んで、指定のCSSセレクタでパースして、crawlingValueを構成する
 # @details css_image_selectは、CSSセレクタを指定する。image_attrは、属性を指定する。
 # @warning
 # @note
 
-class XmlScraping:
-    xmlScrapingValue: XmlScrapingValue = None
+class crawling:
+    crawlingValue: crawlingValue = None
     target_url: str = None
     css_image_selector: str = None
     image_attr: str = None
@@ -80,10 +80,10 @@ class XmlScraping:
                  target_url: 'str 対象となるサイトURL' = None,
                  css_image_selector: 'str スクレイピングする際のCSSセレクタ' = None,
                  image_attr: 'str スクレイピングする際の属性' = None,
-                 xml_scraping_value:  'XmlScrapingValue 値オブジェクト' = None,
+                 xml_scraping_value:  'crawlingValue 値オブジェクト' = None,
                  ):
         if xml_scraping_value is not None:
-            self.xmlScrapingValue = xml_scraping_value
+            self.crawlingValue = xml_scraping_value
             if xml_scraping_value.target_url is not None:
                 self.target_url = xml_scraping_value.target_url
             if xml_scraping_value.css_image_selector is not None:
@@ -102,18 +102,18 @@ class XmlScraping:
 
     # 値オブジェクトを取得する
     def get_value_objects(self
-                          ) -> 'XmlScrapingValue 値オブジェクト':
-        return copy.deepcopy(self.xmlScrapingValue)
+                          ) -> 'crawlingValue 値オブジェクト':
+        return copy.deepcopy(self.crawlingValue)
 
     # 画像URLリストを取得する
     def get_image_list(self
-                       ) -> 'XmlScrapingValue.image_list 画像URLリスト':
-        return copy.deepcopy(self.xmlScrapingValue.image_list)
+                       ) -> 'crawlingValue.image_list 画像URLリスト':
+        return copy.deepcopy(self.crawlingValue.image_list)
 
     # 対象サイトタイトルを取得する
     def get_title(self
-                  ) -> 'XmlScrapingValue.title 対象サイトタイトル':
-        return self.xmlScrapingValue.title
+                  ) -> 'crawlingValue.title 対象サイトタイトル':
+        return self.crawlingValue.title
 
     # target_urlに接続して、image_attrでスクレイピングして、titleとimage_listを更新する
     def request(self
@@ -130,7 +130,7 @@ class XmlScraping:
             if 0 == len(parse_path.scheme):  # 絶対パスかチェックする
                 absolute_path = urljoin(self.target_url, absolute_path)
             image_list.append(absolute_path)
-        self.xmlScrapingValue = XmlScrapingValue(
+        self.crawlingValue = crawlingValue(
             self.target_url,
             self.css_image_selector,
             self.image_attr,
@@ -142,14 +142,14 @@ class XmlScraping:
     def save_text(self,
                   save_path: 'str セーブするファイルのパス'
                   ) -> 'bool 成功/失敗=True/False':
-        if self.xmlScrapingValue is None:
+        if self.crawlingValue is None:
             return False
         with open(save_path, 'w', encoding='utf-8') as work_file:
-            buff = self.xmlScrapingValue.target_url + '\n'  # サイトURL追加
-            buff += self.xmlScrapingValue.css_image_selector + '\n'  # cssセレクタ追加
-            buff += self.xmlScrapingValue.image_attr + '\n'  # 属性追加
-            buff += self.xmlScrapingValue.title + '\n'  # タイトル追加
-            for absolute_path in self.xmlScrapingValue.image_list:
+            buff = self.crawlingValue.target_url + '\n'  # サイトURL追加
+            buff += self.crawlingValue.css_image_selector + '\n'  # cssセレクタ追加
+            buff += self.crawlingValue.image_attr + '\n'  # 属性追加
+            buff += self.crawlingValue.title + '\n'  # タイトル追加
+            for absolute_path in self.crawlingValue.image_list:
                 buff += absolute_path + '\n'  # 画像URL追加
             work_file.write(buff)  # ファイルへの保存
             return True
@@ -171,7 +171,7 @@ class XmlScraping:
             image_list: list = []
             for line in buff:
                 image_list.append(line.rstrip('\n'))
-            self.xmlScrapingValue = XmlScrapingValue(
+            self.crawlingValue = crawlingValue(
                 self.target_url,
                 self.css_image_selector,
                 self.image_attr,
@@ -186,7 +186,7 @@ class XmlScraping:
         if save_path is None:
             return False
         with open(save_path, 'wb') as work_file:
-            pickle.dump(self.xmlScrapingValue, work_file)
+            pickle.dump(self.crawlingValue, work_file)
             return True
 
     # ファイルから読み込み、pickleでデシリアライズする
@@ -196,19 +196,19 @@ class XmlScraping:
         if load_path is None:
             return False
         with open(load_path, 'rb') as work_file:
-            self.xmlScrapingValue = pickle.load(work_file)
+            self.crawlingValue = pickle.load(work_file)
             return True
 
-    # xmlScrapingをクリップボードにコピー
+    # crawlingをクリップボードにコピー
     def clip_copy(self
                   ) -> 'bool 成功/失敗=True/False':
-        if self.xmlScrapingValue is None:
+        if self.crawlingValue is None:
             return False
-        buff = self.xmlScrapingValue.target_url + '\n'  # サイトURL追加
-        buff += self.xmlScrapingValue.css_image_selector + '\n'  # cssセレクタ追加
-        buff += self.xmlScrapingValue.image_attr + '\n'  # 属性追加
-        buff += self.xmlScrapingValue.title + '\n'  # タイトル追加
-        for absolute_path in self.xmlScrapingValue.image_list:
+        buff = self.crawlingValue.target_url + '\n'  # サイトURL追加
+        buff += self.crawlingValue.css_image_selector + '\n'  # cssセレクタ追加
+        buff += self.crawlingValue.image_attr + '\n'  # 属性追加
+        buff += self.crawlingValue.title + '\n'  # タイトル追加
+        for absolute_path in self.crawlingValue.image_list:
             buff += absolute_path + '\n'  # 画像URL追加
         pyperclip.copy(buff)  # クリップボードへのコピー
         return True
@@ -238,17 +238,17 @@ if __name__ == '__main__':  # インポート時には動かない
         print(msg_error_exit)
         sys.exit()
     print(target_url)
-    xmlScraping = XmlScraping(target_url, img_css_select, img_attr)  # 'img.vimg[src*="jpg"]'
-    xmlScraping.save_text(RESULT_FILE_PATH)
-    value_objects = xmlScraping.get_value_objects()
-    xmlScraping.save_pickle(RESULT_FILE_PATH + '1.pkl')
-    xmlScraping.load_pickle(RESULT_FILE_PATH + '1.pkl')
-    xmlScraping.save_text(RESULT_FILE_PATH + '1.txt')
-    xmlScraping2 = XmlScraping(None, None, None, value_objects)
-    xmlScraping2.save_pickle(RESULT_FILE_PATH + '2.pkl')
-    xmlScraping2.load_pickle(RESULT_FILE_PATH + '2.pkl')
-    xmlScraping2.save_text(RESULT_FILE_PATH + '2.txt')
-    xmlScraping2.load_text(RESULT_FILE_PATH + '2.txt')
-    xmlScraping2.save_pickle(RESULT_FILE_PATH + '3.pkl')
-    xmlScraping2.load_pickle(RESULT_FILE_PATH + '3.pkl')
-    xmlScraping2.save_text(RESULT_FILE_PATH + '3.txt')
+    crawling = crawling(target_url, img_css_select, img_attr)  # 'img.vimg[src*="jpg"]'
+    crawling.save_text(RESULT_FILE_PATH)
+    value_objects = crawling.get_value_objects()
+    crawling.save_pickle(RESULT_FILE_PATH + '1.pkl')
+    crawling.load_pickle(RESULT_FILE_PATH + '1.pkl')
+    crawling.save_text(RESULT_FILE_PATH + '1.txt')
+    crawling2 = crawling(None, None, None, value_objects)
+    crawling2.save_pickle(RESULT_FILE_PATH + '2.pkl')
+    crawling2.load_pickle(RESULT_FILE_PATH + '2.pkl')
+    crawling2.save_text(RESULT_FILE_PATH + '2.txt')
+    crawling2.load_text(RESULT_FILE_PATH + '2.txt')
+    crawling2.save_pickle(RESULT_FILE_PATH + '3.pkl')
+    crawling2.load_pickle(RESULT_FILE_PATH + '3.pkl')
+    crawling2.save_text(RESULT_FILE_PATH + '3.txt')

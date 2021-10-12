@@ -67,11 +67,11 @@ def getfilenamefromurl(file_urllist, dst_file_namelist):
 def download_image(file_url, timeout=30):
     response = requests.get(file_url, allow_redirects=False, timeout=timeout)
     if response.status_code != requests.codes.ok:
-        e = Exception("HTTP status: " + str(response.status_code))
+        e = Exception("HTTP status: " + str(response.status_code))  # + " " + file_url + " " + response.url)
         raise e
     content_type = response.headers["content-type"]
     if 'image' not in content_type:
-        e = Exception("Content-Type: " + content_type)
+        e = Exception("Content-Type: " + content_type)  # + " " + file_url + " " + response.url)
         raise e
     return response.content
 

@@ -13,7 +13,7 @@
 # local source
 from const import *
 from func import *
-from xmlScraping import *
+from crawling import *
 
 if __name__ == '__main__':  # インポート時には動かない
     imglist_filepath = RESULT_FILE_PATH
@@ -40,15 +40,15 @@ if __name__ == '__main__':  # インポート時には動かない
     print(target_url)
 
     # ファイルのURLリストを作成
-    xmlScraping = XmlScraping(target_url, img_css_select, img_attr)
-    if not xmlScraping:
+    crawling = crawling(target_url, img_css_select, img_attr)
+    if not crawling:
         print(msg_error_exit)
-        sys.exit(xmlScraping)
-    xmlScraping.save_text(RESULT_FILE_PATH + '1.txt')
-    xmlScraping.save_pickle(RESULT_FILE_PATH + '1.pkl')
-    file_url_list = xmlScraping.get_image_list()
-    title = xmlScraping.get_title()
-    xmlScraping.clip_copy()
+        sys.exit(crawling)
+    crawling.save_text(RESULT_FILE_PATH + '1.txt')
+    crawling.save_pickle(RESULT_FILE_PATH + '1.pkl')
+    file_url_list = crawling.get_image_list()
+    title = crawling.get_title()
+    crawling.clip_copy()
 
     # ファイルのダウンロード
     print('タイトルとURLリストをクリップボードにコピーし、ファイルに保存済み')
