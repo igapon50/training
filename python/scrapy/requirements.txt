@@ -1,0 +1,11 @@
+ipython==7.22.0
+pylint==2.7.2
+autopep8==1.5.6
+scrapy==2.4.1
+scrapy-selenium==0.0.7
+pymongo==3.11.3
+pillow==8.2.0
+dnspython==1.16.0
+shub
+
+
