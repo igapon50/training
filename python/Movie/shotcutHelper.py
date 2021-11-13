@@ -66,6 +66,22 @@ class ShotcutHelper:
                     fp.write(self.xml_data)
                     # print(self.xml_data)
 
+    # 作成中 xml_dataに動画を追加する
+    def add_movies(self,
+                   movies: 'list 追加する動画ファイルのリスト'
+                   ):
+        if movies is not None:
+            for movie in movies:
+                if os.path.isabs(movie):
+                    target_path = movie
+                else:
+                    target_path = os.path.abspath(movie)
+                if not os.path.isfile(target_path):
+                    print('ファイルが見つかりません。処理を中止します。')
+                    sys.exit()
+                print('xmlに動画を追加します。')
+                print(target_path)
+
 
 # 検証コード
 if __name__ == '__main__':  # インポート時には動かない
@@ -77,11 +93,11 @@ if __name__ == '__main__':  # インポート時には動かない
         # 1.対象のファイルパス
         target_file_path = sys.argv[1]
     elif 1 == len(sys.argv):
-        # 引数がなければ、クリップボードからURLを得る
+        # 引数がなければ、クリップボードから得る
         paste_str = pyperclip.paste()
         if 0 < len(paste_str):
             target_file_path = paste_str
-    # クリップボードが空なら、デフォルトURLを用いる
+    # クリップボードが空なら、デフォルトを用いる
     else:
         print('引数が不正です。')
         sys.exit()
@@ -89,3 +105,8 @@ if __name__ == '__main__':  # インポート時には動かない
     shotcut1 = ShotcutHelper('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/テンプレート.mlt')
     shotcut2 = ShotcutHelper('./せんちゃんネル/テンプレート.mlt')
     shotcut2.save_xml('C:/Git/igapon50/traning/python/Movie/test.mlt')
+    movies = [
+        './せんちゃんネル/20210306/IUMY5140.MOV',
+        './せんちゃんネル/20210306/JGWU8992.MOV',
+    ]
+    shotcut2.add_movies(movies)

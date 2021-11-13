@@ -1,0 +1,477 @@
+<?xml version="1.0" standalone="no"?>
+<mlt LC_NUMERIC="C" version="7.0.0" title="Shotcut version UNSTABLE-21.02.09" producer="main_bin">
+  <profile description="automatic" width="1920" height="1080" progressive="1" sample_aspect_num="1" sample_aspect_den="1" display_aspect_num="1920" display_aspect_den="1080" frame_rate_num="18750" frame_rate_den="937" colorspace="601"/>
+  <producer id="producer1" in="00:00:00.000" out="00:00:18.140">
+    <property name="length">00:00:18.190</property>
+    <property name="eof">pause</property>
+    <property name="resource">C:\Git\igapon50\traning\python\Movie\せんちゃんネル/Clouds - 35573.mp4</property>
+    <property name="audio_index">1</property>
+    <property name="video_index">0</property>
+    <property name="mute_on_pause">0</property>
+    <property name="mlt_service">avformat-novalidate</property>
+    <property name="seekable">1</property>
+    <property name="aspect_ratio">1</property>
+    <property name="creation_time">2021-03-06T02:06:49</property>
+    <property name="global_feed">1</property>
+    <property name="xml">was here</property>
+    <property name="shotcut:hash">97e8d19532c15b7954398111c39c8a01</property>
+  </producer>
+  <producer id="producer2" in="00:00:00.000" out="00:00:59.968">
+    <property name="length">00:01:00.050</property>
+    <property name="eof">pause</property>
+    <property name="resource">C:\Git\igapon50\traning\python\Movie\せんちゃんネル/晴れの日.mp3</property>
+    <property name="audio_index">0</property>
+    <property name="video_index">-1</property>
+    <property name="mute_on_pause">0</property>
+    <property name="mlt_service">avformat-novalidate</property>
+    <property name="seekable">1</property>
+    <property name="global_feed">1</property>
+    <property name="xml">was here</property>
+    <property name="shotcut:hash">7dee00bd26e8d992717d3efd70fa3d2b</property>
+  </producer>
+  <producer id="producer0" in="00:00:00.000" out="00:00:04.897">
+    <property name="length">00:00:04.947</property>
+    <property name="eof">pause</property>
+    <property name="resource">BYJF8744_part 0.MOV</property>
+    <property name="audio_index">1</property>
+    <property name="video_index">0</property>
+    <property name="mute_on_pause">0</property>
+    <property name="mlt_service">avformat-novalidate</property>
+    <property name="seekable">1</property>
+    <property name="aspect_ratio">1</property>
+    <property name="global_feed">1</property>
+    <property name="xml">was here</property>
+    <property name="shotcut:hash">c4588bbccb6491d37387220ab8046419</property>
+  </producer>
+  <producer id="producer3" in="00:00:00.000" out="00:00:00.800">
+    <property name="length">00:00:00.850</property>
+    <property name="eof">pause</property>
+    <property name="resource">BYJF8744_part 1.MOV</property>
+    <property name="audio_index">1</property>
+    <property name="video_index">0</property>
+    <property name="mute_on_pause">0</property>
+    <property name="mlt_service">avformat-novalidate</property>
+    <property name="seekable">1</property>
+    <property name="aspect_ratio">1</property>
+    <property name="global_feed">1</property>
+    <property name="xml">was here</property>
+    <property name="shotcut:hash">928239213417065267a1df7f3abd4ba1</property>
+  </producer>
+  <producer id="producer4" in="00:00:00.000" out="00:00:01.799">
+    <property name="length">00:00:01.849</property>
+    <property name="eof">pause</property>
+    <property name="resource">BYJF8744_part 2.MOV</property>
+    <property name="audio_index">1</property>
+    <property name="video_index">0</property>
+    <property name="mute_on_pause">0</property>
+    <property name="mlt_service">avformat-novalidate</property>
+    <property name="seekable">1</property>
+    <property name="aspect_ratio">1</property>
+    <property name="global_feed">1</property>
+    <property name="xml">was here</property>
+    <property name="shotcut:hash">cf4ada741d424efa867fcce422adc685</property>
+  </producer>
+  <producer id="producer5" in="00:00:00.000" out="00:00:07.546">
+    <property name="length">00:00:07.596</property>
+    <property name="eof">pause</property>
+    <property name="resource">BYJF8744_part 3.MOV</property>
+    <property name="audio_index">1</property>
+    <property name="video_index">0</property>
+    <property name="mute_on_pause">0</property>
+    <property name="mlt_service">avformat-novalidate</property>
+    <property name="seekable">1</property>
+    <property name="aspect_ratio">1</property>
+    <property name="global_feed">1</property>
+    <property name="xml">was here</property>
+    <property name="shotcut:hash">aaa0cc9878ef1f330f11995e5c2d731a</property>
+  </producer>
+  <producer id="producer6" in="00:00:00.000" out="00:00:05.197">
+    <property name="length">00:00:05.247</property>
+    <property name="eof">pause</property>
+    <property name="resource">BYJF8744_part 4.MOV</property>
+    <property name="audio_index">1</property>
+    <property name="video_index">0</property>
+    <property name="mute_on_pause">0</property>
+    <property name="mlt_service">avformat-novalidate</property>
+    <property name="seekable">1</property>
+    <property name="aspect_ratio">1</property>
+    <property name="global_feed">1</property>
+    <property name="xml">was here</property>
+    <property name="shotcut:hash">748f7f188ef2cd36f8332b84a7e31b5c</property>
+  </producer>
+  <producer id="producer7" in="00:00:00.000" out="03:59:60.018">
+    <property name="length">04:00:00.050</property>
+    <property name="eof">pause</property>
+    <property name="resource">#00000000</property>
+    <property name="aspect_ratio">1</property>
+    <property name="mlt_service">color</property>
+    <property name="mlt_image_format">rgb24a</property>
+    <property name="shotcut:caption">transparent</property>
+    <property name="shotcut:detail">transparent</property>
+    <property name="ignore_points">0</property>
+    <property name="global_feed">1</property>
+    <property name="xml">was here</property>
+    <property name="seekable">1</property>
+    <filter id="filter0" out="00:00:03.948">
+      <property name="argument">せんちゃんネル</property>
+      <property name="geometry">0 810 1920 270 1</property>
+      <property name="family">Verdana</property>
+      <property name="size">120</property>
+      <property name="weight">500</property>
+      <property name="style">normal</property>
+      <property name="fgcolour">#ffffffff</property>
+      <property name="bgcolour">#00000000</property>
+      <property name="olcolour">#000000</property>
+      <property name="pad">0</property>
+      <property name="halign">center</property>
+      <property name="valign">top</property>
+      <property name="outline">3</property>
+      <property name="mlt_service">dynamictext</property>
+      <property name="shotcut:filter">dynamicText</property>
+      <property name="shotcut:usePointSize">1</property>
+      <property name="shotcut:pointSize">60</property>
+    </filter>
+  </producer>
+  <playlist id="main_bin">
+    <property name="xml_retain">1</property>
+    <entry producer="producer1" in="00:00:00.000" out="00:00:18.140"/>
+    <entry producer="producer2" in="00:00:00.000" out="00:00:59.968"/>
+    <entry producer="producer0" in="00:00:00.000" out="00:00:04.897"/>
+    <entry producer="producer3" in="00:00:00.000" out="00:00:00.800"/>
+    <entry producer="producer4" in="00:00:00.000" out="00:00:01.799"/>
+    <entry producer="producer5" in="00:00:00.000" out="00:00:07.546"/>
+    <entry producer="producer6" in="00:00:00.000" out="00:00:05.197"/>
+    <entry producer="producer7" in="00:00:00.000" out="00:00:03.948"/>
+  </playlist>
+  <producer id="black" in="00:00:00.000" out="00:00:39.079">
+    <property name="length">00:00:39.129</property>
+    <property name="eof">pause</property>
+    <property name="resource">0</property>
+    <property name="aspect_ratio">1</property>
+    <property name="mlt_service">color</property>
+    <property name="mlt_image_format">rgb24a</property>
+    <property name="set.test_audio">0</property>
+  </producer>
+  <playlist id="background">
+    <entry producer="black" in="00:00:00.000" out="00:00:39.079"/>
+  </playlist>
+  <producer id="producer8" in="00:00:00.000" out="00:00:18.140">
+    <property name="length">00:00:18.190</property>
+    <property name="eof">pause</property>
+    <property name="resource">C:\Git\igapon50\traning\python\Movie\せんちゃんネル/Clouds - 35573.mp4</property>
+    <property name="audio_index">1</property>
+    <property name="video_index">0</property>
+    <property name="mute_on_pause">0</property>
+    <property name="mlt_service">avformat-novalidate</property>
+    <property name="seekable">1</property>
+    <property name="aspect_ratio">1</property>
+    <property name="creation_time">2021-03-06T02:06:49</property>
+    <property name="global_feed">1</property>
+    <property name="xml">was here</property>
+    <property name="shotcut:hash">97e8d19532c15b7954398111c39c8a01</property>
+    <property name="shotcut:caption">Clouds - 35573.mp4</property>
+    <filter id="filter1" out="00:00:09.745">
+      <property name="argument">せんちゃんネル</property>
+      <property name="geometry">0 0 1920 1080 1</property>
+      <property name="family">Verdana</property>
+      <property name="size">1080</property>
+      <property name="weight">500</property>
+      <property name="style">normal</property>
+      <property name="fgcolour">#ffffffff</property>
+      <property name="bgcolour">#00000000</property>
+      <property name="olcolour">#aa000000</property>
+      <property name="pad">0</property>
+      <property name="halign">center</property>
+      <property name="valign">bottom</property>
+      <property name="outline">3</property>
+      <property name="mlt_service">dynamictext</property>
+      <property name="shotcut:filter">dynamicText</property>
+      <property name="shotcut:usePointSize">0</property>
+      <property name="shotcut:animIn">00:00:00.000</property>
+      <property name="shotcut:animOut">00:00:00.000</property>
+    </filter>
+  </producer>
+  <producer id="producer9" in="00:00:00.000" out="00:00:04.897">
+    <property name="length">00:00:04.947</property>
+    <property name="eof">pause</property>
+    <property name="resource">BYJF8744_part 0.MOV</property>
+    <property name="audio_index">1</property>
+    <property name="video_index">0</property>
+    <property name="mute_on_pause">0</property>
+    <property name="mlt_service">avformat-novalidate</property>
+    <property name="seekable">1</property>
+    <property name="aspect_ratio">1</property>
+    <property name="global_feed">1</property>
+    <property name="xml">was here</property>
+    <property name="shotcut:hash">c4588bbccb6491d37387220ab8046419</property>
+    <property name="shotcut:caption">BYJF8744_part 0.MOV</property>
+  </producer>
+  <producer id="producer10" in="00:00:00.000" out="00:00:00.800">
+    <property name="length">00:00:00.850</property>
+    <property name="eof">pause</property>
+    <property name="resource">BYJF8744_part 1.MOV</property>
+    <property name="audio_index">1</property>
+    <property name="video_index">0</property>
+    <property name="mute_on_pause">0</property>
+    <property name="mlt_service">avformat-novalidate</property>
+    <property name="seekable">1</property>
+    <property name="aspect_ratio">1</property>
+    <property name="global_feed">1</property>
+    <property name="xml">was here</property>
+    <property name="shotcut:hash">928239213417065267a1df7f3abd4ba1</property>
+    <property name="shotcut:caption">BYJF8744_part 1.MOV</property>
+  </producer>
+  <producer id="producer11" in="00:00:00.000" out="00:00:01.799">
+    <property name="length">00:00:01.849</property>
+    <property name="eof">pause</property>
+    <property name="resource">BYJF8744_part 2.MOV</property>
+    <property name="audio_index">1</property>
+    <property name="video_index">0</property>
+    <property name="mute_on_pause">0</property>
+    <property name="mlt_service">avformat-novalidate</property>
+    <property name="seekable">1</property>
+    <property name="aspect_ratio">1</property>
+    <property name="global_feed">1</property>
+    <property name="xml">was here</property>
+    <property name="shotcut:hash">cf4ada741d424efa867fcce422adc685</property>
+    <property name="shotcut:caption">BYJF8744_part 2.MOV</property>
+  </producer>
+  <producer id="producer12" in="00:00:00.000" out="00:00:07.546">
+    <property name="length">00:00:07.596</property>
+    <property name="eof">pause</property>
+    <property name="resource">BYJF8744_part 3.MOV</property>
+    <property name="audio_index">1</property>
+    <property name="video_index">0</property>
+    <property name="mute_on_pause">0</property>
+    <property name="mlt_service">avformat-novalidate</property>
+    <property name="seekable">1</property>
+    <property name="aspect_ratio">1</property>
+    <property name="global_feed">1</property>
+    <property name="xml">was here</property>
+    <property name="shotcut:hash">aaa0cc9878ef1f330f11995e5c2d731a</property>
+    <property name="shotcut:caption">BYJF8744_part 3.MOV</property>
+  </producer>
+  <producer id="producer13" in="00:00:00.000" out="00:00:05.197">
+    <property name="length">00:00:05.247</property>
+    <property name="eof">pause</property>
+    <property name="resource">BYJF8744_part 4.MOV</property>
+    <property name="audio_index">1</property>
+    <property name="video_index">0</property>
+    <property name="mute_on_pause">0</property>
+    <property name="mlt_service">avformat-novalidate</property>
+    <property name="seekable">1</property>
+    <property name="aspect_ratio">1</property>
+    <property name="global_feed">1</property>
+    <property name="xml">was here</property>
+    <property name="shotcut:hash">748f7f188ef2cd36f8332b84a7e31b5c</property>
+    <property name="shotcut:caption">BYJF8744_part 4.MOV</property>
+  </producer>
+  <producer id="producer14" in="00:00:00.000" out="00:00:18.140">
+    <property name="length">00:00:18.190</property>
+    <property name="eof">pause</property>
+    <property name="resource">C:\Git\igapon50\traning\python\Movie\せんちゃんネル/Clouds - 35573.mp4</property>
+    <property name="audio_index">1</property>
+    <property name="video_index">0</property>
+    <property name="mute_on_pause">0</property>
+    <property name="mlt_service">avformat-novalidate</property>
+    <property name="seekable">1</property>
+    <property name="aspect_ratio">1</property>
+    <property name="creation_time">2021-03-06T02:06:49</property>
+    <property name="global_feed">1</property>
+    <property name="xml">was here</property>
+    <property name="shotcut:hash">97e8d19532c15b7954398111c39c8a01</property>
+    <property name="shotcut:caption">Clouds - 35573.mp4</property>
+    <filter id="filter4" out="00:00:09.995">
+      <property name="argument">またみてね♪
+
+せんちゃんネル</property>
+      <property name="geometry">0 0 1920 1080 1</property>
+      <property name="family">Verdana</property>
+      <property name="size">360</property>
+      <property name="weight">500</property>
+      <property name="style">normal</property>
+      <property name="fgcolour">#ffffffff</property>
+      <property name="bgcolour">#00000000</property>
+      <property name="olcolour">#aa000000</property>
+      <property name="pad">0</property>
+      <property name="halign">center</property>
+      <property name="valign">bottom</property>
+      <property name="outline">3</property>
+      <property name="mlt_service">dynamictext</property>
+      <property name="shotcut:filter">dynamicText</property>
+      <property name="shotcut:usePointSize">0</property>
+      <property name="shotcut:animIn">00:00:00.000</property>
+      <property name="shotcut:animOut">00:00:00.000</property>
+    </filter>
+  </producer>
+  <playlist id="playlist0">
+    <property name="shotcut:video">1</property>
+    <property name="shotcut:name">V1</property>
+    <entry producer="producer8" in="00:00:00.000" out="00:00:09.045"/>
+    <entry producer="producer9" in="00:00:00.000" out="00:00:04.897"/>
+    <entry producer="producer10" in="00:00:00.000" out="00:00:00.800"/>
+    <entry producer="producer11" in="00:00:00.000" out="00:00:01.799"/>
+    <entry producer="producer12" in="00:00:00.000" out="00:00:07.546"/>
+    <entry producer="producer13" in="00:00:00.000" out="00:00:05.197"/>
+    <entry producer="producer14" in="00:00:00.500" out="00:00:09.995"/>
+  </playlist>
+  <producer id="producer15" in="00:00:00.000" out="00:00:59.968">
+    <property name="length">00:01:00.050</property>
+    <property name="eof">pause</property>
+    <property name="resource">C:\Git\igapon50\traning\python\Movie\せんちゃんネル/晴れの日.mp3</property>
+    <property name="audio_index">0</property>
+    <property name="video_index">-1</property>
+    <property name="mute_on_pause">0</property>
+    <property name="mlt_service">avformat-novalidate</property>
+    <property name="seekable">1</property>
+    <property name="global_feed">1</property>
+    <property name="xml">was here</property>
+    <property name="shotcut:hash">7dee00bd26e8d992717d3efd70fa3d2b</property>
+    <property name="shotcut:caption">晴れの日.mp3</property>
+    <filter id="filter5" out="00:00:39.079">
+      <property name="window">75</property>
+      <property name="max_gain">20dB</property>
+      <property name="level">-10</property>
+      <property name="mlt_service">volume</property>
+      <property name="shotcut:animIn">00:00:00.000</property>
+      <property name="shotcut:animOut">00:00:00.000</property>
+    </filter>
+  </producer>
+  <playlist id="playlist1">
+    <property name="shotcut:audio">1</property>
+    <property name="shotcut:name">A1</property>
+    <entry producer="producer15" in="00:00:00.000" out="00:00:39.079"/>
+  </playlist>
+  <producer id="producer16" in="00:00:00.000" out="03:59:60.018">
+    <property name="length">04:00:00.050</property>
+    <property name="eof">pause</property>
+    <property name="resource">#00000000</property>
+    <property name="aspect_ratio">1</property>
+    <property name="mlt_service">color</property>
+    <property name="mlt_image_format">rgb24a</property>
+    <property name="shotcut:caption">transparent</property>
+    <property name="shotcut:detail">transparent</property>
+    <property name="ignore_points">0</property>
+    <property name="global_feed">1</property>
+    <property name="xml">was here</property>
+    <property name="seekable">1</property>
+    <filter id="filter2" out="00:00:12.993">
+      <property name="argument">トランポリンを
+飛んだ時だけ
+声を出してもらい
+無音な部分を
+削除した
+動画を作ります
+うまくいくかな？</property>
+      <property name="geometry">53 53 1818 963 1</property>
+      <property name="family">Verdana</property>
+      <property name="size">96</property>
+      <property name="weight">500</property>
+      <property name="style">normal</property>
+      <property name="fgcolour">#ffffffff</property>
+      <property name="bgcolour">#00000000</property>
+      <property name="olcolour">#000000</property>
+      <property name="pad">0</property>
+      <property name="halign">right</property>
+      <property name="valign">top</property>
+      <property name="outline">3</property>
+      <property name="mlt_service">dynamictext</property>
+      <property name="shotcut:filter">dynamicText</property>
+      <property name="shotcut:usePointSize">1</property>
+      <property name="shotcut:pointSize">48</property>
+    </filter>
+  </producer>
+  <producer id="producer17" in="00:00:00.000" out="03:59:60.018">
+    <property name="length">04:00:00.050</property>
+    <property name="eof">pause</property>
+    <property name="resource">#00000000</property>
+    <property name="aspect_ratio">1</property>
+    <property name="mlt_service">color</property>
+    <property name="mlt_image_format">rgb24a</property>
+    <property name="shotcut:caption">transparent</property>
+    <property name="shotcut:detail">transparent</property>
+    <property name="ignore_points">0</property>
+    <property name="global_feed">1</property>
+    <property name="xml">was here</property>
+    <property name="seekable">1</property>
+    <filter id="filter3" out="00:00:07.396">
+      <property name="argument">うーん
+喋りっぱなしで
+飛んだ映像に
+ならないですねw
+せんちゃんに
+演技指導が
+必要です♪</property>
+      <property name="geometry">53 53 1818 963 1</property>
+      <property name="family">Verdana</property>
+      <property name="size">96</property>
+      <property name="weight">500</property>
+      <property name="style">normal</property>
+      <property name="fgcolour">#ffffffff</property>
+      <property name="bgcolour">#00000000</property>
+      <property name="olcolour">#000000</property>
+      <property name="pad">0</property>
+      <property name="halign">right</property>
+      <property name="valign">top</property>
+      <property name="outline">3</property>
+      <property name="mlt_service">dynamictext</property>
+      <property name="shotcut:filter">dynamicText</property>
+      <property name="shotcut:usePointSize">1</property>
+      <property name="shotcut:pointSize">48</property>
+    </filter>
+  </producer>
+  <playlist id="playlist2">
+    <property name="shotcut:video">1</property>
+    <property name="shotcut:name">V2</property>
+    <blank length="00:00:09.095"/>
+    <entry producer="producer16" in="00:00:00.000" out="00:00:12.993"/>
+    <entry producer="producer17" in="00:00:00.000" out="00:00:07.396"/>
+  </playlist>
+  <tractor id="tractor6" title="Shotcut version UNSTABLE-21.02.09" global_feed="1" in="00:00:00.000" out="00:00:39.079">
+    <property name="shotcut">1</property>
+    <property name="shotcut:projectAudioChannels">2</property>
+    <property name="shotcut:projectFolder">1</property>
+    <property name="shotcut:scaleFactor">1.6705</property>
+    <track producer="background"/>
+    <track producer="playlist0"/>
+    <track producer="playlist1" hide="video"/>
+    <track producer="playlist2"/>
+    <transition id="transition12">
+      <property name="a_track">0</property>
+      <property name="b_track">1</property>
+      <property name="mlt_service">mix</property>
+      <property name="always_active">1</property>
+      <property name="sum">1</property>
+    </transition>
+    <transition id="transition13">
+      <property name="a_track">0</property>
+      <property name="b_track">1</property>
+      <property name="version">0.9</property>
+      <property name="mlt_service">frei0r.cairoblend</property>
+      <property name="threads">0</property>
+      <property name="disable">1</property>
+    </transition>
+    <transition id="transition14">
+      <property name="a_track">0</property>
+      <property name="b_track">2</property>
+      <property name="mlt_service">mix</property>
+      <property name="always_active">1</property>
+      <property name="sum">1</property>
+    </transition>
+    <transition id="transition0">
+      <property name="a_track">0</property>
+      <property name="b_track">3</property>
+      <property name="mlt_service">mix</property>
+      <property name="always_active">1</property>
+      <property name="sum">1</property>
+    </transition>
+    <transition id="transition1">
+      <property name="a_track">1</property>
+      <property name="b_track">3</property>
+      <property name="version">0.9</property>
+      <property name="mlt_service">frei0r.cairoblend</property>
+      <property name="threads">0</property>
+      <property name="disable">0</property>
+    </transition>
+  </tractor>
+</mlt>
