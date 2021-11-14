@@ -5,8 +5,8 @@
 # @version 1.0.0
 # @author Ryosuke Igarashi(HN:igapon)
 # @date 2021/11/13
-# @brief 動画編集shotcutのプロジェクトファイルを編集するヘルパー。
-# @details 。
+# @brief 動画編集shotcutのプロジェクトファイルを編集するヘルパー
+# @details
 # @warning
 # @note
 
@@ -17,10 +17,25 @@ import xmltodict
 
 
 ##
-# @brief 動画編集shotcutのプロジェクトファイルを編集するヘルパー。
-# @details 内部では辞書型でデータを保持する。
+# @brief 相対パスが指定されたら絶対パスを返す
+# @details
 # @warning
 # @note
+def get_abs_path(path: 'str 変換対象パス'):
+    if path is not None:
+        if os.path.isabs(path):
+            target_path = path
+        else:
+            target_path = os.path.abspath(path)
+        return target_path
+
+##
+# @brief 動画編集shotcutのプロジェクトファイルを編集するヘルパー
+# @details 内部では辞書型でデータを保持する
+# @warning
+# @note
+
+
 class ShotcutHelper:
     mlt_path: str = None
     xml_data: str = None
@@ -33,14 +48,12 @@ class ShotcutHelper:
                  mlt_path: 'str shotcutのプロジェクトファイルパス',
                  ):
         if mlt_path is not None:
-            if os.path.isabs(mlt_path):
-                object.__setattr__(self, "mlt_path", mlt_path)
-            else:
-                object.__setattr__(self, "mlt_path", os.path.abspath(mlt_path))
-            self.initialize()
+            path = get_abs_path(mlt_path)
+            object.__setattr__(self, "mlt_path", path)
+            self.load_xml()
 
     # プロジェクトファイルをロードする
-    def initialize(self):
+    def load_xml(self):
         if os.path.isfile(self.mlt_path):
             with open(self.mlt_path, encoding='utf-8') as fp:
                 self.xml_data = fp.read()
@@ -53,14 +66,11 @@ class ShotcutHelper:
                  save_path: 'str xmlで保存するファイルパス',
                  ):
         if save_path is not None:
-            if os.path.isabs(save_path):
-                target_path = save_path
-            else:
-                target_path = os.path.abspath(save_path)
-            if os.path.isfile(target_path):
+            path = get_abs_path(save_path)
+            if os.path.isfile(path):
                 print('ファイルが存在します。xmlファイル保存を中止します。')
             else:
-                with open(target_path, mode='w', encoding='utf-8') as fp:
+                with open(path, mode='w', encoding='utf-8') as fp:
                     # dict → xml , xmlの整形
                     self.xml_data = xmltodict.unparse(self.dict_data, pretty=True)
                     fp.write(self.xml_data)
@@ -72,15 +82,36 @@ class ShotcutHelper:
                    ):
         if movies is not None:
             for movie in movies:
-                if os.path.isabs(movie):
-                    target_path = movie
-                else:
-                    target_path = os.path.abspath(movie)
-                if not os.path.isfile(target_path):
+                path = get_abs_path(movie)
+                if not os.path.isfile(path):
                     print('ファイルが見つかりません。処理を中止します。')
                     sys.exit()
                 print('xmlに動画を追加します。')
-                print(target_path)
+                print(path)
+
+    # 作成中 プレイリストにitemを増やす(mltファイルのplaylistタグid=main_bin)
+    def add_item(self,
+                     movie: 'str 動画のファイルパス'
+                     ):
+        return movie
+
+    # 作成中 タイムラインにトラックを増やす(mltファイルのplaylistタグid=playlist0..)
+    def add_trac(self,
+                     name: 'str トラック名'
+                     ):
+        return name
+
+    # 作成中 タイムラインにshotを追加する
+    def add_producer(self,
+                     movie: 'str 動画のファイルパス'
+                     ):
+        return movie
+
+    # 作成中 トランジション(フェード、ワイプ、クロスフェード、ミックス)
+    def add_tractor(self,
+                    movie: 'str 動画のファイルパス'
+                    ):
+        return movie
 
 
 # 検証コード
