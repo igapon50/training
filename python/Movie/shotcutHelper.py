@@ -14,6 +14,7 @@ import os
 import sys
 import pyperclip
 import xmltodict
+import collections
 
 
 ##
@@ -42,6 +43,8 @@ class ShotcutHelper:
     yaml_data: str = None
 #    json_data: str = None
     dict_data: dict = None
+    playlist_entry: list = []
+    playlist_name: str = 'producer'
 
     # コンストラクタ
     def __init__(self,
@@ -54,12 +57,26 @@ class ShotcutHelper:
 
     # プロジェクトファイルをロードする
     def load_xml(self):
+        self.playlist_entry.clear()
         if os.path.isfile(self.mlt_path):
             with open(self.mlt_path, encoding='utf-8') as fp:
                 self.xml_data = fp.read()
                 # xml → dict
                 self.dict_data = xmltodict.parse(self.xml_data)
-#                print(self.dict_data)
+                # print(self.dict_data)
+                # プレイリストのロード
+                playlist_main_bin = self.dict_data['mlt']['playlist'][0]
+                if playlist_main_bin['@id'] == 'main_bin':
+                    for index in range(len(playlist_main_bin['entry'])):
+                        element = playlist_main_bin['entry'][index]
+                        key = '@' + self.playlist_name
+                        name = element[key]
+                        count = len(self.playlist_name)
+                        if len(name) >= count:
+                            number = name[count:]
+                            if number.isdecimal():
+                                self.playlist_entry.append(int(number))
+                        print(self.playlist_entry)
 
     # shotcutプロジェクトファイルを保存する（ファイルがある場合は保存しない）
     def save_xml(self,
@@ -88,13 +105,61 @@ class ShotcutHelper:
                     sys.exit()
                 print('xmlに動画を追加します。')
                 print(path)
+                # プレイリストに追加
+                self.add_item(path)
 
     # 作成中 プレイリストにitemを増やす(mltファイルのplaylistタグid=main_bin)
     def add_item(self,
-                     movie: 'str 動画のファイルパス'
-                     ):
+                 movie: 'str 動画のファイルパス',
+                 ):
+        # TODO 動画の情報を集める
+
+        # プレイリストの空き番号を調べる
+        index = self.create_playlist_entry()
+
+        # プレイリストに追加する
+        playlist_main_bin = self.dict_data['mlt']['playlist'][0]
+        if playlist_main_bin['@id'] == 'main_bin':
+            od = collections.OrderedDict()
+            od['@' + self.playlist_name] = self.playlist_name + str(index)
+            # TODO 動画の情報をセットする
+            od['@in'] = '00:00:00.000'
+            od['@out'] = '00:00:99.999'
+            index = len(self.playlist_entry)
+            playlist_main_bin['entry'].append(od)
+
+        # TODO producerを追加する
+
         return movie
 
+    # 作成中 リストに無い次の(アルファベット+十進数値な)名前のindexを返す
+    def create_playlist_entry(self):
+        for index in range(len(self.playlist_entry)):
+            if not index in self.playlist_entry:
+                return index
+        return 0
+
+# < producer id = "producer0" in = "00:00:00.000" out = "00:00:03.448" >
+#   < property name = "length" > 00:00: 03.498 < / property >
+#   < property name = "eof" > pause < / property >
+#   < property name = "resource" > mov / BPUB2392.MP4 < / property >
+#   < property name = "audio_index" > -1 < / property >
+#   < property name = "video_index" > 0 < / property >
+#   < property name = "mute_on_pause" > 0 < / property >
+#   < property name = "mlt_service" > avformat - novalidate < / property >
+#   < property name = "seekable" > 1 < / property >
+#   < property name = "aspect_ratio" > 1 < / property >
+#   < property name = "creation_time" > 2020 - 10 - 10 T06: 41:41 < / property >
+#   < property name = "global_feed" > 1 < / property >
+#   < property name = "xml" > was here < / property >
+#   < property name = "shotcut:hash" > b296c075554cbbadaacf3110a66ffdd9 < / property >
+# < / producer >
+# < playlist id = "main_bin" >
+#   < property name = "xml_retain" > 1 < / property >
+#   < entry producer = "producer1" in = "00:00:00.000" out = "00:00:18.140" / >
+#   < entry producer = "producer2" in = "00:00:00.000" out = "00:00:59.968" / >
+#   < entry producer = "producer0" in = "00:00:00.000" out = "00:00:03.448" / >
+# < / playlist >
     # 作成中 タイムラインにトラックを増やす(mltファイルのplaylistタグid=playlist0..)
     def add_trac(self,
                      name: 'str トラック名'
@@ -135,7 +200,7 @@ if __name__ == '__main__':  # インポート時には動かない
     print(target_file_path)
     shotcut1 = ShotcutHelper('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/テンプレート.mlt')
     shotcut2 = ShotcutHelper('./せんちゃんネル/テンプレート.mlt')
-    shotcut2.save_xml('C:/Git/igapon50/traning/python/Movie/test.mlt')
+    # shotcut2.save_xml('C:/Git/igapon50/traning/python/Movie/test.mlt')
     movies = [
         './せんちゃんネル/20210306/IUMY5140.MOV',
         './せんちゃんネル/20210306/JGWU8992.MOV',
