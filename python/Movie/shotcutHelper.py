@@ -38,75 +38,82 @@ def get_abs_path(path: 'str 変換対象パス'):
 
 
 class ShotcutHelper:
-    mlt_path: str = None
-    xml_data: str = None
-    yaml_data: str = None
-#    json_data: str = None
-    dict_data: dict = None
-    playlist_entry: list = []
     playlist_name: str = 'producer'
 
     # コンストラクタ
     def __init__(self,
                  mlt_path: 'str shotcutのプロジェクトファイルパス',
                  ):
-        if mlt_path is not None:
-            path = get_abs_path(mlt_path)
-            object.__setattr__(self, "mlt_path", path)
-            self.load_xml()
+        self.mlt_path = None
+        self.xml_data = None
+        self.dict_data = None
+        self.playlist_entry = []
+        if mlt_path is None:
+            print('プロジェクトパスがNoneです')
+            sys.exit(1)
+        self.mlt_path = get_abs_path(mlt_path)
+        self.load_xml()
 
     # プロジェクトファイルをロードする
     def load_xml(self):
-        self.playlist_entry.clear()
-        if os.path.isfile(self.mlt_path):
-            with open(self.mlt_path, encoding='utf-8') as fp:
-                self.xml_data = fp.read()
-                # xml → dict
-                self.dict_data = xmltodict.parse(self.xml_data)
-                # print(self.dict_data)
-                # プレイリストのロード
-                playlist_main_bin = self.dict_data['mlt']['playlist'][0]
-                if playlist_main_bin['@id'] == 'main_bin':
-                    for index in range(len(playlist_main_bin['entry'])):
-                        element = playlist_main_bin['entry'][index]
-                        key = '@' + self.playlist_name
-                        name = element[key]
-                        count = len(self.playlist_name)
-                        if len(name) >= count:
-                            number = name[count:]
-                            if number.isdecimal():
-                                self.playlist_entry.append(int(number))
-                        print(self.playlist_entry)
+        if not os.path.isfile(self.mlt_path):
+            print('プロジェクトファイルがありません')
+            sys.exit(1)
+        with open(self.mlt_path, encoding='utf-8') as fp:
+            self.xml_data = fp.read()
+        # xml → dict
+        self.dict_data = xmltodict.parse(self.xml_data)
+        # プレイリストのロード
+        playlist_main_bin = self.dict_data.get('mlt').get('playlist')[0]
+        if playlist_main_bin.get('@id') != 'main_bin':
+            print('プロジェクトファイルにmain_binがありません')
+            sys.exit(1)
+        for index in range(len(playlist_main_bin.get('entry'))):
+            element = playlist_main_bin.get('entry')[index]
+            key = '@' + self.playlist_name
+            name = element[key]
+            count = len(self.playlist_name)
+            if len(name) < count:
+                print('プロジェクトファイルのプレイリストentryのプレフィックスがproducerではない')
+                sys.exit(1)
+            number = name[count:]
+            if not number.isdecimal():
+                print('プロジェクトファイルのプレイリストentryに追加するindexを決定できなかった')
+                sys.exit(1)
+            self.playlist_entry.append(int(number))
 
     # shotcutプロジェクトファイルを保存する（ファイルがある場合は保存しない）
     def save_xml(self,
                  save_path: 'str xmlで保存するファイルパス',
                  ):
-        if save_path is not None:
-            path = get_abs_path(save_path)
-            if os.path.isfile(path):
-                print('ファイルが存在します。xmlファイル保存を中止します。')
-            else:
-                with open(path, mode='w', encoding='utf-8') as fp:
-                    # dict → xml , xmlの整形
-                    self.xml_data = xmltodict.unparse(self.dict_data, pretty=True)
-                    fp.write(self.xml_data)
-                    # print(self.xml_data)
+        if save_path is None:
+            print('引数が空です')
+            sys.exit(1)
+        path = get_abs_path(save_path)
+        if os.path.isfile(path):
+            print('ファイルが存在します。xmlファイル保存を中止します。')
+            sys.exit(1)
+        with open(path, mode='w', encoding='utf-8') as fp:
+            # dict → xml , xmlの整形 , xmlの保存
+            self.xml_data = xmltodict.unparse(self.dict_data, pretty=True)
+            fp.write(self.xml_data)
 
     # 作成中 xml_dataに動画を追加する
     def add_movies(self,
                    movies: 'list 追加する動画ファイルのリスト'
                    ):
-        if movies is not None:
-            for movie in movies:
-                path = get_abs_path(movie)
-                if not os.path.isfile(path):
-                    print('ファイルが見つかりません。処理を中止します。')
-                    sys.exit()
-                print('xmlに動画を追加します。')
-                print(path)
-                # プレイリストに追加
-                self.add_item(path)
+        if movies is None:
+            print('引数が空です')
+            sys.exit(1)
+        for movie in movies:
+            path = get_abs_path(movie)
+            if not os.path.isfile(path):
+                print('ファイルが見つかりません。処理を中止します。')
+                sys.exit(1)
+            print('xmlに動画を追加します。')
+            print(path)
+            # プレイリストに追加
+            self.add_item(path)
 
     # 作成中 プレイリストにitemを増やす(mltファイルのplaylistタグid=main_bin)
     def add_item(self,
@@ -115,29 +122,31 @@ class ShotcutHelper:
         # TODO 動画の情報を集める
 
         # プレイリストの空き番号を調べる
-        index = self.create_playlist_entry()
+        index = self.get_next_index_playlist_entry()
 
         # プレイリストに追加する
-        playlist_main_bin = self.dict_data['mlt']['playlist'][0]
-        if playlist_main_bin['@id'] == 'main_bin':
-            od = collections.OrderedDict()
-            od['@' + self.playlist_name] = self.playlist_name + str(index)
-            # TODO 動画の情報をセットする
-            od['@in'] = '00:00:00.000'
-            od['@out'] = '00:00:99.999'
-            index = len(self.playlist_entry)
-            playlist_main_bin['entry'].append(od)
+        playlist_main_bin = self.dict_data.get('mlt').get('playlist')[0]
+        if playlist_main_bin.get('@id') != 'main_bin':
+            print('プロジェクトファイルにmain_binがありません')
+            sys.exit(1)
+        od = collections.OrderedDict()
+        od['@' + self.playlist_name] = self.playlist_name + str(index)
+        # TODO 動画の情報をセットする
+        od['@in'] = '00:00:00.000'
+        od['@out'] = '00:00:99.999'
+        playlist_main_bin.get('entry').append(od)
+        self.playlist_entry.append(index)
 
         # TODO producerを追加する
 
-        return movie
+        return
 
-    # 作成中 リストに無い次の(アルファベット+十進数値な)名前のindexを返す
-    def create_playlist_entry(self):
+    # リストに無い次の(アルファベット+十進数値な)名前のindexを返す
+    def get_next_index_playlist_entry(self):
         for index in range(len(self.playlist_entry)):
             if not index in self.playlist_entry:
                 return index
-        return 0
+        return index + 1
 
 # < producer id = "producer0" in = "00:00:00.000" out = "00:00:03.448" >
 #   < property name = "length" > 00:00: 03.498 < / property >
