@@ -9,12 +9,14 @@
 # @details
 # @warning
 # @note
-
+import datetime
 import os
+import re
 import sys
 import pyperclip
 import xmltodict
 import collections
+import ffmpeg
 
 
 ##
@@ -38,7 +40,8 @@ def get_abs_path(path: 'str 変換対象パス'):
 
 
 class ShotcutHelper:
-    playlist_name: str = 'producer'
+    playlist_name: str = 'playlist'
+    producer_name: str = 'producer'
 
     # コンストラクタ
     def __init__(self,
@@ -70,9 +73,9 @@ class ShotcutHelper:
             sys.exit(1)
         for index in range(len(playlist_main_bin.get('entry'))):
             element = playlist_main_bin.get('entry')[index]
-            key = '@' + self.playlist_name
+            key = '@' + self.producer_name
             name = element[key]
-            count = len(self.playlist_name)
+            count = len(self.producer_name)
             if len(name) < count:
                 print('プロジェクトファイルのプレイリストentryのプレフィックスがproducerではない')
                 sys.exit(1)
@@ -119,26 +122,45 @@ class ShotcutHelper:
     def add_item(self,
                  movie: 'str 動画のファイルパス',
                  ):
-        # TODO 動画の情報を集める
+        # 動画の情報を集める
+        video_info = ffmpeg.probe(movie)
+        creation_time = video_info.get('format').get('tags').get('creation_time')
+        start_time = video_info.get('format').get('start_time')
+        time_s = int(float(start_time))
+        time_m = int((float(start_time) - float(time_s)) * 1000000)
+        dt = datetime.time(hour=0, minute=0, second=time_s, microsecond=time_m, tzinfo=None)
+        in_time = dt.strftime('%H:%M:%S.%f')[:12]
+        end_time = video_info.get('format').get('duration')
+        time_s = int(float(end_time))
+        time_m = int((float(end_time) - float(time_s)) * 1000000)
+        dt = datetime.time(hour=0, minute=0, second=time_s, microsecond=time_m, tzinfo=None)
+        out_time = dt.strftime('%H:%M:%S.%f')[:12]
 
         # プレイリストの空き番号を調べる
         index = self.get_next_index_playlist_entry()
 
-        # プレイリストに追加する
+        # プレイリストを追加する
         playlist_main_bin = self.dict_data.get('mlt').get('playlist')[0]
         if playlist_main_bin.get('@id') != 'main_bin':
             print('プロジェクトファイルにmain_binがありません')
             sys.exit(1)
         od = collections.OrderedDict()
-        od['@' + self.playlist_name] = self.playlist_name + str(index)
-        # TODO 動画の情報をセットする
-        od['@in'] = '00:00:00.000'
-        od['@out'] = '00:00:99.999'
+        od['@' + self.producer_name] = self.producer_name + str(index)
+        od['@in'] = in_time
+        od['@out'] = out_time
         playlist_main_bin.get('entry').append(od)
+
+        # producerを追加する
+        mlt_dict = self.dict_data.get('mlt').get(self.producer_name)
+        od = collections.OrderedDict()
+        od['@id'] = self.producer_name + str(index)
+        od['@in'] = in_time
+        od['@out'] = out_time
+        mlt_dict.append(od)
+        # TODO 末尾に追加された、そこにpropertyを追加する
+
+        # リストに登録した番号を追加する
         self.playlist_entry.append(index)
-
-        # TODO producerを追加する
-
         return
 
     # リストに無い次の(アルファベット+十進数値な)名前のindexを返す
@@ -211,7 +233,7 @@ if __name__ == '__main__':  # インポート時には動かない
     shotcut2 = ShotcutHelper('./せんちゃんネル/テンプレート.mlt')
     # shotcut2.save_xml('C:/Git/igapon50/traning/python/Movie/test.mlt')
     movies = [
-        './せんちゃんネル/20210306/IUMY5140.MOV',
+        './せんちゃんネル/mov/BPUB2392.MP4',
         './せんちゃんネル/20210306/JGWU8992.MOV',
     ]
     shotcut2.add_movies(movies)
