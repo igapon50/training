@@ -117,11 +117,11 @@ class ShotcutHelper:
                 sys.exit(1)
             self.add_item(path)
 
-    # プレイリストにitemを増やす(mltファイルのplaylistタグid=main_bin)
+    # プレイリストにitem(動画)を追加する(mltファイルのplaylistタグid=main_binと、producer)
     def add_item(self,
                  movie: 'str 動画のファイルパス',
                  ):
-        # 動画の情報を集める
+        # item(動画)の情報を集める
         video_info = ffmpeg.probe(movie)
         creation_time = video_info.get('format').get('tags').get('creation_time')
         start_time = video_info.get('format').get('start_time')
@@ -134,7 +134,8 @@ class ShotcutHelper:
         time_m = int((float(end_time) - float(time_s)) * 1000000)
         dt = datetime.time(hour=0, minute=0, second=time_s, microsecond=time_m, tzinfo=None)
         out_time = dt.strftime('%H:%M:%S.%f')[:12]
-        # ハッシュの計算
+
+        # item(動画)のハッシュを計算
         algo = 'md5'
         hash_object = hashlib.new(algo)
         hash_size = hash_object.block_size * 0x800
@@ -145,29 +146,27 @@ class ShotcutHelper:
                 binary_data = fp.read(hash_size)
         shotcut_hash = hash_object.hexdigest()
 
-        # プレイリストの空き番号を調べる
+        # item(動画)の空き番号を調べる
         index = self.get_next_index_playlist_entry()
 
-        # プレイリストを追加する
+        # プレイリストにitem(動画)を追加する
         playlist_main_bin = self.dict_data.get('mlt').get('playlist')[0]
         if playlist_main_bin.get('@id') != 'main_bin':
             print('プロジェクトファイルにmain_binがありません')
             sys.exit(1)
-        od = collections.OrderedDict()
-        od['@' + self.producer_name] = self.producer_name + str(index)
-        od['@in'] = in_time
-        od['@out'] = out_time
+        od = collections.OrderedDict([('@' + self.producer_name, self.producer_name + str(index)),
+                                      ('@in', in_time),
+                                      ('@out', out_time)])
         playlist_main_bin.get('entry').append(od)
 
-        # producerを追加する
+        # producerにitem(動画)を追加する
         mlt_dict = self.dict_data.get('mlt').get(self.producer_name)
-        od = collections.OrderedDict()
-        od['@id'] = self.producer_name + str(index)
-        od['@in'] = in_time
-        od['@out'] = out_time
-        od[self.property_name] = []
+        od = collections.OrderedDict([('@id', self.producer_name + str(index)),
+                                      ('@in', in_time),
+                                      ('@out', out_time),
+                                      (self.property_name, [])])
         mlt_dict.append(od)
-        producer_list = [collections.OrderedDict([('@name', 'length'), ('#text', out_time)]),
+        property_list = [collections.OrderedDict([('@name', 'length'), ('#text', out_time)]),
                          collections.OrderedDict([('@name', 'eof'), ('#text', 'pause')]),
                          collections.OrderedDict([('@name', 'resource'), ('#text', movie)]),
                          collections.OrderedDict([('@name', 'audio_index'), ('#text', '-1')]),
@@ -181,10 +180,10 @@ class ShotcutHelper:
                          collections.OrderedDict([('@name', 'shotcut:hash'), ('#text', shotcut_hash)]),
                          collections.OrderedDict([('@name', 'shotcut:caption'), ('#text', os.path.basename(movie))])]
         last_key = next(reversed(mlt_dict), None)
-        for od in producer_list:
-            last_key[self.property_name].append(od)
+        for property in property_list:
+            last_key[self.property_name].append(property)
 
-        # 追加した動画の管理番号を登録する
+        # 追加したitem(動画)の管理番号を登録する
         self.playlist_entry.append(index)
         return
 
