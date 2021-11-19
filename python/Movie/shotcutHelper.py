@@ -17,6 +17,7 @@ import pyperclip
 import xmltodict
 import collections
 import ffmpeg
+import hashlib
 
 
 ##
@@ -42,6 +43,7 @@ def get_abs_path(path: 'str 変換対象パス'):
 class ShotcutHelper:
     playlist_name: str = 'playlist'
     producer_name: str = 'producer'
+    property_name: str = 'property'
 
     # コンストラクタ
     def __init__(self,
@@ -101,7 +103,7 @@ class ShotcutHelper:
             self.xml_data = xmltodict.unparse(self.dict_data, pretty=True)
             fp.write(self.xml_data)
 
-    # 作成中 xml_dataに動画を追加する
+    # xml_dataに動画を追加する
     def add_movies(self,
                    movies: 'list 追加する動画ファイルのリスト'
                    ):
@@ -113,12 +115,9 @@ class ShotcutHelper:
             if not os.path.isfile(path):
                 print('ファイルが見つかりません。処理を中止します。')
                 sys.exit(1)
-            print('xmlに動画を追加します。')
-            print(path)
-            # プレイリストに追加
             self.add_item(path)
 
-    # 作成中 プレイリストにitemを増やす(mltファイルのplaylistタグid=main_bin)
+    # プレイリストにitemを増やす(mltファイルのplaylistタグid=main_bin)
     def add_item(self,
                  movie: 'str 動画のファイルパス',
                  ):
@@ -135,6 +134,16 @@ class ShotcutHelper:
         time_m = int((float(end_time) - float(time_s)) * 1000000)
         dt = datetime.time(hour=0, minute=0, second=time_s, microsecond=time_m, tzinfo=None)
         out_time = dt.strftime('%H:%M:%S.%f')[:12]
+        # ハッシュの計算
+        algo = 'md5'
+        hash_object = hashlib.new(algo)
+        hash_size = hash_object.block_size * 0x800
+        with open(movie, 'rb') as fp:
+            binary_data = fp.read(hash_size)
+            while binary_data:
+                hash_object.update(binary_data)
+                binary_data = fp.read(hash_size)
+        shotcut_hash = hash_object.hexdigest()
 
         # プレイリストの空き番号を調べる
         index = self.get_next_index_playlist_entry()
@@ -156,10 +165,26 @@ class ShotcutHelper:
         od['@id'] = self.producer_name + str(index)
         od['@in'] = in_time
         od['@out'] = out_time
+        od[self.property_name] = []
         mlt_dict.append(od)
-        # TODO 末尾に追加された、そこにpropertyを追加する
+        producer_list = [collections.OrderedDict([('@name', 'length'), ('#text', out_time)]),
+                         collections.OrderedDict([('@name', 'eof'), ('#text', 'pause')]),
+                         collections.OrderedDict([('@name', 'resource'), ('#text', movie)]),
+                         collections.OrderedDict([('@name', 'audio_index'), ('#text', '-1')]),
+                         collections.OrderedDict([('@name', 'video_index'), ('#text', '0')]),
+                         collections.OrderedDict([('@name', 'mute_on_pause'), ('#text', '0')]),
+                         collections.OrderedDict([('@name', 'mlt_service'), ('#text', 'avformat-novalidate')]),
+                         collections.OrderedDict([('@name', 'seekable'), ('#text', '1')]),
+                         collections.OrderedDict([('@name', 'aspect_ratio'), ('#text', '1')]),
+                         collections.OrderedDict([('@name', 'global_feed'), ('#text', '1')]),
+                         collections.OrderedDict([('@name', 'xml'), ('#text', 'was here')]),
+                         collections.OrderedDict([('@name', 'shotcut:hash'), ('#text', shotcut_hash)]),
+                         collections.OrderedDict([('@name', 'shotcut:caption'), ('#text', os.path.basename(movie))])]
+        last_key = next(reversed(mlt_dict), None)
+        for od in producer_list:
+            last_key[self.property_name].append(od)
 
-        # リストに登録した番号を追加する
+        # 追加した動画の管理番号を登録する
         self.playlist_entry.append(index)
         return
 
@@ -170,6 +195,10 @@ class ShotcutHelper:
                 return index
         return index + 1
 
+# windowsでMD5ハッシュを出力する方法
+# > certutil -hashfile C:\Git\igapon50\traning\python\Movie\せんちゃんネル\mov\BPUB2392.MP4 MD5
+# shotcutのmltプロジェクトファイルフォーマット
+# https://shotcut.org/notes/mltxml-annotations/
 # < producer id = "producer0" in = "00:00:00.000" out = "00:00:03.448" >
 #   < property name = "length" > 00:00: 03.498 < / property >
 #   < property name = "eof" > pause < / property >
@@ -231,9 +260,9 @@ if __name__ == '__main__':  # インポート時には動かない
     print(target_file_path)
     shotcut1 = ShotcutHelper('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/テンプレート.mlt')
     shotcut2 = ShotcutHelper('./せんちゃんネル/テンプレート.mlt')
-    # shotcut2.save_xml('C:/Git/igapon50/traning/python/Movie/test.mlt')
     movies = [
         './せんちゃんネル/mov/BPUB2392.MP4',
         './せんちゃんネル/20210306/JGWU8992.MOV',
     ]
     shotcut2.add_movies(movies)
+    shotcut2.save_xml('C:/Git/igapon50/traning/python/Movie/test.mlt')
