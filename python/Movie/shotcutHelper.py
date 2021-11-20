@@ -18,6 +18,7 @@ import xmltodict
 import collections
 import ffmpeg
 import hashlib
+from dataclasses import dataclass
 
 
 ##
@@ -44,6 +45,37 @@ def get_md5(movie: 'str ハッシュを計算するファイルパス'):
             hash_object.update(binary_data)
             binary_data = fp.read(hash_size)
     return hash_object.hexdigest()
+
+
+##
+# @brief Value Objects
+# @details item(動画)の値オブジェクト。
+# @warning
+# @note
+@dataclass(frozen=True)
+class ItemValue:
+
+    # 完全コンストラクタパターン
+    def __init__(self,
+                 index: 'int 登録するインデックス番号',
+                 in_time: 'str 開始時間',
+                 out_time: 'str 終了時間',
+                 movie: 'str 動画のファイルパス',
+                 shotcut_hash: 'str 動画のハッシュ',
+                 creation_time: 'str 作成日時',
+                 ):
+        if index is not None:
+            object.__setattr__(self, "index", index)
+        if in_time is not None:
+            object.__setattr__(self, "in_time", in_time)
+        if out_time is not None:
+            object.__setattr__(self, "out_time", out_time)
+        if movie is not None:
+            object.__setattr__(self, "movie", movie)
+        if shotcut_hash is not None:
+            object.__setattr__(self, "shotcut_hash", shotcut_hash)
+        if creation_time is not None:
+            object.__setattr__(self, "creation_time", creation_time)
 
 
 ##
@@ -98,7 +130,7 @@ class ShotcutHelper:
             if not number.isdecimal():
                 print('プロジェクトファイルのプレイリストentryに追加するindexを決定できなかった')
                 sys.exit(1)
-            self.playlist_entry.append(int(number))
+            self.__register_index_playlist_entry(int(number))
 
     # shotcutプロジェクトファイルを保存する（ファイルがある場合は保存しない）
     def save_xml(self,
@@ -133,9 +165,9 @@ class ShotcutHelper:
     # リストに無い次の(アルファベット+十進数値な)名前のindex(管理番号)を返す
     def __get_next_index_playlist_entry(self):
         for index in range(len(self.playlist_entry)):
-            if not index in self.playlist_entry:
+            if index not in self.playlist_entry:
                 return index
-        return index + 1
+        return (index + 1)
 
     # 追加したitem(動画)の管理番号を登録する
     def __register_index_playlist_entry(self,
@@ -160,12 +192,13 @@ class ShotcutHelper:
 
     # producerにitem(動画)を追加する
     def __add_item_to_producer(self,
-                             index: 'int 登録するインデックス番号',
-                             in_time: 'str 開始時間',
-                             out_time: 'str 終了時間',
-                             movie: 'str 動画のファイルパス',
-                             shotcut_hash: 'str 動画のハッシュ',
-                             ):
+                               index: 'int 登録するインデックス番号',
+                               in_time: 'str 開始時間',
+                               out_time: 'str 終了時間',
+                               movie: 'str 動画のファイルパス',
+                               creation_time: 'str 作成日時',
+                               shotcut_hash: 'str 動画のハッシュ',
+                               ):
         mlt_dict = self.dict_data.get('mlt').get(self.producer_name)
         od = collections.OrderedDict([('@id', self.producer_name + str(index)),
                                       ('@in', in_time),
@@ -181,6 +214,7 @@ class ShotcutHelper:
                          collections.OrderedDict([('@name', 'mlt_service'), ('#text', 'avformat-novalidate')]),
                          collections.OrderedDict([('@name', 'seekable'), ('#text', '1')]),
                          collections.OrderedDict([('@name', 'aspect_ratio'), ('#text', '1')]),
+                         collections.OrderedDict([('@name', 'creation_time'), ('#text', creation_time)]),
                          collections.OrderedDict([('@name', 'global_feed'), ('#text', '1')]),
                          collections.OrderedDict([('@name', 'xml'), ('#text', 'was here')]),
                          collections.OrderedDict([('@name', 'shotcut:hash'), ('#text', shotcut_hash)]),
@@ -189,13 +223,45 @@ class ShotcutHelper:
         for property in property_list:
             last_key[self.property_name].append(property)
 
+    def create_item_value(self,
+                     movie: 'str 動画のファイルパス',
+                     index: 'int 登録するインデックス番号',
+                     shotcut_hash: 'str 動画のハッシュ',
+                     ):
+        # item(動画)の情報を集める
+        video_info = ffmpeg.probe(movie)
+        creation_str = video_info.get('format').get('tags').get('creation_time')
+        date_dt = datetime.datetime.strptime(creation_str, '%Y-%m-%dT%H:%M:%S.%fZ')
+        creation_time = date_dt.strftime('%Y-%m-%dT%H:%M:%S')
+        start_time = video_info.get('format').get('start_time')
+        time_s = int(float(start_time))
+        time_m = int((float(start_time) - float(time_s)) * 1000000)
+        dt = datetime.time(hour=0, minute=0, second=time_s, microsecond=time_m, tzinfo=None)
+        in_time = dt.strftime('%H:%M:%S.%f')[:12]
+        end_time = video_info.get('format').get('duration')
+        time_s = int(float(end_time))
+        time_m = int((float(end_time) - float(time_s)) * 1000000)
+        dt = datetime.time(hour=0, minute=0, second=time_s, microsecond=time_m, tzinfo=None)
+        out_time = dt.strftime('%H:%M:%S.%f')[:12]
+        return ItemValue(index, in_time, out_time, movie, shotcut_hash, creation_time)
+
     # プレイリストに動画を追加する(playlistとproducerにitemを追加する。mltファイルのplaylistタグid=main_binと、producer)
     def add_item(self,
                  movie: 'str 動画のファイルパス',
                  ):
+        # item(動画)の空き番号を調べる
+        index = self.__get_next_index_playlist_entry()
+
+        # item(動画)のハッシュを計算
+        shotcut_hash = get_md5(movie)
+
+        # TODO 値オブジェクト使う？
         # item(動画)の情報を集める
+        # item_value = self.create_item_value(movie, index, shotcut_hash)
         video_info = ffmpeg.probe(movie)
-        creation_time = video_info.get('format').get('tags').get('creation_time')
+        creation_str = video_info.get('format').get('tags').get('creation_time')
+        date_dt = datetime.datetime.strptime(creation_str, '%Y-%m-%dT%H:%M:%S.%fZ')
+        creation_time = date_dt.strftime('%Y-%m-%dT%H:%M:%S')
         start_time = video_info.get('format').get('start_time')
         time_s = int(float(start_time))
         time_m = int((float(start_time) - float(time_s)) * 1000000)
@@ -207,17 +273,11 @@ class ShotcutHelper:
         dt = datetime.time(hour=0, minute=0, second=time_s, microsecond=time_m, tzinfo=None)
         out_time = dt.strftime('%H:%M:%S.%f')[:12]
 
-        # item(動画)のハッシュを計算
-        shotcut_hash = get_md5(movie)
-
-        # item(動画)の空き番号を調べる
-        index = self.__get_next_index_playlist_entry()
-
         # playlistにitem(動画)を追加する
         self.__add_item_to_playlist(index, in_time, out_time)
 
         # producerにitem(動画)を追加する
-        self.__add_item_to_producer(index, in_time, out_time, movie, shotcut_hash)
+        self.__add_item_to_producer(index, in_time, out_time, movie, creation_time, shotcut_hash)
 
         # 追加したitem(動画)の管理番号を登録する
         self.__register_index_playlist_entry(index)
