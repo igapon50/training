@@ -105,6 +105,11 @@ class ItemValue:
 
 
 class ShotcutHelper:
+    app_name: str = 'shotcut'
+    mlt_name: str = 'mlt'
+    tractor_name: str = 'tractor'
+    track_name: str = 'track'
+    transition_name: str = 'transition'
     playlist_name: str = 'playlist'
     producer_name: str = 'producer'
     property_name: str = 'property'
@@ -117,6 +122,7 @@ class ShotcutHelper:
         self.xml_data = None
         self.dict_data = None
         self.playlist_entry = []
+        self.producer_entry = []
         if mlt_path is None:
             print('プロジェクトパスがNoneです')
             sys.exit(1)
@@ -132,8 +138,29 @@ class ShotcutHelper:
             self.xml_data = fp.read()
         # xml → dict
         self.dict_data = xmltodict.parse(self.xml_data)
+        # トラックのロード
+        tractor_root = self.dict_data.get(self.mlt_name).get(self.tractor_name)
+        count = len(self.app_name)
+        if tractor_root.get('@title')[:count].lower() != self.app_name.lower():
+            print('プロジェクトファイルにtractorがありません')
+            sys.exit(1)
+        track_root = tractor_root.get(self.track_name)
+        for index in range(len(track_root)):
+            element = track_root[index]
+            key = '@' + self.producer_name
+            name = element[key]
+            count = len(self.producer_name)
+            if self.playlist_name != name[:count]:
+                continue
+            number = name[count:]
+            if not number.isdecimal():
+                print('プロジェクトファイルのプレイリストentryに追加するindexを決定できなかった')
+                sys.exit(1)
+            self.__register_index_playlist_entry(int(number))
+        # TODO トランジションのロード
+
         # プレイリストのロード
-        playlist_main_bin = self.dict_data.get('mlt').get('playlist')[0]
+        playlist_main_bin = self.dict_data.get(self.mlt_name).get(self.playlist_name)[0]
         if playlist_main_bin.get('@id') != 'main_bin':
             print('プロジェクトファイルにmain_binがありません')
             sys.exit(1)
@@ -149,7 +176,7 @@ class ShotcutHelper:
             if not number.isdecimal():
                 print('プロジェクトファイルのプレイリストentryに追加するindexを決定できなかった')
                 sys.exit(1)
-            self.__register_index_playlist_entry(int(number))
+            self.__register_index_producer_entry(int(number))
 
     # shotcutプロジェクトファイルを保存する（ファイルがある場合は保存しない）
     def save_xml(self,
@@ -188,17 +215,30 @@ class ShotcutHelper:
                 return index
         return index + 1
 
-    # 追加したitem(動画)の管理番号を登録する
+    # リストに無い次の(アルファベット+十進数値な)名前のindex(管理番号)を返す
+    def __get_next_index_producer_entry(self):
+        for index in range(len(self.producer_entry)):
+            if index not in self.producer_entry:
+                return index
+        return index + 1
+
+    # 追加したtrackの管理番号を登録する
     def __register_index_playlist_entry(self,
                                         index: 'int 登録する管理番号',
                                         ):
         self.playlist_entry.append(index)
 
+    # 追加したitem(動画)の管理番号を登録する
+    def __register_index_producer_entry(self,
+                                        index: 'int 登録する管理番号',
+                                        ):
+        self.producer_entry.append(index)
+
     # playlistにitem(動画)を追加する
     def __add_item_to_playlist(self,
                                item_value: 'ItemValue item(動画)値クラス',
                                ):
-        playlist_main_bin = self.dict_data.get('mlt').get('playlist')[0]
+        playlist_main_bin = self.dict_data.get(self.mlt_name).get(self.playlist_name)[0]
         if playlist_main_bin.get('@id') != 'main_bin':
             print('プロジェクトファイルにmain_binがありません')
             sys.exit(1)
@@ -241,7 +281,7 @@ class ShotcutHelper:
                  movie: 'str 動画のファイルパス',
                  ):
         # item(動画)の空き番号を調べる
-        index = self.__get_next_index_playlist_entry()
+        index = self.__get_next_index_producer_entry()
 
         # item(動画)のハッシュを計算
         shotcut_hash = get_md5(movie)
@@ -256,7 +296,7 @@ class ShotcutHelper:
         self.__add_item_to_producer(item_value)
 
         # 追加したitem(動画)の管理番号を登録する
-        self.__register_index_playlist_entry(index)
+        self.__register_index_producer_entry(index)
         return
 
 # <producer id="producer4" in="00:00:00.000" out="00:00:03.448">
