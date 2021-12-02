@@ -11,7 +11,6 @@
 # @note
 import datetime
 import os
-import re
 import sys
 import pyperclip
 import xmltodict
@@ -36,6 +35,8 @@ def get_abs_path(path: 'str 変換対象パス'):
 
 
 # item(動画)のハッシュを計算して返す
+# 参考)windowsでMD5ハッシュを出力するコマンド例
+# > certutil -hashfile C:\Git\igapon50\traning\python\Movie\せんちゃんネル\mov\BPUB2392.MP4 MD5
 def get_md5(movie: 'str ハッシュを計算するファイルパス'):
     algo = 'md5'
     hash_object = hashlib.new(algo)
@@ -70,7 +71,7 @@ class ItemValue:
                  ):
         if movie is None or shotcut_hash is None:
             print('引数が不正です。')
-            sys.exit()
+            sys.exit(1)
         object.__setattr__(self, "movie", movie)
         object.__setattr__(self, "index", index)
         object.__setattr__(self, "shotcut_hash", shotcut_hash)
@@ -99,6 +100,8 @@ class ItemValue:
 # @details 内部では辞書型でデータを保持する
 # @warning
 # @note
+# shotcutのmltプロジェクトファイルフォーマット
+# https://shotcut.org/notes/mltxml-annotations/
 
 
 class ShotcutHelper:
@@ -166,12 +169,12 @@ class ShotcutHelper:
 
     # xml_dataに動画を追加する
     def add_movies(self,
-                   movies: 'list 追加する動画ファイルのリスト',
+                   movie_list: 'list 追加する動画ファイルのリスト',
                    ):
-        if movies is None:
+        if movie_list is None:
             print('引数が空です')
             sys.exit(1)
-        for movie in movies:
+        for movie in movie_list:
             path = get_abs_path(movie)
             if not os.path.isfile(path):
                 print('ファイルが見つかりません。処理を中止します。')
@@ -227,10 +230,11 @@ class ShotcutHelper:
                          collections.OrderedDict([('@name', 'global_feed'), ('#text', '1')]),
                          collections.OrderedDict([('@name', 'xml'), ('#text', 'was here')]),
                          collections.OrderedDict([('@name', 'shotcut:hash'), ('#text', item_value.shotcut_hash)]),
-                         collections.OrderedDict([('@name', 'shotcut:caption'), ('#text', os.path.basename(item_value.movie))])]
+                         collections.OrderedDict([('@name', 'shotcut:caption'),
+                                                  ('#text', os.path.basename(item_value.movie))])]
         last_key = next(reversed(mlt_dict), None)
-        for property in property_list:
-            last_key[self.property_name].append(property)
+        for prop in property_list:
+            last_key[self.property_name].append(prop)
 
     # プレイリストに動画を追加する(playlistとproducerにitemを追加する。mltファイルのplaylistタグid=main_binと、producer)
     def add_item(self,
@@ -242,7 +246,6 @@ class ShotcutHelper:
         # item(動画)のハッシュを計算
         shotcut_hash = get_md5(movie)
 
-        # TODO 値オブジェクト使う？
         # item(動画)の情報を集める
         item_value = ItemValue(movie, index, shotcut_hash)
 
@@ -256,92 +259,121 @@ class ShotcutHelper:
         self.__register_index_playlist_entry(index)
         return
 
-# windowsでMD5ハッシュを出力する方法
-# > certutil -hashfile C:\Git\igapon50\traning\python\Movie\せんちゃんネル\mov\BPUB2392.MP4 MD5
-# shotcutのmltプロジェクトファイルフォーマット
-# https://shotcut.org/notes/mltxml-annotations/
-# < producer id = "producer0" in = "00:00:00.000" out = "00:00:03.448" >
-#   < property name = "length" > 00:00: 03.498 < / property >
-#   < property name = "eof" > pause < / property >
-#   < property name = "resource" > mov / BPUB2392.MP4 < / property >
-#   < property name = "audio_index" > -1 < / property >
-#   < property name = "video_index" > 0 < / property >
-#   < property name = "mute_on_pause" > 0 < / property >
-#   < property name = "mlt_service" > avformat - novalidate < / property >
-#   < property name = "seekable" > 1 < / property >
-#   < property name = "aspect_ratio" > 1 < / property >
-#   < property name = "creation_time" > 2020 - 10 - 10 T06: 41:41 < / property >
-#   < property name = "global_feed" > 1 < / property >
-#   < property name = "xml" > was here < / property >
-#   < property name = "shotcut:hash" > b296c075554cbbadaacf3110a66ffdd9 < / property >
-# < / producer >
-# < playlist id = "main_bin" >
-#   < property name = "xml_retain" > 1 < / property >
-#   < entry producer = "producer1" in = "00:00:00.000" out = "00:00:18.140" / >
-#   < entry producer = "producer2" in = "00:00:00.000" out = "00:00:59.968" / >
-#   < entry producer = "producer0" in = "00:00:00.000" out = "00:00:03.448" / >
-# < / playlist >
-    # 作成中 タイムラインにトラックを増やす(mltファイルのplaylistタグid=playlist0..)
+# <producer id="producer4" in="00:00:00.000" out="00:00:03.448">
+#   <property name="length">00:00:03.500</property>
+#   <property name="eof">pause</property>
+#   <property name="resource">C:\Git\igapon50\traning\python\Movie\せんちゃんネル\mov\BPUB2392.MP4</property>
+#   <property name="audio_index">-1</property>
+#   <property name="video_index">0</property>
+#   <property name="mute_on_pause">0</property>
+#   <property name="mlt_service">avformat-novalidate</property>
+#   <property name="seekable">1</property>
+#   <property name="aspect_ratio">1</property>
+#   <property name="global_feed">1</property>
+#   <property name="xml">was here</property>
+#   <property name="shotcut:hash">b296c075554cbbadaacf3110a66ffdd9</property>
+#   <property name="shotcut:caption">BPUB2392.MP4</property>
+# </producer>
+# <producer id="producer5" in="00:00:00.000" out="00:00:11.094">
+#   <property name="length">00:00:11.148</property>
+#   <property name="eof">pause</property>
+#   <property name="resource">C:\Git\igapon50\traning\python\Movie\せんちゃんネル\20210306\JGWU8992.MOV</property>
+#   <property name="audio_index">-1</property>
+#   <property name="video_index">0</property>
+#   <property name="mute_on_pause">0</property>
+#   <property name="mlt_service">avformat-novalidate</property>
+#   <property name="seekable">1</property>
+#   <property name="aspect_ratio">1</property>
+#   <property name="global_feed">1</property>
+#   <property name="xml">was here</property>
+#   <property name="shotcut:hash">58ecc0b168240fda90ce17106c5b50c8</property>
+#   <property name="shotcut:caption">JGWU8992.MOV</property>
+# </producer>
+# <playlist id="playlist0">
+#   <property name="shotcut:video">1</property>
+#   <property name="shotcut:name">V1</property>
+#   <entry producer="producer6" in="00:00:00.000" out="00:00:09.045"/>
+#   <entry producer="producer11" in="00:00:00.500" out="00:00:10.894"/>
+#   <entry producer="producer4" in="00:00:00.000" out="00:00:03.448"/>
+#   <entry producer="producer5" in="00:00:00.000" out="00:00:11.094"/>
+# </playlist>
+
+    # TODO タイムラインにトラックを増やす(mltファイルのplaylistタグid=playlist0..)
     def add_trac(self,
-                     name: 'str トラック名'
-                     ):
+                 name: 'str トラック名'
+                 ):
         return name
 
-    # 作成中 プレイリストのリストを返す(id, type, shotcut:name)
+# < playlist id = "playlist2" >
+#   < property name = "shotcut:video" > 1 < / property >
+#   < property name = "shotcut:name" > V2 < / property >
+#   < blank length = "00:00:00.050" / >
+# < / playlist >
+# < tractor id = "tractor6" title = "Shotcut version UNSTABLE-21.02.09" global_feed = "1"
+#    in = "00:00:00.000" out = "00:02:44.726" >
+#   < property name = "shotcut" > 1 < / property >
+#   < property name = "shotcut:projectAudioChannels" > 2 < / property >
+#   < property name = "shotcut:projectFolder" > 1 < / property >
+#   < property name = "shotcut:scaleFactor" > 0.814792 < / property >
+#   < track producer = "background" / >
+#   < track producer = "playlist0" / >
+#   < track producer = "playlist1" hide = "video" / >
+#   < track producer = "playlist2" / >
+#   < transition id = "transition12" >
+#     < property name = "a_track" > 0 < / property >
+#     < property name = "b_track" > 1 < / property >
+#     < property name = "mlt_service" > mix < / property >
+#     < property name = "always_active" > 1 < / property >
+#     < property name = "sum" > 1 < / property >
+#   < / transition >
+#   < transition id = "transition13" >
+#     < property name = "a_track" > 0 < / property >
+#     < property name = "b_track" > 1 < / property >
+#     < property name = "version" > 0.9 < / property >
+#     < property name = "mlt_service" > frei0r.cairoblend < / property >
+#     < property name = "threads" > 0 < / property >
+#     < property name = "disable" > 1 < / property >
+#   < / transition >
+#   < transition id = "transition14" >
+#     < property name = "a_track" > 0 < / property >
+#     < property name = "b_track" > 2 < / property >
+#     < property name = "mlt_service" > mix < / property >
+#     < property name = "always_active" > 1 < / property >
+#     < property name = "sum" > 1 < / property >
+#   < / transition >
+#   < transition id = "transition0" >
+#     < property name = "a_track" > 0 < / property >
+#     < property name = "b_track" > 3 < / property >
+#     < property name = "mlt_service" > mix < / property >
+#     < property name = "always_active" > 1 < / property >
+#     < property name = "sum" > 1 < / property >
+#   < / transition >
+#   < transition id = "transition1" >
+#     < property name = "a_track" > 1 < / property >
+#     < property name = "b_track" > 3 < / property >
+#     < property name = "version" > 0.9 < / property >
+#     < property name = "mlt_service" > frei0r.cairoblend < / property >
+#     < property name = "threads" > 0 < / property >
+#     < property name = "disable" > 0 < / property >
+#   < / transition >
+# < / tractor >
+
+    # TODO プレイリストのリストを返す(id, type, shotcut:name)
     def get_playlist(self,
                      playlist_list: 'list '):
         return playlist_list
 
-    # 作成中 タイムラインにshotを追加する
+    # TODO タイムラインにshotを追加する
     def add_producer(self,
                      movie: 'str 動画のファイルパス'
                      ):
         return movie
 
-    # 作成中 トランジション(フェード、ワイプ、クロスフェード、ミックス)
+    # TODO トランジション(フェード、ワイプ、クロスフェード、ミックス)
     def add_tractor(self,
                     movie: 'str 動画のファイルパス'
                     ):
         return movie
-
-  # <producer id="producer4" in="00:00:00.000" out="00:00:03.448">
-  #   <property name="length">00:00:03.500</property>
-  #   <property name="eof">pause</property>
-  #   <property name="resource">C:\Git\igapon50\traning\python\Movie\せんちゃんネル\mov\BPUB2392.MP4</property>
-  #   <property name="audio_index">-1</property>
-  #   <property name="video_index">0</property>
-  #   <property name="mute_on_pause">0</property>
-  #   <property name="mlt_service">avformat-novalidate</property>
-  #   <property name="seekable">1</property>
-  #   <property name="aspect_ratio">1</property>
-  #   <property name="global_feed">1</property>
-  #   <property name="xml">was here</property>
-  #   <property name="shotcut:hash">b296c075554cbbadaacf3110a66ffdd9</property>
-  #   <property name="shotcut:caption">BPUB2392.MP4</property>
-  # </producer>
-  # <producer id="producer5" in="00:00:00.000" out="00:00:11.094">
-  #   <property name="length">00:00:11.148</property>
-  #   <property name="eof">pause</property>
-  #   <property name="resource">C:\Git\igapon50\traning\python\Movie\せんちゃんネル\20210306\JGWU8992.MOV</property>
-  #   <property name="audio_index">-1</property>
-  #   <property name="video_index">0</property>
-  #   <property name="mute_on_pause">0</property>
-  #   <property name="mlt_service">avformat-novalidate</property>
-  #   <property name="seekable">1</property>
-  #   <property name="aspect_ratio">1</property>
-  #   <property name="global_feed">1</property>
-  #   <property name="xml">was here</property>
-  #   <property name="shotcut:hash">58ecc0b168240fda90ce17106c5b50c8</property>
-  #   <property name="shotcut:caption">JGWU8992.MOV</property>
-  # </producer>
-  # <playlist id="playlist0">
-  #   <property name="shotcut:video">1</property>
-  #   <property name="shotcut:name">V1</property>
-  #   <entry producer="producer6" in="00:00:00.000" out="00:00:09.045"/>
-  #   <entry producer="producer11" in="00:00:00.500" out="00:00:10.894"/>
-  #   <entry producer="producer4" in="00:00:00.000" out="00:00:03.448"/>
-  #   <entry producer="producer5" in="00:00:00.000" out="00:00:11.094"/>
-  # </playlist>
 
 
 # 検証コード
@@ -365,11 +397,18 @@ if __name__ == '__main__':  # インポート時には動かない
     print(target_file_path)
 
     # テストコード
-    shotcut1 = ShotcutHelper('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/テンプレート.mlt')
-    shotcut2 = ShotcutHelper('./せんちゃんネル/テンプレート.mlt')
+    # 絶対パスでmltファイルを読み込み、保存する
+    app1 = ShotcutHelper('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/テンプレート.mlt')
+    app1.save_xml('C:/Git/igapon50/traning/python/Movie/test1.mlt')
+    # 相対パスでmltファイルを読み込み、動画を2つプレイリストに追加して、保存する
+    app2 = ShotcutHelper('./せんちゃんネル/テンプレート.mlt')
     movies = [
         './せんちゃんネル/mov/BPUB2392.MP4',
         './せんちゃんネル/20210306/JGWU8992.MOV',
     ]
-    shotcut2.add_movies(movies)
-    shotcut2.save_xml('C:/Git/igapon50/traning/python/Movie/test.mlt')
+    app2.add_movies(movies)
+    app2.save_xml('./test2.mlt')
+    # TODO さらにトラックを追加して、保存する
+    # app2.save_xml('./test3.mlt')
+    # TODO さらに追加したトラックに、動画を2つ追加して、保存する
+    # app2.save_xml('./test4.mlt')
