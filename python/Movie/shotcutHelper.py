@@ -210,17 +210,23 @@ class ShotcutHelper:
 
     # リストに無い次の(アルファベット+十進数値な)名前のindex(管理番号)を返す
     def __get_next_index_playlist_entry(self):
-        for index in range(len(self.playlist_entry)):
+        ret_value = 0
+        entry_length = len(self.playlist_entry)
+        for index in range(entry_length):
             if index not in self.playlist_entry:
                 return index
-        return index + 1
+            ret_value = index + 1
+        return ret_value
 
     # リストに無い次の(アルファベット+十進数値な)名前のindex(管理番号)を返す
     def __get_next_index_producer_entry(self):
-        for index in range(len(self.producer_entry)):
+        ret_value = 0
+        entry_length = len(self.producer_entry)
+        for index in range(entry_length):
             if index not in self.producer_entry:
                 return index
-        return index + 1
+            ret_value = index + 1
+        return ret_value
 
     # 追加したtrackの管理番号を登録する
     def __register_index_playlist_entry(self,
