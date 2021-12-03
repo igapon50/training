@@ -327,9 +327,9 @@ class ShotcutHelper:
         # item(動画)の空き番号を調べる
         index = self.__get_next_index_producer_entry()
         # item(動画)のハッシュを計算
-        shotcut_hash = get_md5(movie)
+        shotcut_hash = get_md5(path)
         # item(動画)の情報を集める
-        item_value = ItemValue(movie, index, shotcut_hash)
+        item_value = ItemValue(path, index, shotcut_hash)
         # playlistにitem(動画)を追加する
         self.__add_item_to_playlist(playlist_id, item_value)
         # producerにitem(動画)を追加する
@@ -448,7 +448,7 @@ if __name__ == '__main__':  # インポート時には動かない
     # テストコード
     # 絶対パスでmltファイルを読み込み、保存する
     app1 = ShotcutHelper('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/テンプレート.mlt')
-    app1.save_xml('C:/Git/igapon50/traning/python/Movie/test1.mlt')
+    app1.save_xml('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test1.mlt')
     # 相対パスでmltファイルを読み込み、動画を2つプレイリストに追加して、保存する
     app2 = ShotcutHelper('./せんちゃんネル/テンプレート.mlt')
     movies = [
@@ -456,14 +456,14 @@ if __name__ == '__main__':  # インポート時には動かない
         './せんちゃんネル/20210306/JGWU8992.MOV',
     ]
     app2.add_movies('main_bin', movies)
-    app2.save_xml('./test2.mlt')
+    app2.save_xml('./せんちゃんネル/test2.mlt')
     # さらに、カレントフォルダ以下で「*_part*.mov」を再起検索して、見つけたファイルをトラックplaylist0に追加して、保存する
     movies = glob.glob('./**/*_part*.mov', recursive=True)
     app2.add_movies('playlist0', movies)
-    app2.save_xml('./test3.mlt')
+    app2.save_xml('./せんちゃんネル/test3.mlt')
     # さらに、トラックを1つ追加して、保存する
     target_playlist = app2.add_track('V2')
-    app2.save_xml('./test4.mlt')
+    app2.save_xml('./せんちゃんネル/test4.mlt')
     # TODO さらに、前手順で追加したトラックに、動画を2つ追加して、保存する
     # app2.add_movies(target_playlist, movies)
     # app2.save_xml('./test5.mlt')
