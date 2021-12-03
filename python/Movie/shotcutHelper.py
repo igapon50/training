@@ -49,6 +49,17 @@ def get_md5(movie: 'str ハッシュを計算するファイルパス'):
     return hash_object.hexdigest()
 
 
+# リストに無い次の(アルファベット+十進数値な)名前のindex(管理番号)を返す
+def get_next_index_entry(entry: 'list 対象の管理リスト'):
+    ret_value = 0
+    entry_length = len(entry)
+    for index in range(entry_length):
+        if index not in entry:
+            return index
+        ret_value = index + 1
+    return ret_value
+
+
 ##
 # @brief Value Objects
 # @details item(動画)の値オブジェクト。
@@ -123,22 +134,15 @@ class ShotcutHelper:
         self.dict_data = None
         self.playlist_entry = []
         self.producer_entry = []
+        self.transition_entry = []
         if mlt_path is None:
             print('プロジェクトパスがNoneです')
             sys.exit(1)
         self.mlt_path = get_abs_path(mlt_path)
         self.load_xml()
 
-    # プロジェクトファイルをロードする
-    def load_xml(self):
-        if not os.path.isfile(self.mlt_path):
-            print('プロジェクトファイルがありません')
-            sys.exit(1)
-        with open(self.mlt_path, encoding='utf-8') as fp:
-            self.xml_data = fp.read()
-        # xml → dict
-        self.dict_data = xmltodict.parse(self.xml_data)
-        # トラックのロード
+    # playlist_entryのロード
+    def __load_playlist(self):
         tractor_root = self.dict_data.get(self.mlt_name).get(self.tractor_name)
         count = len(self.app_name)
         if tractor_root.get('@title')[:count].lower() != self.app_name.lower():
@@ -154,12 +158,12 @@ class ShotcutHelper:
                 continue
             number = name[count:]
             if not number.isdecimal():
-                print('プロジェクトファイルのプレイリストentryに追加するindexを決定できなかった')
+                print('playlist_entryに追加するindexを決定できなかった')
                 sys.exit(1)
             self.__register_index_playlist_entry(int(number))
-        # TODO トランジションのロード
 
-        # プレイリストのロード
+    # producer_entryのロード
+    def __load_producer(self):
         playlist_main_bin = self.dict_data.get(self.mlt_name).get(self.playlist_name)[0]
         if playlist_main_bin.get('@id') != 'main_bin':
             print('プロジェクトファイルにmain_binがありません')
@@ -170,13 +174,50 @@ class ShotcutHelper:
             name = element[key]
             count = len(self.producer_name)
             if len(name) < count:
-                print('プロジェクトファイルのプレイリストentryのプレフィックスがproducerではない')
+                print('producer_entryのプレフィックスがproducerではない')
                 sys.exit(1)
             number = name[count:]
             if not number.isdecimal():
-                print('プロジェクトファイルのプレイリストentryに追加するindexを決定できなかった')
+                print('producer_entryに追加するindexを決定できなかった')
                 sys.exit(1)
             self.__register_index_producer_entry(int(number))
+
+    # transition_entryのロード
+    def __load_transition(self):
+        tractor_root = self.dict_data.get(self.mlt_name).get(self.tractor_name)
+        count = len(self.app_name)
+        if tractor_root.get('@title')[:count].lower() != self.app_name.lower():
+            print('プロジェクトファイルにtractorがありません')
+            sys.exit(1)
+        transition_root = tractor_root.get(self.transition_name)
+        for index in range(len(transition_root)):
+            element = transition_root[index]
+            key = '@id'
+            name = element[key]
+            count = len(self.transition_name)
+            if self.transition_name != name[:count]:
+                continue
+            number = name[count:]
+            if not number.isdecimal():
+                print('transition_entryに追加するindexを決定できなかった')
+                sys.exit(1)
+            self.__register_index_transition_entry(int(number))
+
+    # プロジェクトファイルをロードする
+    def load_xml(self):
+        if not os.path.isfile(self.mlt_path):
+            print('プロジェクトファイルがありません')
+            sys.exit(1)
+        with open(self.mlt_path, encoding='utf-8') as fp:
+            self.xml_data = fp.read()
+        # xml → dict
+        self.dict_data = xmltodict.parse(self.xml_data)
+        # トラックのロード
+        self.__load_playlist()
+        # プレイリストのロード
+        self.__load_producer()
+        # トランジションのロード
+        self.__load_transition()
 
     # shotcutプロジェクトファイルを保存する（ファイルがある場合は保存しない）
     def save_xml(self,
@@ -194,39 +235,14 @@ class ShotcutHelper:
             self.xml_data = xmltodict.unparse(self.dict_data, pretty=True)
             fp.write(self.xml_data)
 
-    # xml_dataに動画を追加する
-    def add_movies(self,
-                   movie_list: 'list 追加する動画ファイルのリスト',
-                   ):
-        if movie_list is None:
-            print('引数が空です')
-            sys.exit(1)
-        for movie in movie_list:
-            path = get_abs_path(movie)
-            if not os.path.isfile(path):
-                print('ファイルが見つかりません。処理を中止します。')
-                sys.exit(1)
-            self.add_item(path)
-
-    # リストに無い次の(アルファベット+十進数値な)名前のindex(管理番号)を返す
     def __get_next_index_playlist_entry(self):
-        ret_value = 0
-        entry_length = len(self.playlist_entry)
-        for index in range(entry_length):
-            if index not in self.playlist_entry:
-                return index
-            ret_value = index + 1
-        return ret_value
+        return get_next_index_entry(self.playlist_entry)
 
-    # リストに無い次の(アルファベット+十進数値な)名前のindex(管理番号)を返す
     def __get_next_index_producer_entry(self):
-        ret_value = 0
-        entry_length = len(self.producer_entry)
-        for index in range(entry_length):
-            if index not in self.producer_entry:
-                return index
-            ret_value = index + 1
-        return ret_value
+        return get_next_index_entry(self.producer_entry)
+
+    def __get_next_index_transition_entry(self):
+        return get_next_index_entry(self.transition_entry)
 
     # 追加したtrackの管理番号を登録する
     def __register_index_playlist_entry(self,
@@ -239,6 +255,12 @@ class ShotcutHelper:
                                         index: 'int 登録する管理番号',
                                         ):
         self.producer_entry.append(index)
+
+    # 追加したitem(動画)の管理番号を登録する
+    def __register_index_transition_entry(self,
+                                          index: 'int 登録する管理番号',
+                                          ):
+        self.transition_entry.append(index)
 
     # playlistにitem(動画)を追加する
     def __add_item_to_playlist(self,
@@ -282,28 +304,38 @@ class ShotcutHelper:
         for prop in property_list:
             last_key[self.property_name].append(prop)
 
-    # プレイリストに動画を追加する(playlistとproducerにitemを追加する。mltファイルのplaylistタグid=main_binと、producer)
+    # producerの空き番号を調べて、playlistとproducerにitem(動画)を追加する
+    # ※途中で失敗したらロールバックせずに中断
     def add_item(self,
                  movie: 'str 動画のファイルパス',
                  ):
         # item(動画)の空き番号を調べる
         index = self.__get_next_index_producer_entry()
-
         # item(動画)のハッシュを計算
         shotcut_hash = get_md5(movie)
-
         # item(動画)の情報を集める
         item_value = ItemValue(movie, index, shotcut_hash)
-
         # playlistにitem(動画)を追加する
         self.__add_item_to_playlist(item_value)
-
         # producerにitem(動画)を追加する
         self.__add_item_to_producer(item_value)
-
         # 追加したitem(動画)の管理番号を登録する
         self.__register_index_producer_entry(index)
         return
+
+    # プレイリストに動画を追加する
+    def add_movies(self,
+                   movie_list: 'list 追加する動画ファイルのリスト',
+                   ):
+        if movie_list is None:
+            print('引数が空です')
+            sys.exit(1)
+        for movie in movie_list:
+            path = get_abs_path(movie)
+            if not os.path.isfile(path):
+                print('ファイルが見つかりません。処理を中止します。')
+                sys.exit(1)
+            self.add_item(path)
 
 # <producer id="producer4" in="00:00:00.000" out="00:00:03.448">
 #   <property name="length">00:00:03.500</property>
@@ -454,7 +486,12 @@ if __name__ == '__main__':  # インポート時には動かない
     ]
     app2.add_movies(movies)
     app2.save_xml('./test2.mlt')
-    # TODO さらにトラックを追加して、保存する
+    # TODO さらに、トラックを1つ追加して、保存する
+    # mltにplaylistを追加
+    # tractorにtrackを追加
+    # tractorにtransitionを追加×2
     # app2.save_xml('./test3.mlt')
-    # TODO さらに追加したトラックに、動画を2つ追加して、保存する
+    # TODO さらに、前手順で追加したトラックに、動画を2つ追加して、保存する
+    # mltにproducerを追加
+    # playlistにproducerを追加
     # app2.save_xml('./test4.mlt')
