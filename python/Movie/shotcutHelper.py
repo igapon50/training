@@ -10,6 +10,7 @@
 # @warning
 # @note
 import datetime
+import glob
 import os
 import sys
 import pyperclip
@@ -89,8 +90,13 @@ class ItemValue:
         # item(動画)の情報を集める
         video_info = ffmpeg.probe(movie)
         creation_str = video_info.get('format').get('tags').get('creation_time')
-        date_dt = datetime.datetime.strptime(creation_str, '%Y-%m-%dT%H:%M:%S.%fZ')
-        creation_time = date_dt.strftime('%Y-%m-%dT%H:%M:%S')
+        if creation_str is None:
+            c_time = os.path.getctime(movie)
+            dt = datetime.datetime.fromtimestamp(c_time)
+            creation_time = dt.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+        else:
+            date_dt = datetime.datetime.strptime(creation_str, '%Y-%m-%dT%H:%M:%S.%fZ')
+            creation_time = date_dt.strftime('%Y-%m-%dT%H:%M:%S')
         start_time = video_info.get('format').get('start_time')
         time_s = int(float(start_time))
         time_m = int((float(start_time) - float(time_s)) * 1000000)
@@ -451,7 +457,8 @@ if __name__ == '__main__':  # インポート時には動かない
     ]
     app2.add_movies('main_bin', movies)
     app2.save_xml('./test2.mlt')
-    # さらに、トラックplaylist0に、動画を2つ追加して、保存する
+    # さらに、カレントフォルダ以下で「*_part*.mov」を再起検索して、見つけたファイルをトラックplaylist0に追加して、保存する
+    movies = glob.glob('./**/*_part*.mov', recursive=True)
     app2.add_movies('playlist0', movies)
     app2.save_xml('./test3.mlt')
     # さらに、トラックを1つ追加して、保存する
