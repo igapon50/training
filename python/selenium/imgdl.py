@@ -13,6 +13,7 @@
 # local source
 from const import *
 from func import *
+from crawling import *
 
 if __name__ == '__main__':  # インポート時には動かない
     imglist_filepath = RESULT_FILE_PATH
@@ -35,13 +36,13 @@ if __name__ == '__main__':  # インポート時には動かない
     else:
         print('引数が不正です。')
         print(msg_error_exit)
-        sys.exit(ret)
+        sys.exit()
     print(target_url)
 
     # ファイルのURLリストを作成
-    file_urllist = []
-    title = []
-    ret = HTML2imglist_SeleniumFireFox(target_url, imglist_filepath, title, file_urllist)
+    file_url_list = []
+    title_list = []
+    ret = HTML2imglist_SeleniumFireFox(target_url, imglist_filepath, title_list, file_url_list)
     if not ret:
         print(msg_error_exit)
         sys.exit(ret)
@@ -50,23 +51,26 @@ if __name__ == '__main__':  # インポート時には動かない
     print('タイトルとURLリストをクリップボードにコピーし、ファイルに保存済み')
     print('irvineにペーストして、ダウンロード完了まで待つ')
     print('ファイルのURLリストを編集すれば、名前の付け直しと圧縮するファイルを調整可能')
-    print(title[0])
+    print(title_list[0])
     # os.system('PAUSE')
 
     # ファイルのURLリストを作成
-    file_urllist = []
-    title = []
-    ret = imglist2filelist(imglist_filepath, title, file_urllist)
-    if not ret:
+    crawling = crawling(target_url, img_css_select, img_attr)
+    if not crawling:
         print(msg_error_exit)
-        sys.exit(ret)
+        sys.exit(crawling)
+    crawling.save_text(RESULT_FILE_PATH + '1.txt')
+    crawling.save_pickle(RESULT_FILE_PATH + '1.pkl')
+    # target_data = crawling.get_value_objects()
+    file_url_list = crawling.get_image_list()
+    title = crawling.get_title()
 
     # ファイルリストの作成
     # ファイルの順序がファイル名順ではない場合、正しい順序のファイル名リストを作る必要がある。
     # file_urllistからdst_file_namelistを作成する
     dst_file_namelist = []
     src_file_pathlist = []
-    ret = getfilenamefromurl(file_urllist, dst_file_namelist)
+    ret = getfilenamefromurl(file_url_list, dst_file_namelist)
     if not ret:
         print(msg_error_exit)
         sys.exit(ret)
@@ -78,12 +82,12 @@ if __name__ == '__main__':  # インポート時には動かない
             src_file_pathlist.append(folder_path + '\\' + file_name)
 
     # 2つの配列から辞書型に変換
-    dic = {key: val for key, val in zip(file_urllist, src_file_pathlist)}
+    dic = {key: val for key, val in zip(file_url_list, src_file_pathlist)}
     # フォルダーがなければ作成する
     if not os.path.isdir(folder_path):
         os.makedirs(folder_path)
     # ファイルのダウンロード
-    for file_url in file_urllist:
+    for file_url in file_url_list:
         try:
             images = download_image(file_url)
             if not os.path.isfile(dic[file_url]):  # ファイルの存在チェック
@@ -116,7 +120,7 @@ if __name__ == '__main__':  # インポート時には動かない
         sys.exit(ret)
 
     # 圧縮ファイル名付け直し
-    zipfilename = '.\\' + re.sub(r'[\\/:*?"<>|]+', '', str(title[0]))  # 禁則文字を削除する
+    zipfilename = '.\\' + re.sub(r'[\\/:*?"<>|]+', '', title)  # 禁則文字を削除する
     print('圧縮ファイル名を付け直します(タイトル)')
     print(zipfilename)
     # os.system('PAUSE')
