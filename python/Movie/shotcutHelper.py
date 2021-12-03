@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ##
-# @file movieCutter.py
+# @file shotcutHelper.py
 # @version 1.0.0
 # @author Ryosuke Igarashi(HN:igapon)
-# @date 2021/11/13
+# @date 2021/12/4
 # @brief 動画編集shotcutのプロジェクトファイルを編集するヘルパー
 # @details
 # @warning
