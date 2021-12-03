@@ -164,18 +164,15 @@ class ShotcutHelper:
 
     # producer_entryのロード
     def __load_producer(self):
-        playlist_main_bin = self.dict_data.get(self.mlt_name).get(self.playlist_name)[0]
-        if playlist_main_bin.get('@id') != 'main_bin':
-            print('プロジェクトファイルにmain_binがありません')
-            sys.exit(1)
-        for index in range(len(playlist_main_bin.get('entry'))):
-            element = playlist_main_bin.get('entry')[index]
-            key = '@' + self.producer_name
+        mlt_root = self.dict_data.get(self.mlt_name)
+        target_root = mlt_root.get(self.producer_name)
+        for index in range(len(target_root)):
+            element = target_root[index]
+            key = '@id'
             name = element[key]
             count = len(self.producer_name)
-            if len(name) < count:
-                print('producer_entryのプレフィックスがproducerではない')
-                sys.exit(1)
+            if self.producer_name != name[:count]:
+                continue
             number = name[count:]
             if not number.isdecimal():
                 print('producer_entryに追加するindexを決定できなかった')
@@ -204,6 +201,7 @@ class ShotcutHelper:
             self.__register_index_transition_entry(int(number))
 
     # プロジェクトファイルをロードする
+    # TODO ロード済みで呼び出されると、clear処理が不足
     def load_xml(self):
         if not os.path.isfile(self.mlt_path):
             print('プロジェクトファイルがありません')
@@ -212,11 +210,9 @@ class ShotcutHelper:
             self.xml_data = fp.read()
         # xml → dict
         self.dict_data = xmltodict.parse(self.xml_data)
-        # トラックのロード
+        # 各管理テーブルをロードする
         self.__load_playlist()
-        # プレイリストのロード
         self.__load_producer()
-        # トランジションのロード
         self.__load_transition()
 
     # shotcutプロジェクトファイルを保存する（ファイルがある場合は保存しない）
@@ -264,16 +260,18 @@ class ShotcutHelper:
 
     # playlistにitem(動画)を追加する
     def __add_item_to_playlist(self,
+                               playlist_id: 'str 追加するプレイリストのID',
                                item_value: 'ItemValue item(動画)値クラス',
                                ):
-        playlist_main_bin = self.dict_data.get(self.mlt_name).get(self.playlist_name)[0]
-        if playlist_main_bin.get('@id') != 'main_bin':
-            print('プロジェクトファイルにmain_binがありません')
-            sys.exit(1)
-        od = collections.OrderedDict([('@' + self.producer_name, self.producer_name + str(item_value.index)),
-                                      ('@in', item_value.in_time),
-                                      ('@out', item_value.out_time)])
-        playlist_main_bin.get('entry').append(od)
+        for target_root in self.dict_data.get(self.mlt_name).get(self.playlist_name):
+            if target_root.get('@id') == playlist_id:
+                od = collections.OrderedDict([('@' + self.producer_name, self.producer_name + str(item_value.index)),
+                                              ('@in', item_value.in_time),
+                                              ('@out', item_value.out_time)])
+                target_root.get('entry').append(od)
+                return
+        print('プロジェクトファイルに指定のplaylistがありません')
+        sys.exit(1)
 
     # producerにitem(動画)を追加する
     def __add_item_to_producer(self,
@@ -306,9 +304,16 @@ class ShotcutHelper:
 
     # producerの空き番号を調べて、playlistとproducerにitem(動画)を追加する
     # ※途中で失敗したらロールバックせずに中断
-    def add_item(self,
-                 movie: 'str 動画のファイルパス',
-                 ):
+    def add_movie(self,
+                  playlist_id: 'str 対象のプレイリストのID',
+                  movie: 'str 追加する動画のファイルパス',
+                  ):
+        if playlist_id is None:
+            print('引数playlist_idが空です')
+            sys.exit(1)
+        if movie is None:
+            print('引数movieが空です')
+            sys.exit(1)
         # item(動画)の空き番号を調べる
         index = self.__get_next_index_producer_entry()
         # item(動画)のハッシュを計算
@@ -316,7 +321,7 @@ class ShotcutHelper:
         # item(動画)の情報を集める
         item_value = ItemValue(movie, index, shotcut_hash)
         # playlistにitem(動画)を追加する
-        self.__add_item_to_playlist(item_value)
+        self.__add_item_to_playlist(playlist_id, item_value)
         # producerにitem(動画)を追加する
         self.__add_item_to_producer(item_value)
         # 追加したitem(動画)の管理番号を登録する
@@ -325,126 +330,86 @@ class ShotcutHelper:
 
     # プレイリストに動画を追加する
     def add_movies(self,
-                   movie_list: 'list 追加する動画ファイルのリスト',
+                   playlist_id: 'str 対象のプレイリストのID',
+                   movie_list: 'list 追加する動画ファイルパスのリスト',
                    ):
+        if playlist_id is None:
+            print('引数playlist_idが空です')
+            sys.exit(1)
         if movie_list is None:
-            print('引数が空です')
+            print('引数movie_listが空です')
             sys.exit(1)
         for movie in movie_list:
             path = get_abs_path(movie)
             if not os.path.isfile(path):
                 print('ファイルが見つかりません。処理を中止します。')
                 sys.exit(1)
-            self.add_item(path)
-
-# <producer id="producer4" in="00:00:00.000" out="00:00:03.448">
-#   <property name="length">00:00:03.500</property>
-#   <property name="eof">pause</property>
-#   <property name="resource">C:\Git\igapon50\traning\python\Movie\せんちゃんネル\mov\BPUB2392.MP4</property>
-#   <property name="audio_index">-1</property>
-#   <property name="video_index">0</property>
-#   <property name="mute_on_pause">0</property>
-#   <property name="mlt_service">avformat-novalidate</property>
-#   <property name="seekable">1</property>
-#   <property name="aspect_ratio">1</property>
-#   <property name="global_feed">1</property>
-#   <property name="xml">was here</property>
-#   <property name="shotcut:hash">b296c075554cbbadaacf3110a66ffdd9</property>
-#   <property name="shotcut:caption">BPUB2392.MP4</property>
-# </producer>
-# <producer id="producer5" in="00:00:00.000" out="00:00:11.094">
-#   <property name="length">00:00:11.148</property>
-#   <property name="eof">pause</property>
-#   <property name="resource">C:\Git\igapon50\traning\python\Movie\せんちゃんネル\20210306\JGWU8992.MOV</property>
-#   <property name="audio_index">-1</property>
-#   <property name="video_index">0</property>
-#   <property name="mute_on_pause">0</property>
-#   <property name="mlt_service">avformat-novalidate</property>
-#   <property name="seekable">1</property>
-#   <property name="aspect_ratio">1</property>
-#   <property name="global_feed">1</property>
-#   <property name="xml">was here</property>
-#   <property name="shotcut:hash">58ecc0b168240fda90ce17106c5b50c8</property>
-#   <property name="shotcut:caption">JGWU8992.MOV</property>
-# </producer>
-# <playlist id="playlist0">
-#   <property name="shotcut:video">1</property>
-#   <property name="shotcut:name">V1</property>
-#   <entry producer="producer6" in="00:00:00.000" out="00:00:09.045"/>
-#   <entry producer="producer11" in="00:00:00.500" out="00:00:10.894"/>
-#   <entry producer="producer4" in="00:00:00.000" out="00:00:03.448"/>
-#   <entry producer="producer5" in="00:00:00.000" out="00:00:11.094"/>
-# </playlist>
+            self.add_movie(playlist_id, path)
 
     # TODO タイムラインにトラックを増やす(mltファイルのplaylistタグid=playlist0..)
-    def add_trac(self,
-                 name: 'str トラック名'
-                 ):
-        return name
-
-# < playlist id = "playlist2" >
-#   < property name = "shotcut:video" > 1 < / property >
-#   < property name = "shotcut:name" > V2 < / property >
-#   < blank length = "00:00:00.050" / >
-# < / playlist >
-# < tractor id = "tractor6" title = "Shotcut version UNSTABLE-21.02.09" global_feed = "1"
-#    in = "00:00:00.000" out = "00:02:44.726" >
-#   < property name = "shotcut" > 1 < / property >
-#   < property name = "shotcut:projectAudioChannels" > 2 < / property >
-#   < property name = "shotcut:projectFolder" > 1 < / property >
-#   < property name = "shotcut:scaleFactor" > 0.814792 < / property >
-#   < track producer = "background" / >
-#   < track producer = "playlist0" / >
-#   < track producer = "playlist1" hide = "video" / >
-#   < track producer = "playlist2" / >
-#   < transition id = "transition12" >
-#     < property name = "a_track" > 0 < / property >
-#     < property name = "b_track" > 1 < / property >
-#     < property name = "mlt_service" > mix < / property >
-#     < property name = "always_active" > 1 < / property >
-#     < property name = "sum" > 1 < / property >
-#   < / transition >
-#   < transition id = "transition13" >
-#     < property name = "a_track" > 0 < / property >
-#     < property name = "b_track" > 1 < / property >
-#     < property name = "version" > 0.9 < / property >
-#     < property name = "mlt_service" > frei0r.cairoblend < / property >
-#     < property name = "threads" > 0 < / property >
-#     < property name = "disable" > 1 < / property >
-#   < / transition >
-#   < transition id = "transition14" >
-#     < property name = "a_track" > 0 < / property >
-#     < property name = "b_track" > 2 < / property >
-#     < property name = "mlt_service" > mix < / property >
-#     < property name = "always_active" > 1 < / property >
-#     < property name = "sum" > 1 < / property >
-#   < / transition >
-#   < transition id = "transition0" >
-#     < property name = "a_track" > 0 < / property >
-#     < property name = "b_track" > 3 < / property >
-#     < property name = "mlt_service" > mix < / property >
-#     < property name = "always_active" > 1 < / property >
-#     < property name = "sum" > 1 < / property >
-#   < / transition >
-#   < transition id = "transition1" >
-#     < property name = "a_track" > 1 < / property >
-#     < property name = "b_track" > 3 < / property >
-#     < property name = "version" > 0.9 < / property >
-#     < property name = "mlt_service" > frei0r.cairoblend < / property >
-#     < property name = "threads" > 0 < / property >
-#     < property name = "disable" > 0 < / property >
-#   < / transition >
-# < / tractor >
-
-    # TODO プレイリストのリストを返す(id, type, shotcut:name)
-    def get_playlist(self,
-                     playlist_list: 'list '):
-        return playlist_list
+    def add_track(self,
+                  name: 'str トラック名'
+                  ):
+        # playlistの空き番号を調べる
+        playlist_index = self.__get_next_index_playlist_entry()
+        # TODO playlistの情報を集める
+        # playlist_value = PlaylistValue(name)
+        # TODO mltにplaylistを追加する
+        # self.__add_playlist_to_mlt(playlist_value)
+        # < playlist id = "playlist2" >
+        #   < property name = "shotcut:video" > 1 < / property >
+        #   < property name = "shotcut:name" > V2 < / property >
+        #   < blank length = "00:00:00.050" / >
+        # < / playlist >
+        # TODO tractorにtrackを追加する
+        # self.__add_track_to_tractor(index)
+        # < tractor id = "tractor6" title = "Shotcut version UNSTABLE-21.02.09" global_feed = "1"
+        #    in = "00:00:00.000" out = "00:02:44.726" >
+        #   < track producer = "playlist2" / >
+        # transitionの空き番号を調べる
+        transition_index = self.__get_next_index_transition_entry()
+        # TODO transitionの情報を集める
+        # transition_value = TransitionValue(name)
+        # TODO tractorにtransitionを追加する、一個目
+        # self.__add_transition_to_tractor(transition_value)
+        #   < transition id = "transition0" >
+        #     < property name = "a_track" > 0 < / property >
+        #     < property name = "b_track" > 3 < / property >
+        #     < property name = "mlt_service" > mix < / property >
+        #     < property name = "always_active" > 1 < / property >
+        #     < property name = "sum" > 1 < / property >
+        #   < / transition >
+        # < / tractor >
+        # 追加したtransitionの管理番号を登録する
+        self.__register_index_transition_entry(transition_index)
+        # transitionの空き番号を調べる
+        transition_index = self.__get_next_index_transition_entry()
+        # TODO transitionの情報を集める
+        # transition_value = TransitionValue(name)
+        # TODO tractorにtransitionを追加する、二個目
+        # self.__add_transition_to_tractor(transition_value)
+        #   < transition id = "transition1" >
+        #     < property name = "a_track" > 1 < / property >
+        #     < property name = "b_track" > 3 < / property >
+        #     < property name = "version" > 0.9 < / property >
+        #     < property name = "mlt_service" > frei0r.cairoblend < / property >
+        #     < property name = "threads" > 0 < / property >
+        #     < property name = "disable" > 0 < / property >
+        #   < / transition >
+        # < / tractor >
+        # 追加したtransitionの管理番号を登録する
+        self.__register_index_transition_entry(transition_index)
+        # 追加したplaylistの管理番号を登録する
+        self.__register_index_playlist_entry(playlist_index)
+        return self.playlist_name + str(playlist_index)
 
     # TODO タイムラインにshotを追加する
     def add_producer(self,
                      movie: 'str 動画のファイルパス'
                      ):
+        # mltにproducerを追加
+        # playlistにproducerを追加
+        # playlistからblankを削除？
         return movie
 
     # TODO トランジション(フェード、ワイプ、クロスフェード、ミックス)
@@ -471,7 +436,7 @@ if __name__ == '__main__':  # インポート時には動かない
     # クリップボードが空なら、デフォルトを用いる
     else:
         print('引数が不正です。')
-        sys.exit()
+        sys.exit(1)
     print(target_file_path)
 
     # テストコード
@@ -484,14 +449,14 @@ if __name__ == '__main__':  # インポート時には動かない
         './せんちゃんネル/mov/BPUB2392.MP4',
         './せんちゃんネル/20210306/JGWU8992.MOV',
     ]
-    app2.add_movies(movies)
+    app2.add_movies('main_bin', movies)
     app2.save_xml('./test2.mlt')
-    # TODO さらに、トラックを1つ追加して、保存する
-    # mltにplaylistを追加
-    # tractorにtrackを追加
-    # tractorにtransitionを追加×2
-    # app2.save_xml('./test3.mlt')
+    # さらに、トラックplaylist0に、動画を2つ追加して、保存する
+    app2.add_movies('playlist0', movies)
+    app2.save_xml('./test3.mlt')
+    # さらに、トラックを1つ追加して、保存する
+    target_playlist = app2.add_track('V2')
+    app2.save_xml('./test4.mlt')
     # TODO さらに、前手順で追加したトラックに、動画を2つ追加して、保存する
-    # mltにproducerを追加
-    # playlistにproducerを追加
-    # app2.save_xml('./test4.mlt')
+    # app2.add_movies(target_playlist, movies)
+    # app2.save_xml('./test5.mlt')
