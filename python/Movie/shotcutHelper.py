@@ -320,6 +320,10 @@ class ShotcutHelper:
         if movie is None:
             print('引数movieが空です')
             sys.exit(1)
+        path = get_abs_path(movie)
+        if not os.path.isfile(path):
+            print('ファイルが見つかりません。処理を中止します。')
+            sys.exit(1)
         # item(動画)の空き番号を調べる
         index = self.__get_next_index_producer_entry()
         # item(動画)のハッシュを計算
@@ -346,11 +350,7 @@ class ShotcutHelper:
             print('引数movie_listが空です')
             sys.exit(1)
         for movie in movie_list:
-            path = get_abs_path(movie)
-            if not os.path.isfile(path):
-                print('ファイルが見つかりません。処理を中止します。')
-                sys.exit(1)
-            self.add_movie(playlist_id, path)
+            self.add_movie(playlist_id, movie)
 
     # TODO タイムラインにトラックを増やす(mltファイルのplaylistタグid=playlist0..)
     def add_track(self,
