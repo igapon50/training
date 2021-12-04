@@ -149,6 +149,7 @@ class ShotcutHelper:
 
     # playlist_entryのロード
     def __load_playlist(self):
+        self.__clear_playlist_entry()
         tractor_root = self.dict_data.get(self.mlt_name).get(self.tractor_name)
         count = len(self.app_name)
         if tractor_root.get('@title')[:count].lower() != self.app_name.lower():
@@ -170,6 +171,7 @@ class ShotcutHelper:
 
     # producer_entryのロード
     def __load_producer(self):
+        self.__clear_producer_entry()
         mlt_root = self.dict_data.get(self.mlt_name)
         target_root = mlt_root.get(self.producer_name)
         for index in range(len(target_root)):
@@ -187,6 +189,7 @@ class ShotcutHelper:
 
     # transition_entryのロード
     def __load_transition(self):
+        self.__clear_transition_entry()
         tractor_root = self.dict_data.get(self.mlt_name).get(self.tractor_name)
         count = len(self.app_name)
         if tractor_root.get('@title')[:count].lower() != self.app_name.lower():
@@ -207,7 +210,6 @@ class ShotcutHelper:
             self.__register_index_transition_entry(int(number))
 
     # プロジェクトファイルをロードする
-    # TODO ロード済みで呼び出されると、clear処理が不足
     def load_xml(self):
         if not os.path.isfile(self.mlt_path):
             print('プロジェクトファイルがありません')
@@ -258,11 +260,19 @@ class ShotcutHelper:
                                         ):
         self.producer_entry.append(index)
 
-    # 追加したitem(動画)の管理番号を登録する
     def __register_index_transition_entry(self,
                                           index: 'int 登録する管理番号',
                                           ):
         self.transition_entry.append(index)
+
+    def __clear_playlist_entry(self):
+        self.playlist_entry.clear()
+
+    def __clear_producer_entry(self):
+        self.producer_entry.clear()
+
+    def __clear_transition_entry(self):
+        self.transition_entry.clear()
 
     # playlistにitem(動画)を追加する
     def __add_item_to_playlist(self,
@@ -352,16 +362,39 @@ class ShotcutHelper:
         for movie in movie_list:
             self.add_movie(playlist_id, movie)
 
-    # TODO タイムラインにトラックを増やす(mltファイルのplaylistタグid=playlist0..)
+    # TODO mltににplaylistを追加する
+    def __add_playlist_to_mlt(self,
+                              name: 'str トラック名(他のトラックと重複可能)'
+                              ):
+        playlist_root = self.dict_data.get('mlt').get(self.playlist_name)
+        od2 = collections.OrderedDict([('@length', '00:00:00.040')])
+        # TODO 0をindexに置き換える
+        od = collections.OrderedDict([('@id', self.playlist_name + str(0)),
+                                      (self.property_name, []),
+                                      ('blank', od2),
+                                      ])
+        playlist_root.append(od)
+        property_list = [collections.OrderedDict([('@name', 'shotcut:video'), ('#text', '1')]),
+                         collections.OrderedDict([('@name', 'shotcut:name'), ('#text', name)]),
+                         ]
+        last_key = next(reversed(playlist_root), None)
+        for prop in property_list:
+            last_key[self.property_name].append(prop)
+        return
+
+    # TODO タイムラインに(動画)トラックを増やす(mltファイルのplaylistタグid=playlist0..)
     def add_track(self,
-                  name: 'str トラック名'
+                  name: 'str トラック名(他のトラックと重複可能)'
                   ):
         # playlistの空き番号を調べる
         playlist_index = self.__get_next_index_playlist_entry()
         # TODO playlistの情報を集める
         # playlist_value = PlaylistValue(name)
-        # TODO mltにplaylistを追加する
-        # self.__add_playlist_to_mlt(playlist_value)
+        # TODO mltにplaylist id="main_bin"がなければmain_binを追加し、mltのproducer="main_bin"に変更する
+        # TODO mltにtractorがなければ、playlist id="playlist0"をtractor id="tractor0"に変更し、tractorにtransitionを追加する
+        # TODO mltにplaylist id="background"がなければbackgroundを追加し、tractorにtrackを追加する
+        # TODO mltにplaylist id="playlist{index}"を追加し、tractorにtrackを追加する
+        self.__add_playlist_to_mlt(name)
         # < playlist id = "playlist2" >
         #   < property name = "shotcut:video" > 1 < / property >
         #   < property name = "shotcut:name" > V2 < / property >
