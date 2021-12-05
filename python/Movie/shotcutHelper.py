@@ -458,27 +458,7 @@ class ShotcutHelper:
         return movie
 
 
-# 検証コード
-if __name__ == '__main__':  # インポート時には動かない
-    target_file_path = 'C:/Git/igapon50/traning/python/Movie/せんちゃんネル/テンプレート.mlt'
-    # 引数チェック
-    if 2 == len(sys.argv):
-        # Pythonに以下の2つ引数を渡す想定
-        # 0は固定でスクリプト名
-        # 1.対象のファイルパス
-        target_file_path = sys.argv[1]
-    elif 1 == len(sys.argv):
-        # 引数がなければ、クリップボードから得る
-        paste_str = pyperclip.paste()
-        if 0 < len(paste_str):
-            target_file_path = paste_str
-    # クリップボードが空なら、デフォルトを用いる
-    else:
-        print('引数が不正です。')
-        sys.exit(1)
-    print(target_file_path)
-
-    # テストコード
+def test(target_file_path: 'str 対象のファイルパス'):
     # 絶対パスでmltファイルを読み込み、保存する
     app1 = ShotcutHelper('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/テンプレート.mlt')
     app1.save_xml('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test1.mlt')
@@ -500,3 +480,40 @@ if __name__ == '__main__':  # インポート時には動かない
     # TODO さらに、前手順で追加したトラックに、動画を2つ追加して、保存する
     # app2.add_movies(target_playlist, movies)
     # app2.save_xml('./test5.mlt')
+
+
+# 検証コード
+if __name__ == '__main__':  # インポート時には動かない
+    target_file_path = 'C:/Git/igapon50/traning/python/Movie/せんちゃんネル/テンプレート.mlt'
+    # 引数チェック
+    if 2 == len(sys.argv):
+        # Pythonに以下の2つ引数を渡す想定
+        # 0は固定でスクリプト名
+        # 1.対象のファイルパス
+        target_file_path = sys.argv[1]
+    elif 1 == len(sys.argv):
+        # 引数がなければ、クリップボードから得る
+        paste_str = pyperclip.paste()
+        if 0 < len(paste_str):
+            target_file_path = paste_str
+    # クリップボードが空なら、デフォルトを用いる
+    else:
+        print('引数が不正です。')
+        sys.exit(1)
+    print(target_file_path)
+
+    # パスを作成
+    target_folder = os.path.dirname(target_file_path)
+    target_mlt_basename = os.path.basename(target_file_path)
+    target_mlt_file_name = os.path.splitext(target_mlt_basename)[0]
+    target_mlt_file_ext = os.path.splitext(target_mlt_basename)[1]
+    search_path = target_folder + '\\**\\*_part*.mov'
+    create_mlt_path = os.path.join(target_folder, target_mlt_file_name + '_new' + target_mlt_file_ext)
+    movies = glob.glob(search_path, recursive=True)
+    app = ShotcutHelper(target_file_path)
+    app.add_movies('main_bin', movies)
+    app.add_movies('playlist0', movies)
+    app.save_xml(create_mlt_path)
+
+    # テストコード
+    # test(target_file_path)

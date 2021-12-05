@@ -99,7 +99,7 @@ if __name__ == '__main__':  # インポート時には動かない
             keep_blocks.append({"from": block["to"], "to": len(data), "suffix": "keep"})
 
     # 出力用テキストファイルパス
-    padding_time = 0.2  # [秒]カットしない無音部分の長さ
+    padding_time = 0.1  # [秒]カットしない無音部分の長さ
     list_files_path = []
 
     # list_keep 残す動画部分のリスト：[{"from": 始点, "to": 終点}, {"from": ...}, ...]
