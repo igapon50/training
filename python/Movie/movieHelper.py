@@ -15,9 +15,7 @@ import os  # ファイルパス分解
 from dataclasses import dataclass
 
 import speech_recognition as sr
-import wave
 import math
-import struct
 from pydub import AudioSegment
 import pyperclip
 import subprocess
@@ -70,10 +68,10 @@ class MovieHelper:
         self.movie_value = movie_value
         self.movie_filepath = movie_value.target_filepath
         self.wave_filepath = os.path.join(self.movie_value.target_dirname,
-                                          "{}{}".format(self.movie_value.target_filename, '.wav')
+                                          self.movie_value.target_filename + '.wav',
                                           )
         self.text_filepath = os.path.join(self.movie_value.target_dirname,
-                                          "{}{}".format(self.movie_value.target_filename, '.txt')
+                                          self.movie_value.target_filename + '.txt',
                                           )
 
     # 動画ファイルから音声ファイルを作る
@@ -98,41 +96,45 @@ class MovieHelper:
         subprocess.run(command_output, shell=True, stdin=subprocess.DEVNULL)
         return self.wave_filepath
 
-    def cut_wave(self,
-                 time: 'int 区切り時間[秒]' = 30
-                 ):
-        # timeの単位は[sec]
-        # ファイルを読み出し
+    # 音声ファイルを消費して、指定秒数単位に分割した音声ファイルを作り、そのパスリストを返す
+    def _split_wave(self,
+                    time: 'int 区切る時間[秒]' = 30
+                    ):
+        # ファイルを読み込み
         source_audio = AudioSegment.from_wav(self.wave_filepath)
-        # waveファイルが持つ性質を取得
+        # waveファイルの情報を取得
         total_time = source_audio.duration_seconds
-        integer = math.floor(total_time)  # 小数点以下切り捨て
-        num_cut = int(integer // time)
-        # wavファイルを削除
+        integer = math.floor(total_time)  # 小数点以下切り下げ
+        num_cut = math.ceil(integer / time)  # 小数点以下切り上げ
+        # TODO 別の場所に移動する
+        #  wavファイルを削除
         os.remove(self.wave_filepath)
-        outf_list = []
+        output_file_list = []
         for i in range(num_cut):
             # 出力データを生成
-            outf = os.path.join(self.movie_value.target_dirname,
-                                "{}{}".format(self.movie_value.target_filename + '_' + str(i).zfill(3), '.wav')
-                                )
+            output_file_path = os.path.join(self.movie_value.target_dirname,
+                                            self.movie_value.target_filename + '_' + str(i).zfill(3) + '.wav',
+                                            )
             start_cut = i * time * 1000
-            end_cut = (i + 1) * time * 1000
+            if total_time < (i + 1) * time:
+                end_cut = total_time * 1000
+            else:
+                end_cut = (i + 1) * time * 1000
             new_audio = source_audio[start_cut:end_cut]
             # 書き出し
-            new_audio.export(outf, format="wav")
+            new_audio.export(output_file_path, format="wav")
             # リストに追加
-            outf_list.append(outf)
-        return outf_list
+            output_file_list.append(output_file_path)
+        return output_file_list
 
-    # 複数ファイルの音声のテキスト変換
-    def cut_waves_str(self,
-                      outf_list
-                      ):
+    # 分割した音声ファイルを消費して、文字起こし結果を返す
+    def _split_waves_str(self,
+                         input_file_list: 'list 音声ファイルパスリスト'
+                         ):
         output_text = ''
         # 複数処理
         print('音声のテキスト変換')
-        for fwav in outf_list:
+        for fwav in input_file_list:
             print(fwav)
             r = sr.Recognizer()
             # 音声->テキスト
@@ -140,22 +142,24 @@ class MovieHelper:
                 audio = r.record(source)
             text = r.recognize_google(audio, language='ja-JP')
             # 各ファイルの出力結果の結合
-            output_text = output_text + text + '\n'
-            # wavファイルを削除
+            output_text += text + '\n'
+            # TODO 別の場所に移動する。
+            #  wavファイルを削除
             os.remove(fwav)
         return output_text
 
-    # movからwavへの変換から音声のテキスト変換まで
+    # 動画ファイルの文字起こし
     def mov_to_text(self):
-        # 音声ファイルへの変換
+        # 動画ファイルから音声ファイルを作る
         self.mov_to_wave()
-        # 音声ファイルの分割(デフォルト30秒)
-        cut_waves = self.cut_wave()
-        # 複数ファイルの音声のテキスト変換
-        out_text = self.cut_waves_str(cut_waves)
-        # テキストファイルへの入力
+        # 音声ファイルを消費して、指定秒数単位に分割した音声ファイルを作り、そのパスリストを返す
+        split_waves = self._split_wave()
+        # 分割した音声ファイルを消費して、文字起こし結果を返す
+        out_text = self._split_waves_str(split_waves)
+        # 文字起こし結果を保存する
         with open(self.text_filepath, 'w') as fp:
             fp.write(out_text)
+        return out_text
 
 
 if __name__ == '__main__':  # インポート時には動かない
@@ -179,5 +183,4 @@ if __name__ == '__main__':  # インポート時には動かない
     # 動画から音声を切り出す
     movie_value = MovieValue(target_file_path)
     mh = MovieHelper(movie_value)
-    # 変換の実行
     mh.mov_to_text()
