@@ -41,6 +41,9 @@ class MovieValue:
         if movie_path is None:
             print('動画ファイルパスがNoneです')
             sys.exit(1)
+        if not os.path.isfile(movie_path):
+            print(movie_path, '動画ファイルが存在しません', sep=':')
+            sys.exit(1)
         object.__setattr__(self, "target_filepath", movie_path)
         target_basename = os.path.basename(movie_path)
         object.__setattr__(self, "target_basename", target_basename)
@@ -60,11 +63,13 @@ class MovieHelper:
 
     # コンストラクタ
     def __init__(self,
-                 movie_value: 'MovieValue movieの値オブジェクト',
+                 movie_value,  # str movieのファイルパス、または、MovieValue movieの値オブジェクト
                  ):
         if movie_value is None:
             print('動画の値オブジェクトがNoneです')
             sys.exit(1)
+        if isinstance(movie_value, str):
+            movie_value = MovieValue(movie_value)
         self.movie_value = movie_value
         self.movie_filepath = movie_value.target_filepath
         self.wave_filepath = os.path.join(self.movie_value.target_dirname,
@@ -79,7 +84,9 @@ class MovieHelper:
         # パスの分解
         # このメソッドはmovファイルを対象とする
         if self.movie_value.target_ext.lower() != '.mov':
-            print('ターゲットファイルの種類が不正です。ファイル拡張子movを指定してください')
+            print(self.movie_value.target_ext.lower(),
+                  'ターゲットファイルの種類が不正です。ファイル拡張子movのファイルを指定してください',
+                  sep=':')
             sys.exit(1)
         # 動画ファイルから音声ファイルを作る
         command_output = ["ffmpeg",
@@ -181,6 +188,5 @@ if __name__ == '__main__':  # インポート時には動かない
     print(target_file_path)
 
     # 動画から音声を切り出す
-    movie_value = MovieValue(target_file_path)
-    mh = MovieHelper(movie_value)
+    mh = MovieHelper(target_file_path)
     mh.mov_to_text()
