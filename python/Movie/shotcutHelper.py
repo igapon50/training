@@ -149,6 +149,7 @@ class ShotcutHelper:
 
     # playlist_entryのロード
     def __load_playlist(self):
+        self.__clear_playlist_entry()
         tractor_root = self.dict_data.get(self.mlt_name).get(self.tractor_name)
         count = len(self.app_name)
         if tractor_root.get('@title')[:count].lower() != self.app_name.lower():
@@ -170,6 +171,7 @@ class ShotcutHelper:
 
     # producer_entryのロード
     def __load_producer(self):
+        self.__clear_producer_entry()
         mlt_root = self.dict_data.get(self.mlt_name)
         target_root = mlt_root.get(self.producer_name)
         for index in range(len(target_root)):
@@ -187,6 +189,7 @@ class ShotcutHelper:
 
     # transition_entryのロード
     def __load_transition(self):
+        self.__clear_transition_entry()
         tractor_root = self.dict_data.get(self.mlt_name).get(self.tractor_name)
         count = len(self.app_name)
         if tractor_root.get('@title')[:count].lower() != self.app_name.lower():
@@ -207,7 +210,6 @@ class ShotcutHelper:
             self.__register_index_transition_entry(int(number))
 
     # プロジェクトファイルをロードする
-    # TODO ロード済みで呼び出されると、clear処理が不足
     def load_xml(self):
         if not os.path.isfile(self.mlt_path):
             print('プロジェクトファイルがありません')
@@ -258,11 +260,19 @@ class ShotcutHelper:
                                         ):
         self.producer_entry.append(index)
 
-    # 追加したitem(動画)の管理番号を登録する
     def __register_index_transition_entry(self,
                                           index: 'int 登録する管理番号',
                                           ):
         self.transition_entry.append(index)
+
+    def __clear_playlist_entry(self):
+        self.playlist_entry.clear()
+
+    def __clear_producer_entry(self):
+        self.producer_entry.clear()
+
+    def __clear_transition_entry(self):
+        self.transition_entry.clear()
 
     # playlistにitem(動画)を追加する
     def __add_item_to_playlist(self,
@@ -352,16 +362,39 @@ class ShotcutHelper:
         for movie in movie_list:
             self.add_movie(playlist_id, movie)
 
-    # TODO タイムラインにトラックを増やす(mltファイルのplaylistタグid=playlist0..)
+    # TODO mltににplaylistを追加する
+    def __add_playlist_to_mlt(self,
+                              name: 'str トラック名(他のトラックと重複可能)'
+                              ):
+        playlist_root = self.dict_data.get('mlt').get(self.playlist_name)
+        od2 = collections.OrderedDict([('@length', '00:00:00.040')])
+        # TODO 0をindexに置き換える
+        od = collections.OrderedDict([('@id', self.playlist_name + str(0)),
+                                      (self.property_name, []),
+                                      ('blank', od2),
+                                      ])
+        playlist_root.append(od)
+        property_list = [collections.OrderedDict([('@name', 'shotcut:video'), ('#text', '1')]),
+                         collections.OrderedDict([('@name', 'shotcut:name'), ('#text', name)]),
+                         ]
+        last_key = next(reversed(playlist_root), None)
+        for prop in property_list:
+            last_key[self.property_name].append(prop)
+        return
+
+    # TODO タイムラインに(動画)トラックを増やす(mltファイルのplaylistタグid=playlist0..)
     def add_track(self,
-                  name: 'str トラック名'
+                  name: 'str トラック名(他のトラックと重複可能)'
                   ):
         # playlistの空き番号を調べる
         playlist_index = self.__get_next_index_playlist_entry()
         # TODO playlistの情報を集める
         # playlist_value = PlaylistValue(name)
-        # TODO mltにplaylistを追加する
-        # self.__add_playlist_to_mlt(playlist_value)
+        # TODO mltにplaylist id="main_bin"がなければmain_binを追加し、mltのproducer="main_bin"に変更する
+        # TODO mltにtractorがなければ、playlist id="playlist0"をtractor id="tractor0"に変更し、tractorにtransitionを追加する
+        # TODO mltにplaylist id="background"がなければbackgroundを追加し、tractorにtrackを追加する
+        # TODO mltにplaylist id="playlist{index}"を追加し、tractorにtrackを追加する
+        self.__add_playlist_to_mlt(name)
         # < playlist id = "playlist2" >
         #   < property name = "shotcut:video" > 1 < / property >
         #   < property name = "shotcut:name" > V2 < / property >
@@ -425,27 +458,7 @@ class ShotcutHelper:
         return movie
 
 
-# 検証コード
-if __name__ == '__main__':  # インポート時には動かない
-    target_file_path = 'C:/Git/igapon50/traning/python/Movie/せんちゃんネル/テンプレート.mlt'
-    # 引数チェック
-    if 2 == len(sys.argv):
-        # Pythonに以下の2つ引数を渡す想定
-        # 0は固定でスクリプト名
-        # 1.対象のファイルパス
-        target_file_path = sys.argv[1]
-    elif 1 == len(sys.argv):
-        # 引数がなければ、クリップボードから得る
-        paste_str = pyperclip.paste()
-        if 0 < len(paste_str):
-            target_file_path = paste_str
-    # クリップボードが空なら、デフォルトを用いる
-    else:
-        print('引数が不正です。')
-        sys.exit(1)
-    print(target_file_path)
-
-    # テストコード
+def test(target_file_path: 'str 対象のファイルパス'):
     # 絶対パスでmltファイルを読み込み、保存する
     app1 = ShotcutHelper('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/テンプレート.mlt')
     app1.save_xml('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test1.mlt')
@@ -467,3 +480,40 @@ if __name__ == '__main__':  # インポート時には動かない
     # TODO さらに、前手順で追加したトラックに、動画を2つ追加して、保存する
     # app2.add_movies(target_playlist, movies)
     # app2.save_xml('./test5.mlt')
+
+
+# 検証コード
+if __name__ == '__main__':  # インポート時には動かない
+    target_file_path = 'C:/Git/igapon50/traning/python/Movie/せんちゃんネル/テンプレート.mlt'
+    # 引数チェック
+    if 2 == len(sys.argv):
+        # Pythonに以下の2つ引数を渡す想定
+        # 0は固定でスクリプト名
+        # 1.対象のファイルパス
+        target_file_path = sys.argv[1]
+    elif 1 == len(sys.argv):
+        # 引数がなければ、クリップボードから得る
+        paste_str = pyperclip.paste()
+        if 0 < len(paste_str):
+            target_file_path = paste_str
+    # クリップボードが空なら、デフォルトを用いる
+    else:
+        print('引数が不正です。')
+        sys.exit(1)
+    print(target_file_path)
+
+    # パスを作成
+    target_folder = os.path.dirname(target_file_path)
+    target_mlt_basename = os.path.basename(target_file_path)
+    target_mlt_file_name = os.path.splitext(target_mlt_basename)[0]
+    target_mlt_file_ext = os.path.splitext(target_mlt_basename)[1]
+    search_path = target_folder + '\\**\\*_part*.mov'
+    create_mlt_path = os.path.join(target_folder, target_mlt_file_name + '_new' + target_mlt_file_ext)
+    movies = glob.glob(search_path, recursive=True)
+    app = ShotcutHelper(target_file_path)
+    app.add_movies('main_bin', movies)
+    app.add_movies('playlist0', movies)
+    app.save_xml(create_mlt_path)
+
+    # テストコード
+    # test(target_file_path)
