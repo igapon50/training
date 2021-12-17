@@ -66,7 +66,7 @@ class MovieHelper:
                  movie_value,  # str movieのファイルパス、または、MovieValue movieの値オブジェクト
                  ):
         if movie_value is None:
-            print('動画の値オブジェクトがNoneです')
+            print('引数movie_valueがNoneです')
             sys.exit(1)
         if isinstance(movie_value, str):
             movie_value = MovieValue(movie_value)

@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ##
-# @file shotcutHelper.py
+# @file mltHelper.py
 # @version 1.0.0
 # @author Ryosuke Igarashi(HN:igapon)
 # @date 2021/12/4
-# @brief 動画編集shotcutのプロジェクトファイルを編集するヘルパー
+# @brief 動画編集shotcutのmltプロジェクトファイルを編集するヘルパー
 # @details
 # @warning
 # @note
@@ -63,6 +63,40 @@ def get_next_index_entry(entry: 'list 対象の管理リスト'):
 
 ##
 # @brief Value Objects
+# @details mltの値オブジェクト。
+# @warning
+# @note
+@dataclass(frozen=True)
+class MltValue:
+    target_filepath: 'str 対象のファイルパス'
+    target_basename: 'str 対象のファイル名+拡張子'
+    target_dirname: 'str 対象のディレクトリ'
+    target_filename: 'str 対象のファイル名'
+    target_ext: 'str 対象の拡張子'
+
+    # コンストラクタ
+    def __init__(self,
+                 mlt_path: 'str movieのファイルパス',
+                 ):
+        if mlt_path is None:
+            print('mltファイルパスがNoneです')
+            sys.exit(1)
+        if not os.path.isfile(mlt_path):
+            print(mlt_path, 'mltファイルが存在しません', sep=':')
+            sys.exit(1)
+        object.__setattr__(self, "target_filepath", mlt_path)
+        target_basename = os.path.basename(mlt_path)
+        object.__setattr__(self, "target_basename", target_basename)
+        target_dirname = os.path.dirname(mlt_path)
+        object.__setattr__(self, "target_dirname", target_dirname)
+        target_filename = os.path.splitext(target_basename)[0]
+        object.__setattr__(self, "target_filename", target_filename)
+        target_ext = os.path.splitext(target_basename)[1]
+        object.__setattr__(self, "target_ext", target_ext)
+
+
+##
+# @brief Value Objects
 # @details item(動画)の値オブジェクト。
 # @warning
 # @note
@@ -113,15 +147,13 @@ class ItemValue:
 
 
 ##
-# @brief 動画編集shotcutのプロジェクトファイルを編集するヘルパー
+# @brief 動画編集shotcutのmltプロジェクトファイルを編集するヘルパー
 # @details 内部では辞書型でデータを保持する
 # @warning
 # @note
 # shotcutのmltプロジェクトファイルフォーマット
 # https://shotcut.org/notes/mltxml-annotations/
-
-
-class ShotcutHelper:
+class MltHelper:
     app_name: str = 'shotcut'
     mlt_name: str = 'mlt'
     tractor_name: str = 'tractor'
@@ -133,18 +165,20 @@ class ShotcutHelper:
 
     # コンストラクタ
     def __init__(self,
-                 mlt_path: 'str shotcutのプロジェクトファイルパス',
+                 mlt_value  # str shotcutのmltプロジェクトファイルパス、または、MltValue mltの値オブジェクト
                  ):
-        self.mlt_path = None
         self.xml_data = None
         self.dict_data = None
         self.playlist_entry = []
         self.producer_entry = []
         self.transition_entry = []
-        if mlt_path is None:
-            print('プロジェクトパスがNoneです')
+        if mlt_value is None:
+            print('引数mlt_valueがNoneです')
             sys.exit(1)
-        self.mlt_path = get_abs_path(mlt_path)
+        if isinstance(mlt_value, str):
+            mlt_value = MltValue(mlt_value)
+        self.mlt_value = mlt_value
+        self.mlt_path = get_abs_path(self.mlt_value.target_filepath)
         self.load_xml()
 
     # playlist_entryのロード
@@ -223,7 +257,7 @@ class ShotcutHelper:
         self.__load_producer()
         self.__load_transition()
 
-    # shotcutプロジェクトファイルを保存する（ファイルがある場合は保存しない）
+    # shotcutのmltプロジェクトファイルを保存する（ファイルがある場合は保存しない）
     def save_xml(self,
                  save_path: 'str xmlで保存するファイルパス',
                  ):
@@ -460,10 +494,10 @@ class ShotcutHelper:
 
 def test(target_file_path: 'str 対象のファイルパス'):
     # 絶対パスでmltファイルを読み込み、保存する
-    app1 = ShotcutHelper('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/テンプレート.mlt')
+    app1 = MltHelper('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/テンプレート.mlt')
     app1.save_xml('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test1.mlt')
     # 相対パスでmltファイルを読み込み、動画を2つプレイリストに追加して、保存する
-    app2 = ShotcutHelper('./せんちゃんネル/テンプレート.mlt')
+    app2 = MltHelper('./せんちゃんネル/テンプレート.mlt')
     movies = [
         './せんちゃんネル/mov/BPUB2392.MP4',
         './せんちゃんネル/20210306/JGWU8992.MOV',
@@ -510,7 +544,7 @@ if __name__ == '__main__':  # インポート時には動かない
     search_path = target_folder + '\\**\\*_part*.mov'
     create_mlt_path = os.path.join(target_folder, target_mlt_file_name + '_new' + target_mlt_file_ext)
     movies = glob.glob(search_path, recursive=True)
-    app = ShotcutHelper(target_file_path)
+    app = MltHelper(target_file_path)
     app.add_movies('main_bin', movies)
     app.add_movies('playlist0', movies)
     app.save_xml(create_mlt_path)
