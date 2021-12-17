@@ -162,6 +162,7 @@ class MltHelper:
     playlist_name: str = 'playlist'
     producer_name: str = 'producer'
     property_name: str = 'property'
+    filter_name: str = 'filter'
 
     # コンストラクタ
     def __init__(self,
@@ -172,6 +173,7 @@ class MltHelper:
         self.playlist_entry = []
         self.producer_entry = []
         self.transition_entry = []
+        self.filter_entry = []
         if mlt_value is None:
             print('引数mlt_valueがNoneです')
             sys.exit(1)
@@ -243,6 +245,27 @@ class MltHelper:
                 sys.exit(1)
             self.__register_index_transition_entry(int(number))
 
+    # filter_entryのロード
+    def __load_filter(self):
+        self.__clear_filter_entry()
+        mlt_root = self.dict_data.get(self.mlt_name)
+        target_root = mlt_root.get(self.producer_name)
+        for index in range(len(target_root)):
+            element = target_root[index]
+            element = element.get(self.filter_name)
+            if element is None:
+                continue
+            key = '@id'
+            name = element[key]
+            count = len(self.filter_name)
+            if self.filter_name != name[:count]:
+                continue
+            number = name[count:]
+            if not number.isdecimal():
+                print('producer_entryに追加するindexを決定できなかった')
+                sys.exit(1)
+            self.__register_index_producer_entry(int(number))
+
     # プロジェクトファイルをロードする
     def load_xml(self):
         if not os.path.isfile(self.mlt_path):
@@ -256,6 +279,7 @@ class MltHelper:
         self.__load_playlist()
         self.__load_producer()
         self.__load_transition()
+        self.__load_filter()
 
     # shotcutのmltプロジェクトファイルを保存する（ファイルがある場合は保存しない）
     def save_xml(self,
@@ -282,6 +306,9 @@ class MltHelper:
     def __get_next_index_transition_entry(self):
         return get_next_index_entry(self.transition_entry)
 
+    def __get_next_index_filter_entry(self):
+        return get_next_index_entry(self.filter_entry)
+
     # 追加したtrackの管理番号を登録する
     def __register_index_playlist_entry(self,
                                         index: 'int 登録する管理番号',
@@ -299,6 +326,11 @@ class MltHelper:
                                           ):
         self.transition_entry.append(index)
 
+    def __register_index_filter_entry(self,
+                                          index: 'int 登録する管理番号',
+                                          ):
+        self.filter_entry.append(index)
+
     def __clear_playlist_entry(self):
         self.playlist_entry.clear()
 
@@ -307,6 +339,9 @@ class MltHelper:
 
     def __clear_transition_entry(self):
         self.transition_entry.clear()
+
+    def __clear_filter_entry(self):
+        self.filter_entry.clear()
 
     # playlistにitem(動画)を追加する
     def __add_item_to_playlist(self,
@@ -548,6 +583,9 @@ if __name__ == '__main__':  # インポート時には動かない
     app.add_movies('main_bin', movies)
     app.add_movies('playlist0', movies)
     app.save_xml(create_mlt_path)
+    # テロップをプレイリストに追加'main_bin'
+    # テロップ用のトラックを追加'playlist2'
+    # テロップをタイムラインに追加'playlist2'
 
     # テストコード
     # test(target_file_path)
