@@ -431,14 +431,16 @@ class MltHelper:
         for movie in movie_list:
             self.add_movie(playlist_id, movie)
 
-    # TODO mltににplaylistを追加する
+    # mltにplaylistを追加する(nameは他のトラックと重複可能)
+    # videoトラック追加用
     def __add_playlist_to_mlt(self,
                               name: 'str トラック名(他のトラックと重複可能)'
                               ):
         playlist_root = self.dict_data.get('mlt').get(self.playlist_name)
         od2 = collections.OrderedDict([('@length', '00:00:00.040')])
-        # TODO 0をindexに置き換える
-        od = collections.OrderedDict([('@id', self.playlist_name + str(0)),
+        # playlistの空き番号を調べる
+        index = self.__get_next_index_playlist_entry()
+        od = collections.OrderedDict([('@id', self.playlist_name + str(index)),
                                       (self.property_name, []),
                                       ('blank', od2),
                                       ])
@@ -449,26 +451,22 @@ class MltHelper:
         last_key = next(reversed(playlist_root), None)
         for prop in property_list:
             last_key[self.property_name].append(prop)
-        return
+        # 追加したplaylistの管理番号を登録する
+        self.__register_index_playlist_entry(index)
+        return self.playlist_name + str(index)
 
     # TODO タイムラインに(動画)トラックを増やす(mltファイルのplaylistタグid=playlist0..)
+    # videoトラック追加用
     def add_track(self,
                   name: 'str トラック名(他のトラックと重複可能)'
                   ):
-        # playlistの空き番号を調べる
-        playlist_index = self.__get_next_index_playlist_entry()
         # TODO playlistの情報を集める
         # playlist_value = PlaylistValue(name)
         # TODO mltにplaylist id="main_bin"がなければmain_binを追加し、mltのproducer="main_bin"に変更する
         # TODO mltにtractorがなければ、playlist id="playlist0"をtractor id="tractor0"に変更し、tractorにtransitionを追加する
         # TODO mltにplaylist id="background"がなければbackgroundを追加し、tractorにtrackを追加する
-        # TODO mltにplaylist id="playlist{index}"を追加し、tractorにtrackを追加する
-        self.__add_playlist_to_mlt(name)
-        # < playlist id = "playlist2" >
-        #   < property name = "shotcut:video" > 1 < / property >
-        #   < property name = "shotcut:name" > V2 < / property >
-        #   < blank length = "00:00:00.050" / >
-        # < / playlist >
+        # mltにplaylist id="playlist{index}"を追加する
+        playlist_id = self.__add_playlist_to_mlt(name)
         # TODO tractorにtrackを追加する
         # self.__add_track_to_tractor(index)
         # < tractor id = "tractor6" title = "Shotcut version UNSTABLE-21.02.09" global_feed = "1"
@@ -507,9 +505,7 @@ class MltHelper:
         # < / tractor >
         # 追加したtransitionの管理番号を登録する
         self.__register_index_transition_entry(transition_index)
-        # 追加したplaylistの管理番号を登録する
-        self.__register_index_playlist_entry(playlist_index)
-        return self.playlist_name + str(playlist_index)
+        return
 
     # TODO タイムラインにshotを追加する
     def add_producer(self,
@@ -585,6 +581,7 @@ if __name__ == '__main__':  # インポート時には動かない
     app.save_xml(create_mlt_path)
     # テロップをプレイリストに追加'main_bin'
     # テロップ用のトラックを追加'playlist2'
+    # app.add_track('playlist2')
     # テロップをタイムラインに追加'playlist2'
 
     # テストコード
