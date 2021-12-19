@@ -2,16 +2,16 @@
 # -*- coding: utf-8 -*-
 ##
 # @file movieHelper.py
-# @version 1.0.0
+# @version 1.1.0
 # @author Ryosuke Igarashi(HN:igapon)
-# @date 2021/12/12
+# @date 2021/12/19
 # @brief 動画の音声について文字お起こしする。
 # @details 動画の音声について文字起こしする。
 # @warning
 # @note
-
 import sys  # 終了時のエラー有無
 import os  # ファイルパス分解
+import glob
 from dataclasses import dataclass
 
 import speech_recognition as sr
@@ -21,6 +21,21 @@ from pydub import AudioSegment
 import pyperclip
 import subprocess
 import soundfile as sf
+
+
+# 指定のフォルダ内にある全てのmovファイルについて、
+# 無音部分をカットした動画に分割し、それぞれ文字起こしする
+def movie_folder(target_path):
+    if not os.path.isdir(target_path):
+        print('フォルダが存在しません。', target_path)
+        sys.exit(False)
+    _movie_list = glob.glob(os.path.join(target_path, '**/*.mov'), recursive=True)
+    for _movie in _movie_list:
+        _mh = MovieHelper(_movie)
+        movie_dividing_list = _mh.movie_dividing()
+        for movie_dividing in movie_dividing_list:
+            _mh_dividing = MovieHelper(movie_dividing)
+            _mh_dividing.mov_to_text()
 
 
 ##
@@ -151,7 +166,10 @@ class MovieHelper:
             # 音声->テキスト
             with sr.AudioFile(fwav) as source:
                 audio = r.record(source)
-            text = r.recognize_google(audio, language='ja-JP')
+                try:
+                    text = r.recognize_google(audio, language='ja-JP')
+                except Exception:
+                    text = '[文字起こしでエラー]'
             # 各ファイルの出力結果の結合
             output_text += text + '\n'
             # TODO 別の場所に移動する。
@@ -239,9 +257,9 @@ class MovieHelper:
                                    )  # 入力する動画ファイルのパス
             out_path = os.path.join(self.movie_value.target_dirname,
                                     "{}_part{}{}".format(self.movie_value.target_filename,
-                                                            str(i).zfill(3),
-                                                            self.movie_value.target_ext
-                                                            )
+                                                         str(i).zfill(3),
+                                                         self.movie_value.target_ext
+                                                         )
                                     )  # 出力する動画ファイルのパス
             self.movie_dividing_filepath.append(out_path)
             # 動画出力
@@ -251,28 +269,22 @@ class MovieHelper:
 
 
 if __name__ == '__main__':  # インポート時には動かない
-    target_file_path = 'C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/JPIC3316.MOV'
+    target_path = 'C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test'
     # 引数チェック
     if 2 == len(sys.argv):
         # Pythonに以下の2つ引数を渡す想定
         # 0は固定でスクリプト名
         # 1.対象のファイルパス
-        target_file_path = sys.argv[1]
+        target_path = sys.argv[1]
     elif 1 == len(sys.argv):
         # 引数がなければ、クリップボードから得る
         paste_str = pyperclip.paste()
         if 0 < len(paste_str):
-            target_file_path = paste_str
+            target_path = paste_str
     else:
         print('引数が不正です。')
         sys.exit(1)
-    print(target_file_path)
+    print(target_path)
 
-    # 文字起こし
-    mh = MovieHelper(target_file_path)
-    mh.mov_to_text()
-    # 無音部分をカットした動画分割して、文字起こし
-    movie_list = mh.movie_dividing()
-    for movie in movie_list:
-        mh_dividing = MovieHelper(movie)
-        mh_dividing.mov_to_text()
+    # 指定フォルダ内のすべての動画文字起こし
+    movie_folder(target_path)
