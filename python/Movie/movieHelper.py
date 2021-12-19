@@ -38,6 +38,26 @@ def movie_folder(target_path):
             _mh_dividing.mov_to_text()
 
 
+# 音声ファイルから文字起こしして返す
+# 長いと失敗するので1分以下のファイルにする
+# TODO wavHelperとかあってもいいかも。
+# TODO エラーの回避策がわからないので、とりあえず例外処理にした。
+def wav_to_text(wav_filepath):
+    if not os.path.isfile(wav_filepath):
+        print('音声ファイルがありません', wav_filepath)
+        exit(1)
+    print(wav_filepath)
+    r = sr.Recognizer()
+    # 音声->テキスト
+    with sr.AudioFile(wav_filepath) as source:
+        audio = r.record(source)
+        try:
+            text = r.recognize_google(audio, language='ja-JP')
+        except Exception:
+            text = '[文字起こしでエラー]'
+    return text
+
+
 ##
 # @brief Value Objects
 # @details 動画の値オブジェクト。
@@ -122,18 +142,19 @@ class MovieHelper:
         subprocess.run(command_output, shell=True, stdin=subprocess.DEVNULL)
         return self.wave_filepath
 
-    # 音声ファイルを消費して、指定秒数単位に分割した音声ファイルを作り、そのパスリストを返す
+    # 動画について、指定秒数単位に分割した音声ファイルを作り、そのパスリストを返す
     def _split_wave(self,
                     time: 'int 区切る時間[秒]' = 30
                     ):
+        # 動画ファイルから音声ファイルを作る
+        self.mov_to_wave()
         # ファイルを読み込み
         source_audio = AudioSegment.from_wav(self.wave_filepath)
         # waveファイルの情報を取得
         total_time = source_audio.duration_seconds
         integer = math.floor(total_time)  # 小数点以下切り下げ
         num_cut = math.ceil(integer / time)  # 小数点以下切り上げ
-        # TODO 別の場所に移動する
-        #  wavファイルを削除
+        # 音声ファイルを削除する
         os.remove(self.wave_filepath)
         output_file_list = []
         for i in range(num_cut):
@@ -153,42 +174,20 @@ class MovieHelper:
             output_file_list.append(output_file_path)
         return output_file_list
 
-    # 分割した音声ファイルを消費して、文字起こし結果を返す
-    def _split_waves_str(self,
-                         input_file_list: 'list 音声ファイルパスリスト'
-                         ):
-        output_text = ''
-        # 複数処理
-        print('音声のテキスト変換')
-        for fwav in input_file_list:
-            print(fwav)
-            r = sr.Recognizer()
-            # 音声->テキスト
-            with sr.AudioFile(fwav) as source:
-                audio = r.record(source)
-                try:
-                    text = r.recognize_google(audio, language='ja-JP')
-                except Exception:
-                    text = '[文字起こしでエラー]'
-            # 各ファイルの出力結果の結合
-            output_text += text + '\n'
-            # TODO 別の場所に移動する。
-            #  wavファイルを削除
-            os.remove(fwav)
-        return output_text
-
-    # 動画ファイルの文字起こし
+    # 動画ファイルの文字起こしして返す。ファイルにも保存する
     def mov_to_text(self):
-        # 動画ファイルから音声ファイルを作る
-        self.mov_to_wave()
-        # 音声ファイルを消費して、指定秒数単位に分割した音声ファイルを作り、そのパスリストを返す
+        # 動画ファイルについて、指定秒数単位に分割した音声ファイルを作り、そのパスリストを返す
         split_waves = self._split_wave()
-        # 分割した音声ファイルを消費して、文字起こし結果を返す
-        out_text = self._split_waves_str(split_waves)
+        # 分割した音声ファイルを消費して、文字起こしする
+        output_text = ''
+        for wav_filepath in split_waves:
+            # 各ファイルの出力結果の結合
+            output_text += wav_to_text(wav_filepath) + '\n'
+            os.remove(wav_filepath)
         # 文字起こし結果を保存する
         with open(self.text_filepath, 'w') as fp:
-            fp.write(out_text)
-        return out_text
+            fp.write(output_text)
+        return output_text
 
     # 動画から音声ファイルを作成して、無音部分をカットした部分動画群を作成する
     # 作成した動画のファイルパスリストを返す
@@ -265,6 +264,7 @@ class MovieHelper:
             # 動画出力
             command_output = ["ffmpeg", "-i", in_path, "-ss", str(fr), "-t", str(duration), out_path]
             subprocess.run(command_output, shell=True, stdin=subprocess.DEVNULL)
+            os.remove(self.wave_filepath)
         return self.movie_dividing_filepath
 
 
