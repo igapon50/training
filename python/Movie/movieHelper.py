@@ -264,7 +264,7 @@ class MovieHelper:
             # 動画出力
             command_output = ["ffmpeg", "-i", in_path, "-ss", str(fr), "-t", str(duration), out_path]
             subprocess.run(command_output, shell=True, stdin=subprocess.DEVNULL)
-            os.remove(self.wave_filepath)
+        os.remove(self.wave_filepath)
         return self.movie_dividing_filepath
 
 
