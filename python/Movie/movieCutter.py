@@ -10,54 +10,58 @@
 # @warning
 # @note
 
-from func import *
+import os
+import sys
+import pyperclip
+import numpy as np
+import subprocess
+import soundfile as sf
 
 if __name__ == '__main__':  # インポート時には動かない
+    target_file_path = 'C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/JPIC3316.MOV'
     # 引数チェック
     if 2 == len(sys.argv):
         # Pythonに以下の2つ引数を渡す想定
         # 0は固定でスクリプト名
         # 1.対象のファイルパス
-        target_filepath = sys.argv[1]
+        target_file_path = sys.argv[1]
     elif 1 == len(sys.argv):
-        # 引数がなければデフォルト
-        # 0は固定でスクリプト名
-        target_filepath = DEFAULT_FILE_PATH
+        # 引数がなければ、クリップボードから得る
+        paste_str = pyperclip.paste()
+        if 0 < len(paste_str):
+            target_file_path = paste_str
+    # クリップボードが空なら、デフォルトを用いる
     else:
         print('引数が不正です。')
-        print(msg_error_exit)
         sys.exit(False)
-    print(target_filepath)
+    print(target_file_path)
 
     # 動画から音声を切り出す
-    basename = os.path.basename(target_filepath)
+    basename = os.path.basename(target_file_path)
     target_filename = os.path.splitext(basename)[0]
     target_ext = os.path.splitext(basename)[1]
     if target_ext.lower() != '.mov':
         print('引数が不正です。ファイル拡張子movを指定してください')
-        print(msg_error_exit)
         sys.exit(False)
-    target_dirname = os.path.dirname(target_filepath)
+    target_dirname = os.path.dirname(target_file_path)
     in_path = os.path.join(target_dirname, "{}{}".format(target_filename, target_ext))  # 入力する動画ファイルのパス
     out_path = os.path.join(target_dirname, "{}{}".format(target_filename, '.wav'))  # 出力する音声ファイルのパス
     # 動画出力
     command_output = ["ffmpeg", "-i", in_path, "-ac", "1", "-ar", "44100", "-acodec", "pcm_s16le", out_path]
     subprocess.run(command_output, shell=True, stdin=subprocess.DEVNULL)
 
-    # ファイルのパスリストを作成
-    filepath_list = []
-    filename = []
+    threshold = 0.05  # 閾値
+    min_silence_duration = 0.5  # [秒]以上thresholdを下回っている個所を抽出する
+    padding_time = 0.1  # [秒]カットしない無音部分の長さ
 
     # 音声ファイル読込
     data, frequency = sf.read(out_path)  # file:音声ファイルのパス
 
     # 一定のレベル(振幅)以上の周波数にフラグを立てる
-    threshold = 0.05  # 閾値
     amp = np.abs(data)
     list_overThreshold = amp > threshold
 
     # 一定時間以上、小音量が続く箇所を探す
-    min_silence_duration = 0.5  # [秒]以上thresholdを下回っている個所を抽出する
     silences = []
     prev = 0
     entered = 0
@@ -73,7 +77,6 @@ if __name__ == '__main__':  # インポート時には動かない
     if 0 < entered < len(list_overThreshold):
         silences.append({"from": entered, "to": len(list_overThreshold), "suffix": "cut"})
 
-    cut_blocks = []
     list_block = silences  # 無音部分のリスト：[{"from": 始点, "to": 終点}, {"from": ...}, ...]
     cut_blocks = [list_block[0]]
     for i, v in enumerate(list_block):
@@ -98,17 +101,17 @@ if __name__ == '__main__':  # インポート時には動かない
         if i == len(cut_blocks) - 1 and block["to"] < len(data):
             keep_blocks.append({"from": block["to"], "to": len(data), "suffix": "keep"})
 
-    # 出力用テキストファイルパス
-    padding_time = 0.1  # [秒]カットしない無音部分の長さ
-    list_files_path = []
-
     # list_keep 残す動画部分のリスト：[{"from": 始点, "to": 終点}, {"from": ...}, ...]
     for i, block in enumerate(keep_blocks):
         fr = max(block["from"] / frequency - padding_time, 0)
         to = min(block["to"] / frequency + padding_time, len(data) / frequency)
         duration = to - fr
-        in_path = os.path.join(target_dirname, "{}{}".format(target_filename, target_ext))  # 入力する動画ファイルのパス
-        out_path = os.path.join(target_dirname, "{}_part{:2d}{}".format(target_filename, i, target_ext))  # 出力する動画ファイルのパス
+        in_path = os.path.join(target_dirname,
+                               "{}{}".format(target_filename, target_ext)
+                               )  # 入力する動画ファイルのパス
+        out_path = os.path.join(target_dirname,
+                                "{}_part{:2d}{}".format(target_filename, i, target_ext)
+                                )  # 出力する動画ファイルのパス
         # 動画出力
         command_output = ["ffmpeg", "-i", in_path, "-ss", str(fr), "-t", str(duration), out_path]
         subprocess.run(command_output, shell=True, stdin=subprocess.DEVNULL)

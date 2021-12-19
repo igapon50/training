@@ -561,7 +561,6 @@ if __name__ == '__main__':  # インポート時には動かない
         paste_str = pyperclip.paste()
         if 0 < len(paste_str):
             target_file_path = paste_str
-    # クリップボードが空なら、デフォルトを用いる
     else:
         print('引数が不正です。')
         sys.exit(1)

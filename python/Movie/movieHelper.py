@@ -16,9 +16,11 @@ from dataclasses import dataclass
 
 import speech_recognition as sr
 import math
+import numpy as np
 from pydub import AudioSegment
 import pyperclip
 import subprocess
+import soundfile as sf
 
 
 ##
@@ -60,6 +62,7 @@ class MovieHelper:
     movie_filepath: 'str 動画ファイル入力パス'
     wave_filepath: 'str 音声ファイル出力パス'
     text_filepath: 'str 文字起こし出力パス'
+    movie_dividing_filepath: 'list 分割動画ファイル出力パスリスト'
 
     # コンストラクタ
     def __init__(self,
@@ -72,6 +75,7 @@ class MovieHelper:
             movie_value = MovieValue(movie_value)
         self.movie_value = movie_value
         self.movie_filepath = movie_value.target_filepath
+        self.movie_dividing_filepath = []
         self.wave_filepath = os.path.join(self.movie_value.target_dirname,
                                           self.movie_value.target_filename + '.wav',
                                           )
@@ -168,6 +172,83 @@ class MovieHelper:
             fp.write(out_text)
         return out_text
 
+    # 動画から音声ファイルを作成して、無音部分をカットした部分動画群を作成する
+    # 作成した動画のファイルパスリストを返す
+    def movie_dividing(self,
+                       threshold: 'float 閾値' = 0.05,
+                       min_silence_duration:  'float [秒]以上thresholdを下回っている個所を抽出する' = 0.5,
+                       padding_time: 'float [秒]カットしない無音部分の長さ' = 0.1,
+                       ):
+        if not os.path.isfile(self.mov_to_wave()):
+            print('動画から音声ファイルが作成できませんでした')
+            sys.exit(1)
+        # 音声ファイル読込
+        data, frequency = sf.read(self.wave_filepath)  # file:音声ファイルのパス
+        # 一定のレベル(振幅)以上の周波数にフラグを立てる
+        amp = np.abs(data)
+        list_over_threshold = amp > threshold
+
+        # 一定時間以上、小音量が続く箇所を探す
+        silences = []
+        prev = 0
+        entered = 0
+        for i, v in enumerate(list_over_threshold):
+            if prev == 1 and v == 0:  # enter silence
+                entered = i
+            if prev == 0 and v == 1:  # exit silence
+                duration = (i - entered) / frequency
+                if duration > min_silence_duration:
+                    silences.append({"from": entered, "to": i, "suffix": "cut"})
+                    entered = 0
+            prev = v
+        if 0 < entered < len(list_over_threshold):
+            silences.append({"from": entered, "to": len(list_over_threshold), "suffix": "cut"})
+
+        list_block = silences  # 無音部分のリスト：[{"from": 始点, "to": 終点}, {"from": ...}, ...]
+        cut_blocks = [list_block[0]]
+        for i, v in enumerate(list_block):
+            if i == 0:
+                continue
+            moment = (v["from"] - cut_blocks[-1]["to"]) / frequency
+            # カット対象だった場合
+            if 0.3 > moment:
+                cut_blocks[-1]["to"] = v["to"]  # １つ前のtoを書き換え
+            # カット対象でない場合
+            else:
+                cut_blocks.append(v)  # そのまま追加
+
+        # カットする箇所を反転させて、残す箇所を決める
+        keep_blocks = []
+        for i, block in enumerate(cut_blocks):
+            if i == 0 and block["from"] > 0:
+                keep_blocks.append({"from": 0, "to": block["from"], "suffix": "keep"})
+            if i > 0:
+                prev = cut_blocks[i - 1]
+                keep_blocks.append({"from": prev["to"], "to": block["from"], "suffix": "keep"})
+            if i == len(cut_blocks) - 1 and block["to"] < len(data):
+                keep_blocks.append({"from": block["to"], "to": len(data), "suffix": "keep"})
+
+        self.movie_dividing_filepath.clear()
+        # list_keep 残す動画部分のリスト：[{"from": 始点, "to": 終点}, {"from": ...}, ...]
+        for i, block in enumerate(keep_blocks):
+            fr = max(block["from"] / frequency - padding_time, 0)
+            to = min(block["to"] / frequency + padding_time, len(data) / frequency)
+            duration = to - fr
+            in_path = os.path.join(self.movie_value.target_dirname,
+                                   "{}{}".format(self.movie_value.target_filename, self.movie_value.target_ext)
+                                   )  # 入力する動画ファイルのパス
+            out_path = os.path.join(self.movie_value.target_dirname,
+                                    "{}_part{}{}".format(self.movie_value.target_filename,
+                                                            str(i).zfill(3),
+                                                            self.movie_value.target_ext
+                                                            )
+                                    )  # 出力する動画ファイルのパス
+            self.movie_dividing_filepath.append(out_path)
+            # 動画出力
+            command_output = ["ffmpeg", "-i", in_path, "-ss", str(fr), "-t", str(duration), out_path]
+            subprocess.run(command_output, shell=True, stdin=subprocess.DEVNULL)
+        return self.movie_dividing_filepath
+
 
 if __name__ == '__main__':  # インポート時には動かない
     target_file_path = 'C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/JPIC3316.MOV'
@@ -187,6 +268,11 @@ if __name__ == '__main__':  # インポート時には動かない
         sys.exit(1)
     print(target_file_path)
 
-    # 動画から音声を切り出す
+    # 文字起こし
     mh = MovieHelper(target_file_path)
     mh.mov_to_text()
+    # 無音部分をカットした動画分割して、文字起こし
+    movie_list = mh.movie_dividing()
+    for movie in movie_list:
+        mh_dividing = MovieHelper(movie)
+        mh_dividing.mov_to_text()
