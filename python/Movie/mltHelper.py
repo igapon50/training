@@ -327,8 +327,8 @@ class MltHelper:
         self.transition_entry.append(index)
 
     def __register_index_filter_entry(self,
-                                          index: 'int 登録する管理番号',
-                                          ):
+                                      index: 'int 登録する管理番号',
+                                      ):
         self.filter_entry.append(index)
 
     def __clear_playlist_entry(self):
@@ -433,13 +433,18 @@ class MltHelper:
 
     # mltにplaylistを追加する(nameは他のトラックと重複可能)
     # videoトラック追加用
+    # < playlist id = "playlist2" >
+    #     < property name = "shotcut:video" > 1 < / property >
+    #     < property name = "shotcut:name" > V2 < / property >
+    #     < blank length = "00:00:00.050" / >
+    # < / playlist >
     def __add_playlist_to_mlt(self,
-                              name: 'str トラック名(他のトラックと重複可能)'
+                              index: 'int 登録するplaylistの番号',
+                              name: 'str トラック名(他のトラックと重複可能)',
                               ):
         playlist_root = self.dict_data.get('mlt').get(self.playlist_name)
         od2 = collections.OrderedDict([('@length', '00:00:00.040')])
         # playlistの空き番号を調べる
-        index = self.__get_next_index_playlist_entry()
         od = collections.OrderedDict([('@id', self.playlist_name + str(index)),
                                       (self.property_name, []),
                                       ('blank', od2),
@@ -451,60 +456,91 @@ class MltHelper:
         last_key = next(reversed(playlist_root), None)
         for prop in property_list:
             last_key[self.property_name].append(prop)
-        # 追加したplaylistの管理番号を登録する
-        self.__register_index_playlist_entry(index)
-        return self.playlist_name + str(index)
 
-    # TODO タイムラインに(動画)トラックを増やす(mltファイルのplaylistタグid=playlist0..)
+    # mltのtractorにtrackを追加する
+    # < tractor id = "tractor6" title = "Shotcut version UNSTABLE-21.02.09" global_feed = "1"
+    #    in = "00:00:00.000" out = "00:02:44.726" >
+    #   < track producer = "playlist2" / >
+    # transitionの空き番号を調べる
+    def __add_track_to_tractor(self,
+                               index: 'int 登録するplaylistの番号',
+                               ):
+        track_root = self.dict_data.get('mlt').get(self.tractor_name).get(self.track_name)
+        od = collections.OrderedDict([('@producer', self.playlist_name + str(index))])
+        track_root.append(od)
+
+    # mltのtractorにtransitionを二つ追加する
+    #   < transition id = "transition0" >
+    #     < property name = "a_track" > 0 < / property >
+    #     < property name = "b_track" > 3 < / property >
+    #     < property name = "mlt_service" > mix < / property >
+    #     < property name = "always_active" > 1 < / property >
+    #     < property name = "sum" > 1 < / property >
+    #   < / transition >
+    #   < transition id = "transition1" >
+    #     < property name = "a_track" > 1 < / property >
+    #     < property name = "b_track" > 3 < / property >
+    #     < property name = "version" > 0.9 < / property >
+    #     < property name = "mlt_service" > frei0r.cairoblend < / property >
+    #     < property name = "threads" > 0 < / property >
+    #     < property name = "disable" > 0 < / property >
+    #   < / transition >
+    # < / tractor >
+    def __add_transition_to_tractor(self,
+                                    ):
+        transition_root = self.dict_data.get('mlt').get(self.tractor_name).get(self.transition_name)
+        index = self.__get_next_index_transition_entry()
+        od = collections.OrderedDict([('@id', self.transition_name + str(index)),
+                                      (self.property_name, []),
+                                      ])
+        transition_root.append(od)
+        # TODO 値の仕様が不明
+        property_list = [collections.OrderedDict([('@name', 'a_track'), ('#text', '0')]),
+                         collections.OrderedDict([('@name', 'b_track'), ('#text', '3')]),
+                         collections.OrderedDict([('@name', 'mlt_service'), ('#text', 'mix')]),
+                         collections.OrderedDict([('@name', 'always_active'), ('#text', '1')]),
+                         collections.OrderedDict([('@name', 'sum'), ('#text', '1')]),
+                         ]
+        last_key = next(reversed(transition_root), None)
+        for prop in property_list:
+            last_key[self.property_name].append(prop)
+        self.__register_index_transition_entry(index)
+        index = self.__get_next_index_transition_entry()
+        od = collections.OrderedDict([('@id', self.transition_name + str(index)),
+                                      (self.property_name, []),
+                                      ])
+        transition_root.append(od)
+        # TODO 値の仕様が不明
+        property_list = [collections.OrderedDict([('@name', 'a_track'), ('#text', '1')]),
+                         collections.OrderedDict([('@name', 'b_track'), ('#text', '3')]),
+                         collections.OrderedDict([('@name', 'version'), ('#text', '0.9')]),
+                         collections.OrderedDict([('@name', 'mlt_service'), ('#text', 'frei0r.cairoblend')]),
+                         collections.OrderedDict([('@name', 'threads'), ('#text', '0')]),
+                         collections.OrderedDict([('@name', 'disable'), ('#text', '0')]),
+                         ]
+        last_key = next(reversed(transition_root), None)
+        for prop in property_list:
+            last_key[self.property_name].append(prop)
+        self.__register_index_transition_entry(index)
+
+    # タイムラインにトラックを増やす(mltファイルのplaylistタグid=playlist0..)
     # videoトラック追加用
     def add_track(self,
                   name: 'str トラック名(他のトラックと重複可能)'
                   ):
-        # TODO playlistの情報を集める
-        # playlist_value = PlaylistValue(name)
         # TODO mltにplaylist id="main_bin"がなければmain_binを追加し、mltのproducer="main_bin"に変更する
         # TODO mltにtractorがなければ、playlist id="playlist0"をtractor id="tractor0"に変更し、tractorにtransitionを追加する
         # TODO mltにplaylist id="background"がなければbackgroundを追加し、tractorにtrackを追加する
+        # 追加するプレイリストの管理番号を取得する
+        index = self.__get_next_index_playlist_entry()
         # mltにplaylist id="playlist{index}"を追加する
-        playlist_id = self.__add_playlist_to_mlt(name)
-        # TODO tractorにtrackを追加する
-        # self.__add_track_to_tractor(index)
-        # < tractor id = "tractor6" title = "Shotcut version UNSTABLE-21.02.09" global_feed = "1"
-        #    in = "00:00:00.000" out = "00:02:44.726" >
-        #   < track producer = "playlist2" / >
-        # transitionの空き番号を調べる
-        transition_index = self.__get_next_index_transition_entry()
-        # TODO transitionの情報を集める
-        # transition_value = TransitionValue(name)
-        # TODO tractorにtransitionを追加する、一個目
-        # self.__add_transition_to_tractor(transition_value)
-        #   < transition id = "transition0" >
-        #     < property name = "a_track" > 0 < / property >
-        #     < property name = "b_track" > 3 < / property >
-        #     < property name = "mlt_service" > mix < / property >
-        #     < property name = "always_active" > 1 < / property >
-        #     < property name = "sum" > 1 < / property >
-        #   < / transition >
-        # < / tractor >
-        # 追加したtransitionの管理番号を登録する
-        self.__register_index_transition_entry(transition_index)
-        # transitionの空き番号を調べる
-        transition_index = self.__get_next_index_transition_entry()
-        # TODO transitionの情報を集める
-        # transition_value = TransitionValue(name)
-        # TODO tractorにtransitionを追加する、二個目
-        # self.__add_transition_to_tractor(transition_value)
-        #   < transition id = "transition1" >
-        #     < property name = "a_track" > 1 < / property >
-        #     < property name = "b_track" > 3 < / property >
-        #     < property name = "version" > 0.9 < / property >
-        #     < property name = "mlt_service" > frei0r.cairoblend < / property >
-        #     < property name = "threads" > 0 < / property >
-        #     < property name = "disable" > 0 < / property >
-        #   < / transition >
-        # < / tractor >
-        # 追加したtransitionの管理番号を登録する
-        self.__register_index_transition_entry(transition_index)
+        self.__add_playlist_to_mlt(index, name)
+        # tractorにtrackを追加する
+        self.__add_track_to_tractor(index)
+        # 追加したplaylistの管理番号を登録する
+        self.__register_index_playlist_entry(index)
+        # tractorにtransitionを追加する、一個目,二個目
+        self.__add_transition_to_tractor()
         return
 
     # TODO タイムラインにshotを追加する
@@ -575,13 +611,15 @@ if __name__ == '__main__':  # インポート時には動かない
     create_mlt_path = os.path.join(target_folder, target_mlt_file_name + '_new' + target_mlt_file_ext)
     movies = glob.glob(search_path, recursive=True)
     app = MltHelper(target_file_path)
+    # 動画をプレイリストに追加
     app.add_movies('main_bin', movies)
+    # 動画をタイムラインに追加
     app.add_movies('playlist0', movies)
-    app.save_xml(create_mlt_path)
-    # テロップをプレイリストに追加'main_bin'
     # テロップ用のトラックを追加'playlist2'
-    # app.add_track('playlist2')
-    # テロップをタイムラインに追加'playlist2'
+    app.add_track('V2')
+    # TODO テロップをプレイリストに追加'main_bin'
+    # TODO テロップをタイムラインに追加'playlist2'
+    app.save_xml(create_mlt_path)
 
     # テストコード
     # test(target_file_path)
