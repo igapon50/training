@@ -97,35 +97,43 @@ class MltValue:
 
 ##
 # @brief Value Objects
-# @details item(動画)の値オブジェクト。
+# @details shot(動画やテロップなど操作の単位)の値オブジェクト。
 # @warning
 # @note
+# TODO このクラスを継承させて、動画やテロップなどのクラスを、個別に用意したほうがいいか。そんなに頑張るつもりないので困るまで放置。
 @dataclass(frozen=True)
-class ItemValue:
+class ShotValue:
     movie: str = None
     index: int = 0
     shotcut_hash: str = None
     in_time: str = None
     out_time: str = None
     creation_time: str = None
+    time: datetime = None
 
     # 完全コンストラクタパターン
+    # 動画の時は、contents,index,shotcut_hash
+    # テロップの時は、contents,index,time
     def __init__(self,
-                 movie: 'str 動画のファイルパス',
+                 contents: 'str 動画のファイルパス、または、str テロップの文字列',
                  index: 'int 登録するインデックス番号',
-                 shotcut_hash: 'str 動画のハッシュ',
+                 shotcut_hash: 'str 動画のハッシュ' = None,
+                 time: 'datetime 時間' = None,
                  ):
-        if movie is None or shotcut_hash is None:
+        # TODO 動画とテロップでの呼び分け処理
+        if time is not None:
+            object.__setattr__(self, "time", time)
+        if contents is None or shotcut_hash is None:
             print('引数が不正です。')
             sys.exit(1)
-        object.__setattr__(self, "movie", movie)
+        object.__setattr__(self, "movie", contents)
         object.__setattr__(self, "index", index)
         object.__setattr__(self, "shotcut_hash", shotcut_hash)
         # item(動画)の情報を集める
-        video_info = ffmpeg.probe(movie)
+        video_info = ffmpeg.probe(contents)
         creation_str = video_info.get('format').get('tags').get('creation_time')
         if creation_str is None:
-            c_time = os.path.getctime(movie)
+            c_time = os.path.getctime(contents)
             dt = datetime.datetime.fromtimestamp(c_time)
             creation_time = dt.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
         else:
@@ -346,13 +354,13 @@ class MltHelper:
     # playlistにitem(動画)を追加する
     def __add_item_to_playlist(self,
                                playlist_id: 'str 追加するプレイリストのID',
-                               item_value: 'ItemValue item(動画)値クラス',
+                               shot_value: 'ShotValue shot(動画やテロップなど操作の単位)の値クラス',
                                ):
         for target_root in self.dict_data.get(self.mlt_name).get(self.playlist_name):
             if target_root.get('@id') == playlist_id:
-                od = collections.OrderedDict([('@' + self.producer_name, self.producer_name + str(item_value.index)),
-                                              ('@in', item_value.in_time),
-                                              ('@out', item_value.out_time)])
+                od = collections.OrderedDict([('@' + self.producer_name, self.producer_name + str(shot_value.index)),
+                                              ('@in', shot_value.in_time),
+                                              ('@out', shot_value.out_time)])
                 target_root.get('entry').append(od)
                 return
         print('プロジェクトファイルに指定のplaylistがありません')
@@ -360,29 +368,29 @@ class MltHelper:
 
     # producerにitem(動画)を追加する
     def __add_item_to_producer(self,
-                               item_value: 'ItemValue item(動画)値クラス',
+                               shot_value: 'ShotValue shot(動画やテロップなど操作の単位)の値クラス',
                                ):
         mlt_dict = self.dict_data.get('mlt').get(self.producer_name)
-        od = collections.OrderedDict([('@id', self.producer_name + str(item_value.index)),
-                                      ('@in', item_value.in_time),
-                                      ('@out', item_value.out_time),
+        od = collections.OrderedDict([('@id', self.producer_name + str(shot_value.index)),
+                                      ('@in', shot_value.in_time),
+                                      ('@out', shot_value.out_time),
                                       (self.property_name, [])])
         mlt_dict.append(od)
-        property_list = [collections.OrderedDict([('@name', 'length'), ('#text', item_value.out_time)]),
+        property_list = [collections.OrderedDict([('@name', 'length'), ('#text', shot_value.out_time)]),
                          collections.OrderedDict([('@name', 'eof'), ('#text', 'pause')]),
-                         collections.OrderedDict([('@name', 'resource'), ('#text', item_value.movie)]),
+                         collections.OrderedDict([('@name', 'resource'), ('#text', shot_value.movie)]),
                          collections.OrderedDict([('@name', 'audio_index'), ('#text', '-1')]),
                          collections.OrderedDict([('@name', 'video_index'), ('#text', '0')]),
                          collections.OrderedDict([('@name', 'mute_on_pause'), ('#text', '0')]),
                          collections.OrderedDict([('@name', 'mlt_service'), ('#text', 'avformat-novalidate')]),
                          collections.OrderedDict([('@name', 'seekable'), ('#text', '1')]),
                          collections.OrderedDict([('@name', 'aspect_ratio'), ('#text', '1')]),
-                         collections.OrderedDict([('@name', 'creation_time'), ('#text', item_value.creation_time)]),
+                         collections.OrderedDict([('@name', 'creation_time'), ('#text', shot_value.creation_time)]),
                          collections.OrderedDict([('@name', 'global_feed'), ('#text', '1')]),
                          collections.OrderedDict([('@name', 'xml'), ('#text', 'was here')]),
-                         collections.OrderedDict([('@name', 'shotcut:hash'), ('#text', item_value.shotcut_hash)]),
+                         collections.OrderedDict([('@name', 'shotcut:hash'), ('#text', shot_value.shotcut_hash)]),
                          collections.OrderedDict([('@name', 'shotcut:caption'),
-                                                  ('#text', os.path.basename(item_value.movie))])]
+                                                  ('#text', os.path.basename(shot_value.movie))])]
         last_key = next(reversed(mlt_dict), None)
         for prop in property_list:
             last_key[self.property_name].append(prop)
@@ -408,11 +416,11 @@ class MltHelper:
         # item(動画)のハッシュを計算
         shotcut_hash = get_md5(path)
         # item(動画)の情報を集める
-        item_value = ItemValue(path, index, shotcut_hash)
+        shot_value = ShotValue(path, index, shotcut_hash)
         # playlistにitem(動画)を追加する
-        self.__add_item_to_playlist(playlist_id, item_value)
+        self.__add_item_to_playlist(playlist_id, shot_value)
         # producerにitem(動画)を追加する
-        self.__add_item_to_producer(item_value)
+        self.__add_item_to_producer(shot_value)
         # 追加したitem(動画)の管理番号を登録する
         self.__register_index_producer_entry(index)
         return
@@ -617,8 +625,11 @@ if __name__ == '__main__':  # インポート時には動かない
     app.add_movies('playlist0', movies)
     # テロップ用のトラックを追加'playlist2'
     app.add_track('V2')
+    # TODO テロップの文字列をファイルから読み込む
     # TODO テロップをプレイリストに追加'main_bin'
+    # app.add_telops('main_bin', telops)
     # TODO テロップをタイムラインに追加'playlist2'
+    # app.add_telops('playlist2', telops)
     app.save_xml(create_mlt_path)
 
     # テストコード
