@@ -27,7 +27,7 @@ def movie_folder(target_path):
     指定フォルダ内の全てのmovファイルについて、無音部分をカットした動画に分割し、それぞれ文字起こしする
 
     :param target_path: 動画ファイルが含まれるパス
-    :return:
+    :return: None
     """
     if not os.path.isdir(target_path):
         print('フォルダが存在しません。', target_path)
@@ -77,9 +77,7 @@ class MovieValue:
     target_filename: 'str 対象のファイル名'
     target_ext: 'str 対象の拡張子'
 
-    def __init__(self,
-                 movie_path,
-                 ):
+    def __init__(self, movie_path):
         """
         コンストラクタ
 
@@ -112,9 +110,7 @@ class MovieHelper:
     text_filepath: 'str 文字起こし出力パス'
     movie_dividing_filepath: 'list 分割動画ファイル出力パスリスト'
 
-    def __init__(self,
-                 movie_value,
-                 ):
+    def __init__(self, movie_value):
         """
         コンストラクタ
 
@@ -162,10 +158,7 @@ class MovieHelper:
         subprocess.run(command_output, shell=True, stdin=subprocess.DEVNULL)
         return self.wave_filepath
 
-
-    def _split_wave(self,
-                    time=30,
-                    ):
+    def _split_wave(self, time=30):
         """
         動画について、指定秒数単位に分割した音声ファイルを作り、そのパスリストを返す
 
@@ -199,7 +192,6 @@ class MovieHelper:
             # リストに追加
             output_file_list.append(output_file_path)
         return output_file_list
-
 
     def mov_to_text(self):
         """

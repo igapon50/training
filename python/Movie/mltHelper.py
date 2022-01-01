@@ -55,8 +55,13 @@ def get_md5(movie):
     return hash_object.hexdigest()
 
 
-# リストに無い次の(アルファベット+十進数値な)名前のindex(管理番号)を返す
-def get_next_index_entry(entry: 'list 対象の管理リスト'):
+def get_next_index_entry(entry):
+    """
+    リストに無い次の(アルファベット+十進数値な)名前のindex(管理番号)を返す
+
+    :param entry: list 対象の管理リスト
+    :return: str 次のindex(管理番号)
+    """
     ret_value = 0
     entry_length = len(entry)
     for index in range(entry_length):
@@ -66,23 +71,23 @@ def get_next_index_entry(entry: 'list 対象の管理リスト'):
     return ret_value
 
 
-##
-# @brief Value Objects
-# @details mltの値オブジェクト。
-# @warning
-# @note
 @dataclass(frozen=True)
 class MltValue:
+    """
+    mltの値オブジェクト
+    """
     target_filepath: 'str 対象のファイルパス'
     target_basename: 'str 対象のファイル名+拡張子'
     target_dirname: 'str 対象のディレクトリ'
     target_filename: 'str 対象のファイル名'
     target_ext: 'str 対象の拡張子'
 
-    # コンストラクタ
-    def __init__(self,
-                 mlt_path: 'str movieのファイルパス',
-                 ):
+    def __init__(self, mlt_path):
+        """
+        コンストラクタ
+
+        :param mlt_path: str movieのファイルパス
+        """
         if mlt_path is None:
             print('mltファイルパスがNoneです')
             sys.exit(1)
@@ -100,14 +105,13 @@ class MltValue:
         object.__setattr__(self, "target_ext", target_ext)
 
 
-##
-# @brief Value Objects
-# @details shot(動画やテロップなど操作の単位)の値オブジェクト。
-# @warning
-# @note
-# TODO このクラスを継承させて、動画やテロップなどのクラスを、個別に用意したほうがいいか。そんなに頑張るつもりないので困るまで放置。
 @dataclass(frozen=True)
 class ShotValue:
+    """
+    shot(動画やテロップなど操作の単位)の値オブジェクト
+
+    Todo: このクラスを継承させて、動画やテロップなどのクラスを、個別に用意したほうがいいか。そんなに頑張るつもりないので困るまで放置
+    """
     movie: str = None
     index: int = 0
     shotcut_hash: str = None
@@ -116,16 +120,18 @@ class ShotValue:
     creation_time: str = None
     time: datetime = None
 
-    # 完全コンストラクタパターン
-    # 動画の時は、contents,index,shotcut_hash
-    # テロップの時は、contents,index,time
-    def __init__(self,
-                 contents: 'str 動画のファイルパス、または、str テロップの文字列',
-                 index: 'int 登録するインデックス番号',
-                 shotcut_hash: 'str 動画のハッシュ' = None,
-                 time: 'datetime 時間' = None,
-                 ):
-        # TODO 動画とテロップでの呼び分け処理
+    def __init__(self, contents, index, shotcut_hash=None, time=None):
+        """
+        完全コンストラクタパターン
+            * 動画の時は、contents,index,shotcut_hash
+            * テロップの時は、contents,index,time
+        Todo: 動画とテロップでの呼び分け処理
+
+        :param contents: str 動画のファイルパス、または、str テロップの文字列
+        :param index: int 登録するインデックス番号
+        :param shotcut_hash: str 動画のハッシュ
+        :param time: datetime 時間
+        """
         if time is not None:
             object.__setattr__(self, "time", time)
         if contents is None or shotcut_hash is None:
@@ -159,14 +165,12 @@ class ShotValue:
         object.__setattr__(self, "creation_time", creation_time)
 
 
-##
-# @brief 動画編集shotcutのmltプロジェクトファイルを編集するヘルパー
-# @details 内部では辞書型でデータを保持する
-# @warning
-# @note
-# shotcutのmltプロジェクトファイルフォーマット
-# https://shotcut.org/notes/mltxml-annotations/
 class MltHelper:
+    """
+    動画編集shotcutのmltプロジェクトファイルを編集するヘルパー
+    内部では辞書型でデータを保持する
+    shotcutのmltプロジェクトファイルフォーマット https://shotcut.org/notes/mltxml-annotations/
+    """
     app_name: str = 'shotcut'
     mlt_name: str = 'mlt'
     tractor_name: str = 'tractor'
@@ -177,10 +181,12 @@ class MltHelper:
     property_name: str = 'property'
     filter_name: str = 'filter'
 
-    # コンストラクタ
-    def __init__(self,
-                 mlt_value  # str shotcutのmltプロジェクトファイルパス、または、MltValue mltの値オブジェクト
-                 ):
+    def __init__(self, mlt_value):
+        """
+        コンストラクタ
+
+        :param mlt_value: str shotcutのmltプロジェクトファイルパス、または、MltValue mltの値オブジェクト
+        """
         self.xml_data = None
         self.dict_data = None
         self.playlist_entry = []
@@ -196,8 +202,12 @@ class MltHelper:
         self.mlt_path = get_abs_path(self.mlt_value.target_filepath)
         self.load_xml()
 
-    # playlist_entryのロード
     def __load_playlist(self):
+        """
+        playlist_entryのロード
+
+        :return: None
+        """
         self.__clear_playlist_entry()
         tractor_root = self.dict_data.get(self.mlt_name).get(self.tractor_name)
         count = len(self.app_name)
@@ -218,8 +228,12 @@ class MltHelper:
                 sys.exit(1)
             self.__register_index_playlist_entry(int(number))
 
-    # producer_entryのロード
     def __load_producer(self):
+        """
+        producer_entryのロード
+
+        :return: None
+        """
         self.__clear_producer_entry()
         mlt_root = self.dict_data.get(self.mlt_name)
         target_root = mlt_root.get(self.producer_name)
@@ -236,8 +250,12 @@ class MltHelper:
                 sys.exit(1)
             self.__register_index_producer_entry(int(number))
 
-    # transition_entryのロード
     def __load_transition(self):
+        """
+        transition_entryのロード
+
+        :return: None
+        """
         self.__clear_transition_entry()
         tractor_root = self.dict_data.get(self.mlt_name).get(self.tractor_name)
         count = len(self.app_name)
@@ -258,8 +276,12 @@ class MltHelper:
                 sys.exit(1)
             self.__register_index_transition_entry(int(number))
 
-    # filter_entryのロード
     def __load_filter(self):
+        """
+        filter_entryのロード
+
+        :return: None
+        """
         self.__clear_filter_entry()
         mlt_root = self.dict_data.get(self.mlt_name)
         target_root = mlt_root.get(self.producer_name)
@@ -279,8 +301,12 @@ class MltHelper:
                 sys.exit(1)
             self.__register_index_producer_entry(int(number))
 
-    # プロジェクトファイルをロードする
     def load_xml(self):
+        """
+        プロジェクトファイルをロードする
+
+        :return: None
+        """
         if not os.path.isfile(self.mlt_path):
             print('プロジェクトファイルがありません')
             sys.exit(1)
@@ -294,10 +320,13 @@ class MltHelper:
         self.__load_transition()
         self.__load_filter()
 
-    # shotcutのmltプロジェクトファイルを保存する（ファイルがある場合は保存しない）
-    def save_xml(self,
-                 save_path: 'str xmlで保存するファイルパス',
-                 ):
+    def save_xml(self, save_path):
+        """
+        shotcutのmltプロジェクトファイルを保存する（ファイルがある場合は保存しない）
+
+        :param save_path: str xmlで保存するファイルパス
+        :return: None
+        """
         if save_path is None:
             print('引数が空です')
             sys.exit(1)
@@ -311,56 +340,117 @@ class MltHelper:
             fp.write(self.xml_data)
 
     def __get_next_index_playlist_entry(self):
+        """
+        次の登録番号を取得する
+
+        :return: 次の登録番号
+        """
         return get_next_index_entry(self.playlist_entry)
 
     def __get_next_index_producer_entry(self):
+        """
+        次の登録番号を取得する
+
+        :return: 次の登録番号
+        """
         return get_next_index_entry(self.producer_entry)
 
     def __get_next_index_transition_entry(self):
+        """
+        次の登録番号を取得する
+
+        :return: 次の登録番号
+        """
         return get_next_index_entry(self.transition_entry)
 
     def __get_next_index_filter_entry(self):
+        """
+        次の登録番号を取得する
+
+        :return: 次の登録番号
+        """
         return get_next_index_entry(self.filter_entry)
 
-    # 追加したtrackの管理番号を登録する
-    def __register_index_playlist_entry(self,
-                                        index: 'int 登録する管理番号',
-                                        ):
+    def __register_index_playlist_entry(self, index):
+        """
+        管理番号を登録する
+
+        :param index: int 登録する管理番号
+        :return: None
+        """
         self.playlist_entry.append(index)
 
-    # 追加したitem(動画)の管理番号を登録する
-    def __register_index_producer_entry(self,
-                                        index: 'int 登録する管理番号',
-                                        ):
+    def __register_index_producer_entry(self, index):
+        """
+        管理番号を登録する
+
+        :param index: int 登録する管理番号
+        :return: None
+        """
         self.producer_entry.append(index)
 
-    def __register_index_transition_entry(self,
-                                          index: 'int 登録する管理番号',
-                                          ):
+    def __register_index_transition_entry(self, index):
+        """
+        管理番号を登録する
+
+        :param index: int 登録する管理番号
+        :return: None
+        """
         self.transition_entry.append(index)
 
-    def __register_index_filter_entry(self,
-                                      index: 'int 登録する管理番号',
-                                      ):
+    def __register_index_filter_entry(self, index: 'int 登録する管理番号'):
+        """
+        管理番号を登録する
+
+        :param index: int 登録する管理番号
+        :return: None
+        """
         self.filter_entry.append(index)
 
     def __clear_playlist_entry(self):
+        """
+        管理番号を初期化する
+
+        :param index: int 登録する管理番号
+        :return: None
+        """
         self.playlist_entry.clear()
 
     def __clear_producer_entry(self):
+        """
+        管理番号を初期化する
+
+        :param index: int 登録する管理番号
+        :return: None
+        """
         self.producer_entry.clear()
 
     def __clear_transition_entry(self):
+        """
+        管理番号を初期化する
+
+        :param index: int 登録する管理番号
+        :return: None
+        """
         self.transition_entry.clear()
 
     def __clear_filter_entry(self):
+        """
+        管理番号を初期化する
+
+        :param index: int 登録する管理番号
+        :return: None
+        """
         self.filter_entry.clear()
 
-    # playlistにitem(動画)を追加する
-    def __add_item_to_playlist(self,
-                               playlist_id: 'str 追加するプレイリストのID',
-                               shot_value: 'ShotValue shot(動画やテロップなど操作の単位)の値クラス',
-                               ):
+    def __add_item_to_playlist(self, playlist_id, shot_value):
+        """
+        playlistにshotを追加する
+
+        :param playlist_id: str 追加するプレイリストのID
+        :param shot_value: ShotValue shot(動画やテロップなど操作の単位)の値クラス
+        :return: None
+        """
         for target_root in self.dict_data.get(self.mlt_name).get(self.playlist_name):
             if target_root.get('@id') == playlist_id:
                 od = collections.OrderedDict([('@' + self.producer_name, self.producer_name + str(shot_value.index)),
@@ -371,10 +461,13 @@ class MltHelper:
         print('プロジェクトファイルに指定のplaylistがありません')
         sys.exit(1)
 
-    # producerにitem(動画)を追加する
-    def __add_item_to_producer(self,
-                               shot_value: 'ShotValue shot(動画やテロップなど操作の単位)の値クラス',
-                               ):
+    def __add_item_to_producer(self, shot_value):
+        """
+        producerにshotを追加する
+
+        :param shot_value: ShotValue shot(動画やテロップなど操作の単位)の値クラス
+        :return: None
+        """
         mlt_dict = self.dict_data.get('mlt').get(self.producer_name)
         od = collections.OrderedDict([('@id', self.producer_name + str(shot_value.index)),
                                       ('@in', shot_value.in_time),
@@ -400,12 +493,15 @@ class MltHelper:
         for prop in property_list:
             last_key[self.property_name].append(prop)
 
-    # producerの空き番号を調べて、playlistとproducerにitem(動画)を追加する
-    # ※途中で失敗したらロールバックせずに中断
-    def add_movie(self,
-                  playlist_id: 'str 対象のプレイリストのID',
-                  movie: 'str 追加する動画のファイルパス',
-                  ):
+    def add_movie(self, playlist_id, movie):
+        """
+        producerの空き番号を調べて、playlistとproducerに動画を追加する
+        ※途中で失敗したらロールバックせずに中断
+
+        :param playlist_id: str 対象のプレイリストのID
+        :param movie: str 追加する動画のファイルパス
+        :return: None
+        """
         if playlist_id is None:
             print('引数playlist_idが空です')
             sys.exit(1)
@@ -428,13 +524,15 @@ class MltHelper:
         self.__add_item_to_producer(shot_value)
         # 追加したitem(動画)の管理番号を登録する
         self.__register_index_producer_entry(index)
-        return
 
-    # プレイリストに動画を追加する
-    def add_movies(self,
-                   playlist_id: 'str 対象のプレイリストのID',
-                   movie_list: 'list 追加する動画ファイルパスのリスト',
-                   ):
+    def add_movies(self, playlist_id, movie_list):
+        """
+        プレイリストに動画を追加する
+
+        :param playlist_id: str 対象のプレイリストのID
+        :param movie_list: list 追加する動画ファイルパスのリスト
+        :return: None
+        """
         if playlist_id is None:
             print('引数playlist_idが空です')
             sys.exit(1)
@@ -444,17 +542,21 @@ class MltHelper:
         for movie in movie_list:
             self.add_movie(playlist_id, movie)
 
-    # mltにplaylistを追加する(nameは他のトラックと重複可能)
-    # videoトラック追加用
-    # < playlist id = "playlist2" >
-    #     < property name = "shotcut:video" > 1 < / property >
-    #     < property name = "shotcut:name" > V2 < / property >
-    #     < blank length = "00:00:00.050" / >
-    # < / playlist >
-    def __add_playlist_to_mlt(self,
-                              index: 'int 登録するplaylistの番号',
-                              name: 'str トラック名(他のトラックと重複可能)',
-                              ):
+    def __add_playlist_to_mlt(self, index, name):
+        """
+        mltにplaylistを追加する(nameは他のトラックと重複可能)
+        videoトラック追加用
+
+        < playlist id = "playlist2" >
+            < property name = "shotcut:video" > 1 < / property >
+            < property name = "shotcut:name" > V2 < / property >
+            < blank length = "00:00:00.050" / >
+        < / playlist >
+
+        :param index: int 登録するplaylistの番号
+        :param name: str トラック名(他のトラックと重複可能)
+        :return: None
+        """
         playlist_root = self.dict_data.get('mlt').get(self.playlist_name)
         od2 = collections.OrderedDict([('@length', '00:00:00.040')])
         # playlistの空き番号を調べる
@@ -470,37 +572,45 @@ class MltHelper:
         for prop in property_list:
             last_key[self.property_name].append(prop)
 
-    # mltのtractorにtrackを追加する
-    # < tractor id = "tractor6" title = "Shotcut version UNSTABLE-21.02.09" global_feed = "1"
-    #    in = "00:00:00.000" out = "00:02:44.726" >
-    #   < track producer = "playlist2" / >
-    # transitionの空き番号を調べる
-    def __add_track_to_tractor(self,
-                               index: 'int 登録するplaylistの番号',
-                               ):
+    def __add_track_to_tractor(self, index):
+        """
+        mltのtractorにtrackを追加する
+        transitionの空き番号を調べる
+
+        < tractor id = "tractor6" title = "Shotcut version UNSTABLE-21.02.09" global_feed = "1"
+         in = "00:00:00.000" out = "00:02:44.726" >
+        < track producer = "playlist2" / >
+
+        :param index: int 登録するplaylistの番号
+        :return: None
+        """
         track_root = self.dict_data.get('mlt').get(self.tractor_name).get(self.track_name)
         od = collections.OrderedDict([('@producer', self.playlist_name + str(index))])
         track_root.append(od)
 
-    # mltのtractorにtransitionを二つ追加する
-    #   < transition id = "transition0" >
-    #     < property name = "a_track" > 0 < / property >
-    #     < property name = "b_track" > 3 < / property >
-    #     < property name = "mlt_service" > mix < / property >
-    #     < property name = "always_active" > 1 < / property >
-    #     < property name = "sum" > 1 < / property >
-    #   < / transition >
-    #   < transition id = "transition1" >
-    #     < property name = "a_track" > 1 < / property >
-    #     < property name = "b_track" > 3 < / property >
-    #     < property name = "version" > 0.9 < / property >
-    #     < property name = "mlt_service" > frei0r.cairoblend < / property >
-    #     < property name = "threads" > 0 < / property >
-    #     < property name = "disable" > 0 < / property >
-    #   < / transition >
-    # < / tractor >
-    def __add_transition_to_tractor(self,
-                                    ):
+    def __add_transition_to_tractor(self):
+        """
+        mltのtractorにtransitionを二つ追加する
+
+        < transition id = "transition0" >
+            < property name = "a_track" > 0 < / property >
+            < property name = "b_track" > 3 < / property >
+            < property name = "mlt_service" > mix < / property >
+            < property name = "always_active" > 1 < / property >
+            < property name = "sum" > 1 < / property >
+        < / transition >
+
+        < transition id = "transition1" >
+            < property name = "a_track" > 1 < / property >
+            < property name = "b_track" > 3 < / property >
+            < property name = "version" > 0.9 < / property >
+            < property name = "mlt_service" > frei0r.cairoblend < / property >
+            < property name = "threads" > 0 < / property >
+            < property name = "disable" > 0 < / property >
+        < / transition >
+
+        :return: None
+        """
         transition_root = self.dict_data.get('mlt').get(self.tractor_name).get(self.transition_name)
         index = self.__get_next_index_transition_entry()
         od = collections.OrderedDict([('@id', self.transition_name + str(index)),
@@ -536,14 +646,19 @@ class MltHelper:
             last_key[self.property_name].append(prop)
         self.__register_index_transition_entry(index)
 
-    # タイムラインにトラックを増やす(mltファイルのplaylistタグid=playlist0..)
-    # videoトラック追加用
-    def add_track(self,
-                  name: 'str トラック名(他のトラックと重複可能)'
-                  ):
-        # TODO mltにplaylist id="main_bin"がなければmain_binを追加し、mltのproducer="main_bin"に変更する
-        # TODO mltにtractorがなければ、playlist id="playlist0"をtractor id="tractor0"に変更し、tractorにtransitionを追加する
-        # TODO mltにplaylist id="background"がなければbackgroundを追加し、tractorにtrackを追加する
+    def add_track(self, name):
+        """
+        タイムラインにトラックを増やす(mltファイルのplaylistタグid=playlist0..)
+        videoトラック追加用
+
+        Todo:
+            * mltにplaylist id="main_bin"がなければmain_binを追加し、mltのproducer="main_bin"に変更する
+            * mltにtractorがなければ、playlist id="playlist0"をtractor id="tractor0"に変更し、tractorにtransitionを追加する
+            * mltにplaylist id="background"がなければbackgroundを追加し、tractorにtrackを追加する
+
+        :param name: str トラック名(他のトラックと重複可能)
+        :return: None
+        """
         # 追加するプレイリストの管理番号を取得する
         index = self.__get_next_index_playlist_entry()
         # mltにplaylist id="playlist{index}"を追加する
@@ -554,25 +669,36 @@ class MltHelper:
         self.__register_index_playlist_entry(index)
         # tractorにtransitionを追加する、一個目,二個目
         self.__add_transition_to_tractor()
-        return
 
-    # TODO タイムラインにshotを追加する
-    def add_producer(self,
-                     movie: 'str 動画のファイルパス'
-                     ):
+    def add_producer(self, movie):
+        """
+        TODO タイムラインにshotを追加する
+
+        :param movie: str 動画のファイルパス
+        :return:
+        """
         # mltにproducerを追加
         # playlistにproducerを追加
         # playlistからblankを削除？
         return movie
 
-    # TODO トランジション(フェード、ワイプ、クロスフェード、ミックス)
-    def add_tractor(self,
-                    movie: 'str 動画のファイルパス'
-                    ):
+    def add_tractor(self, movie):
+        """
+        TODO トランジション(フェード、ワイプ、クロスフェード、ミックス)
+
+        :param movie: str 動画のファイルパス
+        :return:
+        """
         return movie
 
 
-def test(target_file_path: 'str 対象のファイルパス'):
+def test(target_file_path):
+    """
+    単体テスト
+
+    :param target_file_path: str 対象のファイルパス
+    :return:
+    """
     # 絶対パスでmltファイルを読み込み、保存する
     app1 = MltHelper('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/テンプレート.mlt')
     app1.save_xml('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test1.mlt')
