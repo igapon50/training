@@ -4,9 +4,6 @@
 動画編集アプリshotcutのmltプロジェクトファイルを扱うヘルパー
     * shotを追加する
     * ・・・
-* @author Ryosuke Igarashi(HN:igapon)
-* @version 1.0.1
-* @date 2022/1/1
 """
 import datetime
 import glob
