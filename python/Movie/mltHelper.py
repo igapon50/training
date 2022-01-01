@@ -1,14 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-##
-# @file mltHelper.py
-# @version 1.0.0
-# @author Ryosuke Igarashi(HN:igapon)
-# @date 2021/12/4
-# @brief 動画編集shotcutのmltプロジェクトファイルを編集するヘルパー
-# @details
-# @warning
-# @note
+"""
+動画編集アプリshotcutのmltプロジェクトファイルを扱うヘルパー
+    * shotを追加する
+    * ・・・
+* @author Ryosuke Igarashi(HN:igapon)
+* @version 1.0.1
+* @date 2022/1/1
+"""
 import datetime
 import glob
 import os
@@ -21,12 +20,13 @@ import hashlib
 from dataclasses import dataclass
 
 
-##
-# @brief 相対パスが指定されたら絶対パスを返す
-# @details
-# @warning
-# @note
-def get_abs_path(path: 'str 変換対象パス'):
+def get_abs_path(path):
+    """
+    相対パスが指定されたら絶対パスを返す
+
+    :param path: 相対パスや絶対パス
+    :return: 絶対パス
+    """
     if path is not None:
         if os.path.isabs(path):
             target_path = path
@@ -35,10 +35,15 @@ def get_abs_path(path: 'str 変換対象パス'):
         return target_path
 
 
-# item(動画)のハッシュを計算して返す
-# 参考)windowsでMD5ハッシュを出力するコマンド例
-# > certutil -hashfile C:\Git\igapon50\traning\python\Movie\せんちゃんネル\mov\BPUB2392.MP4 MD5
-def get_md5(movie: 'str ハッシュを計算するファイルパス'):
+def get_md5(movie):
+    """
+    item(動画)のハッシュを計算して返す
+    参考)windowsでMD5ハッシュを出力するコマンド例
+    > certutil -hashfile C:\Git\igapon50\traning\python\Movie\せんちゃんネル\mov\BPUB2392.MP4 MD5
+
+    :param movie: str ハッシュを計算するファイルパス
+    :return: str md5のハッシュ値
+    """
     algo = 'md5'
     hash_object = hashlib.new(algo)
     hash_size = hash_object.block_size * 0x800

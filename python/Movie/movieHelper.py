@@ -1,14 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-##
-# @file movieHelper.py
-# @version 1.1.0
-# @author Ryosuke Igarashi(HN:igapon)
-# @date 2021/12/19
-# @brief 動画の音声について文字お起こしする。
-# @details 動画の音声について文字起こしする。
-# @warning
-# @note
+"""
+動画ファイルを扱うヘルパー
+    * 無音部分をカットした動画生成
+    * 文字起こし
+* @author Ryosuke Igarashi(HN:igapon)
+* @version 1.1.1
+* @date 2022/1/1
+"""
 import sys  # 終了時のエラー有無
 import os  # ファイルパス分解
 import glob
@@ -23,9 +22,13 @@ import subprocess
 import soundfile as sf
 
 
-# 指定のフォルダ内にある全てのmovファイルについて、
-# 無音部分をカットした動画に分割し、それぞれ文字起こしする
 def movie_folder(target_path):
+    """
+    指定フォルダ内の全てのmovファイルについて、無音部分をカットした動画に分割し、それぞれ文字起こしする
+
+    :param target_path: 動画ファイルが含まれるパス
+    :return:
+    """
     if not os.path.isdir(target_path):
         print('フォルダが存在しません。', target_path)
         sys.exit(False)
@@ -38,11 +41,16 @@ def movie_folder(target_path):
             _mh_dividing.mov_to_text()
 
 
-# 音声ファイルから文字起こしして返す
-# 長いと失敗するので1分以下のファイルにする
-# TODO wavHelperとかあってもいいかも。
-# TODO エラーの回避策がわからないので、とりあえず例外処理にした。
 def wav_to_text(wav_filepath):
+    """
+    音声ファイルから文字起こしして返す(長いと失敗するので1分以下のファイルにする)
+
+    Todo:
+        * wavHelperとかあってもいいかも。
+        * エラーの回避策がわからないので、とりあえず例外処理にした。
+    :param wav_filepath: str 音声ファイルのパス
+    :return: str 文字起こし結果
+    """
     if not os.path.isfile(wav_filepath):
         print('音声ファイルがありません', wav_filepath)
         exit(1)
@@ -58,23 +66,25 @@ def wav_to_text(wav_filepath):
     return text
 
 
-##
-# @brief Value Objects
-# @details 動画の値オブジェクト。
-# @warning
-# @note
 @dataclass(frozen=True)
 class MovieValue:
+    """
+    動画の値オブジェクト
+    """
     target_filepath: 'str 対象のファイルパス'
     target_basename: 'str 対象のファイル名+拡張子'
     target_dirname: 'str 対象のディレクトリ'
     target_filename: 'str 対象のファイル名'
     target_ext: 'str 対象の拡張子'
 
-    # コンストラクタ
     def __init__(self,
-                 movie_path: 'str movieのファイルパス',
+                 movie_path,
                  ):
+        """
+        コンストラクタ
+
+        :param movie_path: str movieのファイルパス
+        """
         if movie_path is None:
             print('動画ファイルパスがNoneです')
             sys.exit(1)
@@ -93,16 +103,23 @@ class MovieValue:
 
 
 class MovieHelper:
+    """
+    動画ファイルのヘルパー
+    """
     movie_value: 'MovieValue movieの値オブジェクト'
     movie_filepath: 'str 動画ファイル入力パス'
     wave_filepath: 'str 音声ファイル出力パス'
     text_filepath: 'str 文字起こし出力パス'
     movie_dividing_filepath: 'list 分割動画ファイル出力パスリスト'
 
-    # コンストラクタ
     def __init__(self,
-                 movie_value,  # str movieのファイルパス、または、MovieValue movieの値オブジェクト
+                 movie_value,
                  ):
+        """
+        コンストラクタ
+
+        :param movie_value: str movieのファイルパス、または、MovieValue movieの値オブジェクト
+        """
         if movie_value is None:
             print('引数movie_valueがNoneです')
             sys.exit(1)
@@ -118,10 +135,13 @@ class MovieHelper:
                                           self.movie_value.target_filename + '.txt',
                                           )
 
-    # 動画ファイルから音声ファイルを作る
     def mov_to_wave(self):
+        """
+        動画ファイルから音声ファイルを作る(movファイルを対象とする)
+
+        :return: 音声ファイルパス
+        """
         # パスの分解
-        # このメソッドはmovファイルを対象とする
         if self.movie_value.target_ext.lower() != '.mov':
             print(self.movie_value.target_ext.lower(),
                   'ターゲットファイルの種類が不正です。ファイル拡張子movのファイルを指定してください',
@@ -142,10 +162,16 @@ class MovieHelper:
         subprocess.run(command_output, shell=True, stdin=subprocess.DEVNULL)
         return self.wave_filepath
 
-    # 動画について、指定秒数単位に分割した音声ファイルを作り、そのパスリストを返す
+
     def _split_wave(self,
-                    time: 'int 区切る時間[秒]' = 30
+                    time=30,
                     ):
+        """
+        動画について、指定秒数単位に分割した音声ファイルを作り、そのパスリストを返す
+
+        :param time: int 区切る時間[秒]
+        :return: 分割した音声ファイルのパスリスト
+        """
         # 動画ファイルから音声ファイルを作る
         self.mov_to_wave()
         # ファイルを読み込み
@@ -174,8 +200,13 @@ class MovieHelper:
             output_file_list.append(output_file_path)
         return output_file_list
 
-    # 動画ファイルの文字起こしして返す。ファイルにも保存する
+
     def mov_to_text(self):
+        """
+        動画ファイルの文字起こしして返す。ファイルにも保存する
+
+        :return: 文字起こし結果の文字列
+        """
         # 動画ファイルについて、指定秒数単位に分割した音声ファイルを作り、そのパスリストを返す
         split_waves = self._split_wave()
         # 分割した音声ファイルを消費して、文字起こしする
@@ -189,13 +220,20 @@ class MovieHelper:
             fp.write(output_text)
         return output_text
 
-    # 動画から音声ファイルを作成して、無音部分をカットした部分動画群を作成する
-    # 作成した動画のファイルパスリストを返す
     def movie_dividing(self,
-                       threshold: 'float 閾値' = 0.05,
-                       min_silence_duration:  'float [秒]以上thresholdを下回っている個所を抽出する' = 0.5,
-                       padding_time: 'float [秒]カットしない無音部分の長さ' = 0.1,
+                       threshold=0.05,
+                       min_silence_duration=0.5,
+                       padding_time=0.1,
                        ):
+        """
+        動画から音声ファイルを作成して、無音部分をカットした部分動画群を作成する
+        作成した動画のファイルパスリストを返す
+
+        :param threshold: float 閾値
+        :param min_silence_duration: float [秒]以上thresholdを下回っている個所を抽出する
+        :param padding_time: float [秒]カットしない無音部分の長さ
+        :return: 分割したファイルのパスリスト
+        """
         if not os.path.isfile(self.mov_to_wave()):
             print('動画から音声ファイルが作成できませんでした')
             sys.exit(1)
