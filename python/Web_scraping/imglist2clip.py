@@ -1,15 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-##
-# @file imglist2clip.py
-# @version 1.0.0
-# @author Ryosuke Igarashi(HN:igapon)
-# @date 2021/10/10
-# @brief imglistファイルを読み込んでクリップボードにコピーする
-# @details imglistファイルを読み込んでクリップボードにコピーする
-# @warning 
-# @note 
-
+"""
+imglistファイルを読み込んでクリップボードにコピーする
+"""
 # local source
 from const import *
 from func import *
@@ -38,7 +31,7 @@ if __name__ == '__main__':  # インポート時には動かない
     print(imglist_filepath)
 
     # ファイルのURLリストを作成
-    crawling = crawling()
+    crawling = Crawling()
     if not crawling:
         print(msg_error_exit)
         sys.exit(crawling)

@@ -1,15 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-##
-# @file imglist2dl.py
-# @version 1.0.0
-# @author Ryosuke Igarashi(HN:igapon)
-# @date 2021/10/10
-# @brief imglistファイルからファイル名リストを作り、ダウンロードする。
-# @details imglistファイルからファイル名リストを作り、ダウンロードする。
-# @warning 
-# @note 
-
+"""
+imglistファイルからファイル名リストを作り、ダウンロードする
+"""
 # local source
 from const import *
 from func import *
@@ -35,7 +28,7 @@ if __name__ == '__main__':  # インポート時には動かない
     print(imglist_filepath)
 
     # ファイルのURLリストを作成
-    crawling = crawling()
+    crawling = Crawling()
     if not crawling:
         print(msg_error_exit)
         sys.exit(crawling)
