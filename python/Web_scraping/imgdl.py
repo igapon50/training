@@ -33,42 +33,30 @@ if __name__ == '__main__':  # インポート時には動かない
         sys.exit()
     print(target_url)
 
-    # ファイルのURLリストを作成
+    # クローリングを開始する
     crawling = Crawling(target_url, img_css_select, img_attr)
     if not crawling:
         print(msg_error_exit)
         sys.exit(1)
+    # クローリング情報をファイルに保存する
     crawling.save_text(RESULT_FILE_PATH + '1.txt')
     crawling.save_pickle(RESULT_FILE_PATH + '1.pkl')
     # target_data = crawling.get_value_objects()
+    # スクレイピングで使用する情報を取得する
     file_url_list = crawling.get_image_list()
     title = crawling.get_title()
-
+    # スクレイピングを開始する
     fileDownloader = Scraping(file_url_list, folder_path)
+    # 画像ファイルのダウンロード
     fileDownloader.download()
+    # ダウンロードファイルを変名する(ナンバリング)
     if not fileDownloader.rename_images():
+        # ダウンロードされていないファイルがあった
         print(msg_error_exit)
         sys.exit(1)
-
     # 圧縮ファイル作成
-    ret = makezipfile(folder_path + '.zip', fileDownloader.get_dst_file_list())
-    if not ret:
-        print(msg_error_exit)
-        sys.exit(ret)
-
+    fileDownloader.make_zip_file()
     # 圧縮ファイル名付け直し
-    zipfilename = '.\\' + re.sub(r'[\\/:*?"<>|]+', '', title)  # 禁則文字を削除する
-    print('圧縮ファイル名を付け直します(タイトル)')
-    print(zipfilename)
-    # os.system('PAUSE')
-    os.rename(folder_path + '.zip', zipfilename + '.zip')
-
+    fileDownloader.rename_zip_file(title)
     # ファイルの削除
-    print('ファイル削除します(フォルダごと削除して、フォルダを作り直します)')
-    print(folder_path)
-    # os.system('PAUSE')
-    shutil.rmtree(folder_path)
-    if folder_path[len(folder_path) - 1] == '\\':
-        os.mkdir(folder_path)
-    else:
-        os.mkdir(folder_path + '\\')
+    fileDownloader.download_file_clear()

@@ -1,11 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-スクレイピング
+スクレイピングユーティリティ
+    * URLリストと、保存フォルダを指定して、スクレイピングする
+        * URLリストのファイルをダウンロードする
+        * ダウンロードしたファイルの名前を、ナンバリングした名前に付けなおす
+        * 保存フォルダを圧縮する
+        * 保存フォルダ内のファイルを削除する
 """
 # standard library
 import sys  # 終了時のエラー有無
+import re  # 正規表現モジュール
+import zipfile  # zipファイル
 import os  # ファイルパス分解
+import shutil  # 高水準のファイル操作
 from urllib.parse import urlparse  # URLパーサー
 from urllib.parse import urljoin  # URL結合
 
@@ -49,6 +57,10 @@ class ScrapingValue:
 class Scraping:
     """
     スクレイピングのユーティリティ
+        * 指定のフォルダにダウンロードする
+        * ダウンロードしたファイル群の名前を付け直す
+        * 指定のフォルダを圧縮する
+        * 指定のフォルダ内のファイルを削除する
     """
     files_downloader_value: ScrapingValue = None
     image_list: list = None
@@ -100,15 +112,15 @@ class Scraping:
 
     def get_src_file_list(self):
         """
-        保存ファイルパスリストを取得する
+        リネーム前の、保存ファイルパスリストを取得する
 
-        :return: list 保存ファイルパスリスト
+        :return: list ダウンロードファイルパスリスト
         """
         return copy.deepcopy(self.src_file_list)
 
     def get_dst_file_list(self):
         """
-        保存ファイルパスリストを取得する
+        リネーム後の、保存ファイルパスリストを取得する
 
         :return: list リネームファイルパスリスト
         """
@@ -202,7 +214,6 @@ class Scraping:
             if not os.path.isfile(src_file_path):
                 print('ファイル[' + src_file_path + ']が存在しません。')
                 print(msg_error_exit)
-                # sys.exit()
                 return False
         count = 0
         for src_file_path in self.src_file_list:
@@ -215,6 +226,41 @@ class Scraping:
             self.dst_file_list.append(dst_img_path)
             os.rename(src_file_path, dst_img_path)
         return True
+
+    def make_zip_file(self):
+        """
+        リネーム後のダウンロードファイルを、一つの圧縮ファイルにする
+
+        :return: None
+        """
+        with zipfile.ZipFile(self.save_path + '.zip', 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            for img_path in self.dst_file_list:
+                zip_file.write(img_path)
+
+    def download_file_clear(self):
+        """
+        保存フォルダからダウンロードファイルを削除する
+
+        :return: None
+        """
+        print('ファイル削除します(フォルダごと削除して、フォルダを作り直します)')
+        shutil.rmtree(self.save_path)
+        if self.save_path[len(self.save_path) - 1] == '\\':
+            os.mkdir(self.save_path)
+        else:
+            os.mkdir(self.save_path + '\\')
+
+    def rename_zip_file(self, title):
+        """
+        圧縮ファイルの名前を付けなおす
+
+        :param title: str 付け直すファイル名(禁則文字は削除される)
+        :return: None
+        """
+        # 禁則文字を削除する
+        zip_file_new_name = '.\\' + re.sub(r'[\\/:*?"<>|]+', '', title)
+        print(f'圧縮ファイル名を付け直します:{zip_file_new_name}.zip')
+        os.rename(self.save_path + '.zip', zip_file_new_name + '.zip')
 
 
 # 検証コード
