@@ -50,7 +50,7 @@ class CrawlingValue:
         :param image_list: list スクレイピングして得た属性のリスト
         """
         if target_url is not None:
-            object.__setattr__(self, "target_value", target_url)
+            object.__setattr__(self, "target_url", target_url)
         if css_image_selector is not None:
             object.__setattr__(self, "css_image_selector", css_image_selector)
         if image_attr is not None:
