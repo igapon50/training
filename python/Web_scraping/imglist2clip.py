@@ -36,7 +36,7 @@ if __name__ == '__main__':  # インポート時には動かない
         print(msg_error_exit)
         sys.exit(crawling)
     crawling.load_text(RESULT_FILE_PATH + '1.txt')
-    file_url_list = crawling.get_image_list()
+    crawling.clip_copy()
 
     # ファイルのダウンロード
     print('タイトルとURLリストをクリップボードにコピーしました。')

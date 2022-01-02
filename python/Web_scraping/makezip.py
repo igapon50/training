@@ -1,15 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-##
-# @file makezip.py
-# @version 1.0.0
-# @author Ryosuke Igarashi(HN:igapon)
-# @date 2021/10/10
-# @brief 指定フォルダ内のファイル群をzip圧縮する
-# @details 指定フォルダ内のファイル群をzip圧縮する
-# @warning 
-# @note 
-
+"""
+指定フォルダ内のファイル群をzip圧縮し、指定フォルダ内のファイルを削除する
+"""
 # local source
 from const import *
 from func import *
@@ -40,3 +33,6 @@ if __name__ == '__main__':  # インポート時には動かない
     if not ret:
         print(msg_error_exit)
         sys.exit(ret)
+
+    # 保存フォルダからダウンロードファイルを削除する
+    downloadfileclear(folder_path)

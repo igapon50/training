@@ -46,17 +46,17 @@ if __name__ == '__main__':  # インポート時には動かない
     file_url_list = crawling.get_image_list()
     title = crawling.get_title()
     # スクレイピングを開始する
-    fileDownloader = Scraping(file_url_list, folder_path)
+    scraping = Scraping(file_url_list, folder_path)
     # 画像ファイルのダウンロード
-    fileDownloader.download()
+    scraping.download()
     # ダウンロードファイルを変名する(ナンバリング)
-    if not fileDownloader.rename_images():
+    if not scraping.rename_images():
         # ダウンロードされていないファイルがあった
         print(msg_error_exit)
         sys.exit(1)
     # 圧縮ファイル作成
-    fileDownloader.make_zip_file()
+    scraping.make_zip_file()
     # 圧縮ファイル名付け直し
-    fileDownloader.rename_zip_file(title)
+    scraping.rename_zip_file(title)
     # ファイルの削除
-    fileDownloader.download_file_clear()
+    scraping.download_file_clear()

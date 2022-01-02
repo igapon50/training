@@ -74,7 +74,7 @@ class Crawling:
     css_image_selector: str = None
     image_attr: str = None
 
-    def __init__(self, target_value, css_image_selector=None, image_attr=None):
+    def __init__(self, target_value=None, css_image_selector=None, image_attr=None):
         """
         コンストラクタ
 
@@ -82,27 +82,25 @@ class Crawling:
         :param css_image_selector: str スクレイピングする際のCSSセレクタ
         :param image_attr: str スクレイピングする際の属性
         """
-        if target_value is None:
-            print('target_valueがNoneです')
-            sys.exit(1)
-        if isinstance(target_value, CrawlingValue):
-            crawling_value = target_value
-            self.crawling_value = crawling_value
-            if crawling_value.target_url is not None:
-                self.target_url = crawling_value.target_url
-            if crawling_value.css_image_selector is not None:
-                self.css_image_selector = crawling_value.css_image_selector
-            if crawling_value.image_attr is not None:
-                self.image_attr = crawling_value.image_attr
-        else:
-            if isinstance(target_value, str):
-                self.target_url = target_value
-                # targetUrlを指定したら、誰か解析してcssImageSelector作ってくれないかな。
-                if css_image_selector is not None:
-                    self.css_image_selector = css_image_selector
-                    if image_attr is not None:
-                        self.image_attr = image_attr
-                        self.request()
+        if target_value is not None:
+            if isinstance(target_value, CrawlingValue):
+                crawling_value = target_value
+                self.crawling_value = crawling_value
+                if crawling_value.target_url is not None:
+                    self.target_url = crawling_value.target_url
+                if crawling_value.css_image_selector is not None:
+                    self.css_image_selector = crawling_value.css_image_selector
+                if crawling_value.image_attr is not None:
+                    self.image_attr = crawling_value.image_attr
+            else:
+                if isinstance(target_value, str):
+                    self.target_url = target_value
+                    # targetUrlを指定したら、誰か解析してcssImageSelector作ってくれないかな。
+                    if css_image_selector is not None:
+                        self.css_image_selector = css_image_selector
+                        if image_attr is not None:
+                            self.image_attr = image_attr
+                            self.request()
 
     def get_value_objects(self):
         """

@@ -1,15 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-##
-# @file func.py
-# @version 1.0.0
-# @author Ryosuke Igarashi(HN:igapon)
-# @date 2021/10/10
-# @brief 関数群
-# @details 
-# @warning 
-# @note 
-
+"""
+関数群、ユーティリティ
+"""
 # standard library
 import sys  # 終了時のエラー有無
 import re  # 正規表現モジュール
@@ -32,15 +25,15 @@ import pyperclip  # クリップボード
 from const import *
 
 
-##
-# @brief 指定したURLリストから、ファイル名+拡張子部分を抽出したリストを作る
-# @param file_urllist IN 基にするURLリスト
-# @param dst_file_namelist OUT ファイル名+拡張子部分を抽出したリスト
-# @return True 成功 / False 失敗(引数チェックエラーで中断)
-# @details file_urllistで指定したファイルURLリストから、ファイル名+拡張子部分を抽出してdst_file_namelistに作成して返す
-# @warning 
-# @note ファイル名に"?"がある場合は"_"に置換する
 def getfilenamefromurl(file_urllist, dst_file_namelist):
+    """
+    指定したURLリストから、ファイル名+拡張子部分を抽出したリストを作る
+    ファイル名に"?"がある場合は"_"に置換する
+
+    :param file_urllist: str 基にするURLリスト
+    :param dst_file_namelist: list ファイル名+拡張子部分を抽出したリスト
+    :return: bool True 成功 / False 失敗(引数チェックエラーで中断)
+    """
     # 引数チェック
     if 0 == len(file_urllist):
         print(sys._getframe().f_code.co_name + '引数file_urllistが空です。')
@@ -56,15 +49,15 @@ def getfilenamefromurl(file_urllist, dst_file_namelist):
     return True
 
 
-##
-# @brief 指定したURLのimageをgetして返す
-# @param url IN 基にするURL
-# @param timeout IN タイムアウト時間[s]
-# @return dst_file_namelist 読み込んだimageのバイナリデータ
-# @details 
-# @warning 
-# @note サーバー落ちているとリダイレクトでエラー画像になることがあるのでリダイレクトFalse
 def download_image(file_url, timeout=30):
+    """
+    指定したURLのimageをgetして返す
+    サーバー落ちているとリダイレクトでエラー画像になることがあるのでリダイレクトFalse
+
+    :param file_url: str 基にするURL
+    :param timeout: int タイムアウト時間[s]
+    :return: 読み込んだimageのバイナリデータ
+    """
     response = requests.get(file_url, allow_redirects=False, timeout=timeout)
     if response.status_code != requests.codes.ok:
         e = Exception("HTTP status: " + str(response.status_code))  # + " " + file_url + " " + response.url)
@@ -76,15 +69,15 @@ def download_image(file_url, timeout=30):
     return response.content
 
 
-##
-# @brief 指定したファイルパスリストから、ファイル名部分をナンバリングし直したファイルパスリストを作る
-# @param src_file_pathlist IN 基にするファイルパスリスト
-# @param dst_file_pathlist OUT ナンバリングし直したファイルパスリスト
-# @return True 成功 / False 失敗(引数チェックエラーで中断)
-# @details src_file_pathlistで指定したファイルパスリストから、ファイル名部分をナンバリングし直したファイル名に付け直したファイルパスリストをdst_file_pathlistに作成して返す
-# @warning 
-# @note 
 def renameimg(src_file_pathlist, dst_file_pathlist):
+    """
+    指定したファイルパスリストから、ファイル名部分をナンバリングし直したファイルパスリストを作る
+    src_file_pathlistで指定したファイルパスリストから、ファイル名部分をナンバリングし直したファイル名に付け直したファイルパスリストをdst_file_pathlistに作成して返す
+
+    :param src_file_pathlist: list 基にするファイルパスリスト
+    :param dst_file_pathlist: list ナンバリングし直したファイルパスリスト
+    :return: bool True 成功 / False 失敗(引数チェックエラーで中断)
+    """
     # 引数チェック
     if 0 == len(src_file_pathlist):
         print(sys._getframe().f_code.co_name + '引数src_file_pathlistが空です。')
@@ -106,15 +99,15 @@ def renameimg(src_file_pathlist, dst_file_pathlist):
     return True
 
 
-##
-# @brief 指定ファイル群が入ったzip圧縮ファイルを作成する
-# @param zipfile_path IN 圧縮ファイルパス
-# @param file_pathlist IN 圧縮するファイルパスリスト
-# @return True 成功 / False 失敗(引数チェックエラーで中断)
-# @details zipfile_pathで指定したファイルパスにzip圧縮ファイルを作成する。file_pathlistで指定したファイルパスリストを圧縮ファイルに含める。
-# @warning 
-# @note 
 def makezipfile(zipfile_path, file_pathlist):
+    """
+    指定ファイル群が入ったzip圧縮ファイルを作成する
+    zipfile_pathで指定したファイルパスにzip圧縮ファイルを作成する。file_pathlistで指定したファイルパスリストを圧縮ファイルに含める。
+
+    :param zipfile_path: str 圧縮ファイルパス
+    :param file_pathlist: list 圧縮するファイルパスリスト
+    :return: bool True 成功 / False 失敗(引数チェックエラーで中断)
+    """
     # 引数チェック
     if 0 == len(zipfile_path):
         print(sys._getframe().f_code.co_name + '引数zipfile_pathが空です。')
@@ -128,3 +121,18 @@ def makezipfile(zipfile_path, file_pathlist):
         zip.write(img_path)
     zip.close()
     return True
+
+
+def downloadfileclear(save_path):
+    """
+    保存フォルダからダウンロードファイルを削除する
+
+    :param save_path: str 保存フォルダ
+    :return: None
+    """
+    print('ファイル削除します(フォルダごと削除して、フォルダを作り直します)')
+    shutil.rmtree(save_path)
+    if save_path[len(save_path) - 1] == '\\':
+        os.mkdir(save_path)
+    else:
+        os.mkdir(save_path + '\\')
