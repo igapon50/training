@@ -31,7 +31,7 @@ if __name__ == '__main__':  # インポート時には動かない
         print(msg_error_exit)
         sys.exit()
     print(target_url)
-#    crawling = Crawling(target_value, img_css_select, img_attr)  # 'img.vimg[src*="jpg"]'
+#    crawling = Crawling(target_url, img_css_select, img_attr)  # 'img.vimg[src*="jpg"]'
     crawling = Crawling(target_url, 'img.vimg[src*="jpg"]', img_attr)  #
     crawling.save_text(RESULT_FILE_PATH)
     value_objects = crawling.get_value_objects()

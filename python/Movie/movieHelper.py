@@ -29,7 +29,7 @@ def movie_folder(target_path):
     """
     if not os.path.isdir(target_path):
         print('フォルダが存在しません。', target_path)
-        sys.exit(False)
+        sys.exit()
     _movie_list = glob.glob(os.path.join(target_path, '**/*.mov'), recursive=True)
     for _movie in _movie_list:
         _mh = MovieHelper(_movie)
@@ -51,7 +51,7 @@ def wav_to_text(wav_filepath):
     """
     if not os.path.isfile(wav_filepath):
         print('音声ファイルがありません', wav_filepath)
-        exit(1)
+        exit()
     print(wav_filepath)
     r = sr.Recognizer()
     # 音声->テキスト
@@ -140,7 +140,7 @@ class MovieHelper:
             print(self.movie_value.target_ext.lower(),
                   'ターゲットファイルの種類が不正です。ファイル拡張子movのファイルを指定してください',
                   sep=':')
-            sys.exit(1)
+            sys.exit()
         # 動画ファイルから音声ファイルを作る
         command_output = ["ffmpeg",
                           "-i",
@@ -311,7 +311,7 @@ if __name__ == '__main__':  # インポート時には動かない
             target_path = paste_str
     else:
         print('引数が不正です。')
-        sys.exit(1)
+        sys.exit()
     print(target_path)
 
     # 指定フォルダ内のすべての動画文字起こし

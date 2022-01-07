@@ -30,6 +30,7 @@ from urllib3.util.retry import Retry
 # local source
 from const import *
 
+# 最大再起回数を1万回にする
 sys.setrecursionlimit(10000)
 
 

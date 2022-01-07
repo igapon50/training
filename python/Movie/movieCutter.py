@@ -1,14 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-##
-# @file movieCutter.py
-# @version 1.1.0
-# @author Ryosuke Igarashi(HN:igapon)
-# @date 2021/12/19
-# @brief 動画から音声のある部分だけ切り出す。
-# @details 動画から音声のある部分だけ切り出す。
-# @warning
-# @note
+"""
+動画から音声のある部分だけ切り出す
+"""
 import sys
 import pyperclip
 from movieHelper import MovieHelper
@@ -29,10 +23,10 @@ if __name__ == '__main__':  # インポート時には動かない
     # クリップボードが空なら、デフォルトを用いる
     else:
         print('引数が不正です。')
-        sys.exit(False)
+        sys.exit()
     print(target_file_path)
 
-    # 無音部分をカットした動画分割して、文字起こし
+    # 無音部分をカットした動画に分割して、文字起こしする
     mh = MovieHelper(target_file_path)
     movie_list = mh.movie_dividing()
     for movie in movie_list:

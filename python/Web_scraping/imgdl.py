@@ -37,7 +37,7 @@ if __name__ == '__main__':  # インポート時には動かない
     crawling = Crawling(target_url, img_css_select, img_attr)
     if not crawling:
         print(msg_error_exit)
-        sys.exit(1)
+        sys.exit()
     # クローリング情報をファイルに保存する
     crawling.save_text(RESULT_FILE_PATH + '1.txt')
     crawling.save_pickle(RESULT_FILE_PATH + '1.pkl')
@@ -53,7 +53,7 @@ if __name__ == '__main__':  # インポート時には動かない
     if not scraping.rename_images():
         # ダウンロードされていないファイルがあった
         print(msg_error_exit)
-        sys.exit(1)
+        sys.exit()
     # 圧縮ファイル作成
     scraping.make_zip_file()
     # 圧縮ファイル名付け直し

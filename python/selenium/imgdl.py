@@ -1,19 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-##
-# @file imgdl.py
-# @version 1.0.0
-# @author Ryosuke Igarashi(HN:igapon)
-# @date 2021/04/26
-# @brief Webサイトから画像のURLリストを作り、ダウンロードしてzipファイルにまとめる。
-# @details Webサイトから画像のURLリストを作り、ダウンロードしてzipファイルにまとめる。
-# @warning 
-# @note 
-
+"""
+Webサイトから画像のURLリストを作り、ダウンロードしてzipファイルにまとめる
+"""
 # local source
-from const import *
 from func import *
-from crawling import *
+from python.Web_scraping.func import *
+from python.Web_scraping.crawling import Crawling
+from python.Web_scraping.scraping import Scraping
 
 if __name__ == '__main__':  # インポート時には動かない
     imglist_filepath = RESULT_FILE_PATH
@@ -47,91 +41,28 @@ if __name__ == '__main__':  # インポート時には動かない
         print(msg_error_exit)
         sys.exit(ret)
 
-    # ファイルのダウンロード
-    print('タイトルとURLリストをクリップボードにコピーし、ファイルに保存済み')
-    print('irvineにペーストして、ダウンロード完了まで待つ')
-    print('ファイルのURLリストを編集すれば、名前の付け直しと圧縮するファイルを調整可能')
-    print(title_list[0])
-    # os.system('PAUSE')
-
     # ファイルのURLリストを作成
-    crawling = crawling(target_url, img_css_select, img_attr)
+    crawling = Crawling(target_url, img_css_select, img_attr)
     if not crawling:
         print(msg_error_exit)
-        sys.exit(crawling)
+        sys.exit()
     crawling.save_text(RESULT_FILE_PATH + '1.txt')
     crawling.save_pickle(RESULT_FILE_PATH + '1.pkl')
     # target_data = crawling.get_value_objects()
     file_url_list = crawling.get_image_list()
     title = crawling.get_title()
-
-    # ファイルリストの作成
-    # ファイルの順序がファイル名順ではない場合、正しい順序のファイル名リストを作る必要がある。
-    # file_urllistからdst_file_namelistを作成する
-    dst_file_namelist = []
-    src_file_pathlist = []
-    ret = getfilenamefromurl(file_url_list, dst_file_namelist)
-    if not ret:
+    # スクレイピングを開始する
+    scraping = Scraping(file_url_list, folder_path)
+    # 画像ファイルのダウンロード
+    scraping.download()
+    # ダウンロードファイルを変名する(ナンバリング)
+    if not scraping.rename_images():
+        # ダウンロードされていないファイルがあった
         print(msg_error_exit)
-        sys.exit(ret)
-    if folder_path[len(folder_path) - 1] == '\\':
-        for file_name in dst_file_namelist:
-            src_file_pathlist.append(folder_path + file_name)
-    else:
-        for file_name in dst_file_namelist:
-            src_file_pathlist.append(folder_path + '\\' + file_name)
-
-    # 2つの配列から辞書型に変換
-    dic = {key: val for key, val in zip(file_url_list, src_file_pathlist)}
-    # フォルダーがなければ作成する
-    if not os.path.isdir(folder_path):
-        os.makedirs(folder_path)
-    # ファイルのダウンロード
-    for file_url in file_url_list:
-        try:
-            images = download_image(file_url)
-            if not os.path.isfile(dic[file_url]):  # ファイルの存在チェック
-                with open(dic[file_url], "wb") as img_file:
-                    img_file.write(images)
-        except KeyboardInterrupt:
-            break
-        except Exception as err:
-            print(file_url + ' ', end='')  # 改行なし
-            print(err)
-
-    # ファイルの存在確認
-    for src_file_path in src_file_pathlist:
-        if not os.path.isfile(src_file_path):
-            print('ファイル[' + src_file_path + ']が存在しません。')
-            print(msg_error_exit)
-            sys.exit(ret)
-
-    # ダウンロードしたファイルのファイル名付け直し
-    file_pathlist = []
-    ret = renameimg(src_file_pathlist, file_pathlist)
-    if not ret:
-        print(msg_error_exit)
-        sys.exit(ret)
-
+        sys.exit()
     # 圧縮ファイル作成
-    ret = makezipfile(folder_path + '.zip', file_pathlist)
-    if not ret:
-        print(msg_error_exit)
-        sys.exit(ret)
-
+    scraping.make_zip_file()
     # 圧縮ファイル名付け直し
-    zipfilename = '.\\' + re.sub(r'[\\/:*?"<>|]+', '', title)  # 禁則文字を削除する
-    print('圧縮ファイル名を付け直します(タイトル)')
-    print(zipfilename)
-    # os.system('PAUSE')
-    os.rename(folder_path + '.zip', zipfilename + '.zip')
-
+    scraping.rename_zip_file(title)
     # ファイルの削除
-    print('ファイル削除します(フォルダごと削除して、フォルダを作り直します)')
-    print(folder_path)
-    # os.system('PAUSE')
-    shutil.rmtree(folder_path)
-    if folder_path[len(folder_path) - 1] == '\\':
-        os.mkdir(folder_path)
-    else:
-        os.mkdir(folder_path + '\\')
+    scraping.download_file_clear()
