@@ -1,9 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-動画編集アプリshotcutのmltプロジェクトファイルを扱うヘルパー
-    * shotを追加する
-    * ・・・
+動画編集アプリshotcutのmltプロジェクトファイルを扱うヘルパー MltHelper
+    * shotcutのmltプロジェクトファイルの読込と保存 load_xml/save_xml
+    * playlistにshotを追加する
+    * producerにshotを追加する
+    * mltにplaylistを追加する
+MltHelperの関連関数
+    * 動画のstart_timeとdurationよりdatetimeを作る　time_to_dt
+    * 相対パスが指定されたら絶対パスを返す　get_abs_path
+    * item(動画)のハッシュを計算して返す get_md5
+    * リストに無い次の(アルファベット+十進数値な)名前のindex(管理番号)を返す get_next_index_entry
 """
 import datetime
 import glob
@@ -15,6 +22,26 @@ import collections
 import ffmpeg
 import hashlib
 from dataclasses import dataclass
+
+
+def time_to_dt(time, tzinfo=None):
+    """
+    動画のstart_timeとdurationよりdatetimeを作る
+
+    :param time: float 秒[s]
+    :param tzinfo:
+    :return: datetime
+    """
+    time_s = int(float(time))
+    time_micro = int((float(time) - float(time_s)) * 1000000)
+    time_m = int(time_s / 60)
+    if time_m > 0:
+        time_s = time_s % 60
+    time_h = int(time_m / 60)
+    if time_h > 0:
+        time_m = time_m % 60
+    dt = datetime.time(hour=time_h, minute=time_m, second=time_s, microsecond=time_micro, tzinfo=tzinfo)
+    return dt
 
 
 def get_abs_path(path):
@@ -148,14 +175,10 @@ class ShotValue:
             date_dt = datetime.datetime.strptime(creation_str, '%Y-%m-%dT%H:%M:%S.%fZ')
             creation_time = date_dt.strftime('%Y-%m-%dT%H:%M:%S')
         start_time = video_info.get('format').get('start_time')
-        time_s = int(float(start_time))
-        time_m = int((float(start_time) - float(time_s)) * 1000000)
-        dt = datetime.time(hour=0, minute=0, second=time_s, microsecond=time_m, tzinfo=None)
+        dt = time_to_dt(start_time)
         in_time = dt.strftime('%H:%M:%S.%f')[:12]
         end_time = video_info.get('format').get('duration')
-        time_s = int(float(end_time))
-        time_m = int((float(end_time) - float(time_s)) * 1000000)
-        dt = datetime.time(hour=0, minute=0, second=time_s, microsecond=time_m, tzinfo=None)
+        dt = time_to_dt(end_time)
         out_time = dt.strftime('%H:%M:%S.%f')[:12]
         object.__setattr__(self, "in_time", in_time)
         object.__setattr__(self, "out_time", out_time)
@@ -408,7 +431,6 @@ class MltHelper:
         """
         管理番号を初期化する
 
-        :param index: int 登録する管理番号
         :return: None
         """
         self.playlist_entry.clear()
@@ -417,7 +439,6 @@ class MltHelper:
         """
         管理番号を初期化する
 
-        :param index: int 登録する管理番号
         :return: None
         """
         self.producer_entry.clear()
@@ -426,7 +447,6 @@ class MltHelper:
         """
         管理番号を初期化する
 
-        :param index: int 登録する管理番号
         :return: None
         """
         self.transition_entry.clear()
@@ -435,7 +455,6 @@ class MltHelper:
         """
         管理番号を初期化する
 
-        :param index: int 登録する管理番号
         :return: None
         """
         self.filter_entry.clear()
@@ -532,12 +551,46 @@ class MltHelper:
         """
         if playlist_id is None:
             print('引数playlist_idが空です')
-            sys.exit(1)
+            sys.exit()
         if movie_list is None:
             print('引数movie_listが空です')
-            sys.exit(1)
+            sys.exit()
         for movie in movie_list:
             self.add_movie(playlist_id, movie)
+
+    def add_subtitle(self, playlist_id, movie):
+        """
+        プレイリストに字幕を追加する
+
+        :param playlist_id: str 対象のプレイリストのID
+        :param movie: str 動画ファイルパス
+        :return: None
+        """
+        if playlist_id is None:
+            print('引数playlist_idが空です')
+            sys.exit()
+        if movie is None:
+            print('引数movieが空です')
+            sys.exit()
+        # todo 動画ファイルから文字起こしする
+        # todo プレイリストに文字起こし結果を追加する
+
+    def add_subtitles(self, playlist_id, movies):
+        """
+        プレイリストに字幕を追加する
+
+        :param playlist_id: str 対象のプレイリストのID
+        :param movies: list[str] 動画ファイルパスのリスト
+        :return: None
+        """
+        if playlist_id is None:
+            print('引数playlist_idが空です')
+            sys.exit()
+        if movies is None:
+            print('引数moviesが空です')
+            sys.exit()
+        for movie in movies:
+            self.add_subtitle(playlist_id, movie)
 
     def __add_playlist_to_mlt(self, index, name):
         """
@@ -645,7 +698,7 @@ class MltHelper:
 
     def add_track(self, name):
         """
-        タイムラインにトラックを増やす(mltファイルのplaylistタグid=playlist0..)
+        タイムラインにトラックを追加する(mltファイルのplaylistタグid=playlist0..)
         videoトラック追加用
 
         Todo:
@@ -689,7 +742,7 @@ class MltHelper:
         return movie
 
 
-def test(target_file_path):
+def test01(target_file_path):
     """
     単体テスト
 
@@ -719,6 +772,23 @@ def test(target_file_path):
     # app2.save_xml('./test5.mlt')
 
 
+def test02(target_file_path):
+    # パスを作成
+    target_folder = os.path.dirname(target_file_path)
+    target_mlt_basename = os.path.basename(target_file_path)
+    target_mlt_file_name = os.path.splitext(target_mlt_basename)[0]
+    target_mlt_file_ext = os.path.splitext(target_mlt_basename)[1]
+    search_path = target_folder + '\\**\\*_part*.mov'
+    create_mlt_path = os.path.join(target_folder, target_mlt_file_name + '_new' + target_mlt_file_ext)
+    movies = glob.glob(search_path, recursive=True)
+    app = MltHelper(target_file_path)
+    # 動画をプレイリストに追加
+    app.add_movies('main_bin', mov)
+    # 動画をタイムラインに追加
+    app.add_movies('playlist0', mov)
+    app.save_xml(create_mlt_path)
+
+
 # 検証コード
 if __name__ == '__main__':  # インポート時には動かない
     target_file_path = 'C:/Git/igapon50/traning/python/Movie/せんちゃんネル/テンプレート.mlt'
@@ -735,30 +805,24 @@ if __name__ == '__main__':  # インポート時には動かない
             target_file_path = paste_str
     else:
         print('引数が不正です。')
-        sys.exit(1)
+        sys.exit()
     print(target_file_path)
 
-    # パスを作成
-    target_folder = os.path.dirname(target_file_path)
-    target_mlt_basename = os.path.basename(target_file_path)
-    target_mlt_file_name = os.path.splitext(target_mlt_basename)[0]
-    target_mlt_file_ext = os.path.splitext(target_mlt_basename)[1]
-    search_path = target_folder + '\\**\\*_part*.mov'
-    create_mlt_path = os.path.join(target_folder, target_mlt_file_name + '_new' + target_mlt_file_ext)
-    movies = glob.glob(search_path, recursive=True)
-    app = MltHelper(target_file_path)
+    mov = ['C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/JPIC3316.MOV']
+    app = MltHelper('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/テンプレート.mlt')
     # 動画をプレイリストに追加
-    app.add_movies('main_bin', movies)
+    app.add_movies('main_bin', mov)
     # 動画をタイムラインに追加
-    app.add_movies('playlist0', movies)
+    app.add_movies('playlist0', mov)
+    app.save_xml('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/テンプレート_add_mov.mlt')
     # テロップ用のトラックを追加'playlist2'
     app.add_track('V2')
-    # TODO テロップの文字列をファイルから読み込む
-    # TODO テロップをプレイリストに追加'main_bin'
-    # app.add_telops('main_bin', telops)
-    # TODO テロップをタイムラインに追加'playlist2'
-    # app.add_telops('playlist2', telops)
-    app.save_xml(create_mlt_path)
+    app.save_xml('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/テンプレート_add_mov_track.mlt')
+    # TODO 動画ファイルから文字起こししてプレイリストに追加'main_bin'
+    app.add_subtitles('main_bin', mov)
+    # TODO 動画ファイルから文字起こししてタイムラインに追加'playlist2'
+    app.add_subtitles('playlist2', mov)
+    app.save_xml('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/テンプレート_add_mov_track_subtitles.mlt')
 
-    # テストコード
-    # test(target_file_path)
+    # test01(target_file_path)
+    # test02(target_file_path)
