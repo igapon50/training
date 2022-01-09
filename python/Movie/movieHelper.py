@@ -3,12 +3,17 @@
 """
 動画ファイルを扱うヘルパー MovieHelper
     * 動画ファイルから音声ファイルを作成する mov_to_wave
-    * 動画ファイルから文字起こしする mov_to_text
+    * 動画ファイルから文字起こしして返す。ファイルにも保存する mov_to_text
     * 動画ファイルから無音部分を除いた動画ファイル群を作成する movie_dividing
+    * 分割動画ファイル群から文字起こしして返す。ファイルにも保存する movie_dividing_to_text
+    * mov_to_textで作った文字起こしファイルを削除する clear_text
+    * movie_dividingで作った動画ファイル群を削除する clear_movie_dividing
 MovieHelperの関連関数
     * 音声ファイルから文字起こしする wav_to_text
     * 動画ファイル群から文字起こしする movies_to_subtitles
     * ディレクトリ内の全ての動画ファイルから文字起こしする movie_to_subtitles_in_directory
+    * movies_to_subtitlesで作った文字起こしファイル群を削除する clear_movies_to_subtitles
+    * movie_to_subtitles_in_directoryで作った文字起こしファイルを削除する clear_movie_to_subtitles_in_directory
 """
 import sys  # 終了時のエラー有無
 import os  # ファイルパス分解
@@ -53,32 +58,60 @@ def movies_to_subtitles(movies):
     """
     動画ファイル群から文字起こしする
 
-    :param movies: 文字起こしする動画ファイル群のファイルパスリスト
-    :return: None
+    :param movies: str 文字起こしする動画ファイル群のファイルパスリスト
+    :return: tuple (list 動画ファイルパスのリストと、list MovieHelperと , list str 文字起こしの結果リスト))を返す
     """
     if movies is None:
         print('引数moviesが不正です。', movies)
         sys.exit()
+    movie_helper = []
+    movie_text = []
     for _movie in movies:
-        _mh = MovieHelper(_movie)
-        movie_dividing_list = _mh.movie_dividing()
-        for movie_dividing in movie_dividing_list:
-            _mh_dividing = MovieHelper(movie_dividing)
-            _mh_dividing.mov_to_text()
+        mh = MovieHelper(_movie)
+        txt = mh.mov_to_text()
+        movie_helper.append(mh)
+        movie_text.append(txt)
+    return movies, movie_helper, movie_text
 
 
-def movie_to_subtitles_in_directory(movies):
+def movie_to_subtitles_in_directory(path):
     """
     指定ディレクトリ内の全てのmovファイルについて、無音部分をカットした動画に分割し、それぞれ文字起こしする
 
-    :param movies: 動画ファイルが含まれるパス
+    :param path: str 動画ファイルが含まれるパス
+    :return: tuple (list 動画ファイルパスのリストと、list MovieHelperのリストと , list str 文字起こし結果のリスト))を返す
+    """
+    if not os.path.isdir(path):
+        print('ディレクトリが存在しません。', path)
+        sys.exit()
+    _movie_list = glob.glob(os.path.join(path, '**/*.mov'), recursive=True)
+    _, movie_helper, movie_text = movies_to_subtitles(_movie_list)
+    return _movie_list, movie_helper, movie_text
+
+
+def clear_movies_to_subtitles(movie_helper_list):
+    """
+    movies_to_subtitles実行時の生成ファイルを削除する
+
+    :param movie_helper_list: list MovieHelper ヘルパーのリスト
     :return: None
     """
-    if not os.path.isdir(movies):
-        print('ディレクトリが存在しません。', movies)
+    if movie_helper_list is None:
+        print('引数movie_helper_listが不正です')
         sys.exit()
-    _movie_list = glob.glob(os.path.join(movies, '**/*.mov'), recursive=True)
-    movies_to_subtitles(_movie_list)
+    # 生成ファイルを削除する
+    for mh in movie_helper_list:
+        mh.clear_text()
+
+
+def clear_movie_to_subtitles_in_directory(movie_helper_list):
+    """
+    movie_to_subtitles_in_directory実行時の生成ファイルを削除する
+
+    :param movie_helper_list: list MovieHelper ヘルパーのリスト
+    :return: None
+    """
+    clear_movies_to_subtitles(movie_helper_list)
 
 
 @dataclass(frozen=True)
@@ -92,22 +125,22 @@ class MovieValue:
     target_filename: 'str 対象のファイル名'
     target_ext: 'str 対象の拡張子'
 
-    def __init__(self, movie_path):
+    def __init__(self, target_filepath):
         """
         コンストラクタ
 
-        :param movie_path: str movieのファイルパス
+        :param target_filepath: str movieのファイルパス
         """
-        if movie_path is None:
+        if target_filepath is None:
             print('動画ファイルパスがNoneです')
-            sys.exit(1)
-        if not os.path.isfile(movie_path):
-            print(movie_path, '動画ファイルが存在しません', sep=':')
-            sys.exit(1)
-        object.__setattr__(self, "target_filepath", movie_path)
-        target_basename = os.path.basename(movie_path)
+            sys.exit()
+        if not os.path.isfile(target_filepath):
+            print(target_filepath, '動画ファイルが存在しません', sep=':')
+            sys.exit()
+        object.__setattr__(self, "target_filepath", target_filepath)
+        target_basename = os.path.basename(target_filepath)
         object.__setattr__(self, "target_basename", target_basename)
-        target_dirname = os.path.dirname(movie_path)
+        target_dirname = os.path.dirname(target_filepath)
         object.__setattr__(self, "target_dirname", target_dirname)
         target_filename = os.path.splitext(target_basename)[0]
         object.__setattr__(self, "target_filename", target_filename)
@@ -133,7 +166,7 @@ class MovieHelper:
         """
         if movie_value is None:
             print('引数movie_valueがNoneです')
-            sys.exit(1)
+            sys.exit()
         if isinstance(movie_value, str):
             movie_value = MovieValue(movie_value)
         self.movie_value = movie_value
@@ -150,7 +183,7 @@ class MovieHelper:
         """
         動画ファイルから音声ファイルを作る(movファイルを対象とする)
 
-        :return: 音声ファイルパス
+        :return: str 音声ファイルパス
         """
         # パスの分解
         if self.movie_value.target_ext.lower() != '.mov':
@@ -176,9 +209,10 @@ class MovieHelper:
     def _split_wave(self, time=30):
         """
         動画について、指定秒数単位に分割した音声ファイルを作り、そのパスリストを返す
+        一時的に全体のWaveファイルを作るが、使い終わったら削除する
 
         :param time: int 区切る時間[秒]
-        :return: 分割した音声ファイルのパスリスト
+        :return: list 分割した音声ファイルのパスリスト
         """
         # 動画ファイルから音声ファイルを作る
         self.mov_to_wave()
@@ -211,8 +245,9 @@ class MovieHelper:
     def mov_to_text(self):
         """
         動画ファイルの文字起こしして返す。ファイルにも保存する
+        一時的にWaveファイルを作るが、使い終わったら削除する
 
-        :return: 文字起こし結果の文字列
+        :return: str 文字起こし結果の文字列
         """
         # 動画ファイルについて、指定秒数単位に分割した音声ファイルを作り、そのパスリストを返す
         split_waves = self._split_wave()
@@ -227,23 +262,35 @@ class MovieHelper:
             fp.write(output_text)
         return output_text
 
+    def clear_text(self):
+        """
+        mov_to_textで作った文字起こしファイルを削除する
+
+        :return: None
+        """
+        os.remove(self.text_filepath)
+
     def movie_dividing(self,
                        threshold=0.05,
                        min_silence_duration=0.5,
                        padding_time=0.1,
                        ):
         """
-        動画から音声ファイルを作成して、無音部分をカットした部分動画群を作成する
+        動画ファイルから無音部分をカットした部分動画ファイル群を作成する
         作成した動画のファイルパスリストを返す
+        一時的にWaveファイルを作るが、使い終わったら削除する
 
         :param threshold: float 閾値
         :param min_silence_duration: float [秒]以上thresholdを下回っている個所を抽出する
         :param padding_time: float [秒]カットしない無音部分の長さ
-        :return: 分割したファイルのパスリスト
+        :return: list 分割したファイルのパスリスト
         """
+        if len(self.movie_dividing_filepath) > 0:
+            print('すでに動画ファイルから無音部分をカットした部分動画ファイル群を作成済みです')
+            sys.exit()
         if not os.path.isfile(self.mov_to_wave()):
             print('動画から音声ファイルが作成できませんでした')
-            sys.exit(1)
+            sys.exit()
         # 音声ファイル読込
         data, frequency = sf.read(self.wave_filepath)  # file:音声ファイルのパス
         # 一定のレベル(振幅)以上の周波数にフラグを立てる
@@ -290,7 +337,6 @@ class MovieHelper:
             if i == len(cut_blocks) - 1 and block["to"] < len(data):
                 keep_blocks.append({"from": block["to"], "to": len(data), "suffix": "keep"})
 
-        self.movie_dividing_filepath.clear()
         # list_keep 残す動画部分のリスト：[{"from": 始点, "to": 終点}, {"from": ...}, ...]
         for i, block in enumerate(keep_blocks):
             fr = max(block["from"] / frequency - padding_time, 0)
@@ -312,6 +358,74 @@ class MovieHelper:
         os.remove(self.wave_filepath)
         return self.movie_dividing_filepath
 
+    def movie_dividing_to_text(self):
+        """
+        分割動画ファイル群から文字起こしして返す。ファイルにも保存する
+
+        :return: tuple (list 分割動画ファイルパスのリストと, list 文字起こしリスト)を返す
+        """
+        txt = []
+        for movie in self.movie_dividing_filepath:
+            _mh = MovieHelper(movie)
+            txt.append(_mh.mov_to_text())
+        return self.movie_dividing_filepath, txt
+
+    def clear_movie_dividing(self):
+        """
+        movie_dividingで作った動画ファイル群を削除する
+
+        :return: None
+        """
+        for movie_filepath in self.movie_dividing_filepath:
+            os.remove(movie_filepath)
+        self.movie_dividing_filepath.clear()
+
+
+def test01():
+    """
+    指定動画ファイルの(無音部分をカットした動画分割後に)文字起こし
+
+    :return: None
+    """
+    mh = MovieHelper('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/JPIC3316.MOV')
+    mh.movie_dividing()
+    mov, txt = mh.movie_dividing_to_text()
+    for m, t in zip(mov, txt):
+        print(m, ': ', t)
+    # 生成ファイルを削除する
+    for m in mov:
+        _mh = MovieHelper(m)
+        _mh.clear_text()
+    mh.clear_movie_dividing()
+
+
+def test02():
+    """
+    指定動画ファイルの文字起こし
+
+    :return: None
+    """
+    mov = ['C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/JPIC3316.MOV']
+    _, m_h, m_t = movies_to_subtitles(mov)
+    for m1, m2, t1 in zip(mov, m_h, m_t):
+        print(m1, ': ', m2.movie_value.target_basename, ': ', t1)
+    # 生成ファイルを削除する
+    clear_movies_to_subtitles(m_h)
+
+
+def test03():
+    """
+    指定ディレクトリ内のすべての動画文字起こし
+
+    :return: None
+    """
+    target_path = 'C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test'
+    mov, m_h, m_t = movie_to_subtitles_in_directory(target_path)
+    for m1, m2, t1 in zip(mov, m_h, m_t):
+        print(m1, ': ', m2.movie_value.target_basename, ': ', t1)
+    # 生成ファイルを削除する
+    clear_movie_to_subtitles_in_directory(m_h)
+
 
 if __name__ == '__main__':  # インポート時には動かない
     target_path = 'C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test'
@@ -331,5 +445,6 @@ if __name__ == '__main__':  # インポート時には動かない
         sys.exit()
     print(target_path)
 
-    # 指定ディレクトリ内のすべての動画文字起こし
-    movie_to_subtitles_in_directory(target_path)
+    test01()
+    test02()
+    test03()
