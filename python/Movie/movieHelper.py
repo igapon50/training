@@ -3,13 +3,13 @@
 """
 動画ファイルを扱うヘルパー MovieHelper
     * 動画ファイルから音声ファイルを作成する mov_to_wave
-    * 動画ファイルから文字起こしして返す。ファイルにも保存する mov_to_text
+    * 動画ファイルから文字起こしして返す。ファイルにも保存する mov_to_subtitles
     * 動画ファイルから無音部分を除いた動画ファイル群を作成する movie_dividing
-    * 分割動画ファイル群から文字起こしして返す。ファイルにも保存する movie_dividing_to_text
-    * mov_to_textで作った文字起こしファイルを削除する clear_text
+    * 分割動画ファイル群から文字起こしして返す。ファイルにも保存する movie_dividing_to_subtitles
+    * mov_to_subtitlesで作った文字起こしファイルを削除する clear_subtitles
     * movie_dividingで作った動画ファイル群を削除する clear_movie_dividing
 MovieHelperの関連関数
-    * 音声ファイルから文字起こしする wav_to_text
+    * 音声ファイルから文字起こしする wav_to_subtitles
     * 動画ファイル群からMovieHelperリストを作る movies_to_helpers
     * MovieHelperリストから文字起こしする helpers_to_subtitles
     * 動画ファイル群から文字起こしする movies_to_subtitles
@@ -31,7 +31,7 @@ import subprocess
 import soundfile as sf
 
 
-def wav_to_text(wav_filepath):
+def wav_to_subtitles(wav_filepath):
     """
     音声ファイルから文字起こしして返す(長いと失敗するので1分以下のファイルにする)
 
@@ -50,10 +50,11 @@ def wav_to_text(wav_filepath):
     with sr.AudioFile(wav_filepath) as source:
         audio = r.record(source)
         try:
-            text = r.recognize_google(audio, language='ja-JP')
+            subtitles = r.recognize_google(audio, language='ja-JP')
         except Exception as e:
-            text = f'[文字起こしでエラー:{e}]'
-    return text
+            type_, _, _ = sys.exc_info()
+            subtitles = f'[文字起こしでエラー:{type_}/{e}]'
+    return subtitles
 
 
 def movies_to_helpers(movies):
@@ -85,11 +86,11 @@ def helpers_to_subtitles(movie_helpers):
         print('引数movie_helperが不正です。', movie_helpers)
         sys.exit()
     movies = []
-    movie_texts = []
+    movie_subtitles = []
     for mh in movie_helpers:
-        movie_texts.append(mh.mov_to_text())
+        movie_subtitles.append(mh.mov_to_subtitles())
         movies.append(mh.movie_filepath)
-    return movies, movie_texts
+    return movies, movie_subtitles
 
 
 def movies_to_subtitles(movies):
@@ -102,8 +103,8 @@ def movies_to_subtitles(movies):
         list[str] 文字起こしの結果リスト)を返す
     """
     movie_helpers = movies_to_helpers(movies)
-    _, movie_texts = helpers_to_subtitles(movie_helpers)
-    return movies, movie_helpers, movie_texts
+    _, movie_subtitles = helpers_to_subtitles(movie_helpers)
+    return movies, movie_helpers, movie_subtitles
 
 
 def movie_directory_to_helpers(path):
@@ -131,8 +132,8 @@ def movie_directory_to_subtitles(path):
         list[str] 文字起こし結果のリスト)を返す
     """
     movie_helpers = movie_directory_to_helpers(path)
-    movies, movie_texts = helpers_to_subtitles(movie_helpers)
-    return movies, movie_helpers, movie_texts
+    movies, movie_subtitles = helpers_to_subtitles(movie_helpers)
+    return movies, movie_helpers, movie_subtitles
 
 
 def clear_helpers_to_subtitles(movie_helpers):
@@ -150,7 +151,7 @@ def clear_helpers_to_subtitles(movie_helpers):
         sys.exit()
     # 生成ファイルを削除する
     for mh in movie_helpers:
-        mh.clear_text()
+        mh.clear_subtitles()
 
 
 @dataclass(frozen=True)
@@ -194,7 +195,7 @@ class MovieHelper:
     movie_value: 'MovieValue movieの値オブジェクト'
     movie_filepath: 'str 動画ファイル入力パス'
     wave_filepath: 'str 音声ファイル出力パス'
-    text_filepath: 'str 文字起こし出力パス'
+    subtitles_filepath: 'str 文字起こし出力パス'
     movie_dividing_filepath: 'list 分割動画ファイル出力パスリスト'
 
     def __init__(self, movie_value):
@@ -214,9 +215,9 @@ class MovieHelper:
         self.wave_filepath = os.path.join(self.movie_value.target_dirname,
                                           self.movie_value.target_filename + '.wav',
                                           )
-        self.text_filepath = os.path.join(self.movie_value.target_dirname,
-                                          self.movie_value.target_filename + '.txt',
-                                          )
+        self.subtitles_filepath = os.path.join(self.movie_value.target_dirname,
+                                               self.movie_value.target_filename + '.txt',
+                                               )
 
     def mov_to_wave(self):
         """
@@ -281,7 +282,7 @@ class MovieHelper:
             output_file_list.append(output_file_path)
         return output_file_list
 
-    def mov_to_text(self):
+    def mov_to_subtitles(self):
         """
         動画ファイルの文字起こしして返す。ファイルにも保存する
         一時的にWaveファイルを作るが、使い終わったら削除する
@@ -291,23 +292,23 @@ class MovieHelper:
         # 動画ファイルについて、指定秒数単位に分割した音声ファイルを作り、そのパスリストを返す
         split_waves = self._split_wave()
         # 分割した音声ファイルを消費して、文字起こしする
-        output_text = ''
+        output_subtitles = ''
         for wav_filepath in split_waves:
             # 各ファイルの出力結果の結合
-            output_text += wav_to_text(wav_filepath) + '\n'
+            output_subtitles += wav_to_subtitles(wav_filepath) + '\n'
             os.remove(wav_filepath)
         # 文字起こし結果を保存する
-        with open(self.text_filepath, 'w') as fp:
-            fp.write(output_text)
-        return output_text
+        with open(self.subtitles_filepath, 'w') as fp:
+            fp.write(output_subtitles)
+        return output_subtitles
 
-    def clear_text(self):
+    def clear_subtitles(self):
         """
-        mov_to_textで作った文字起こしファイルを削除する
+        mov_to_subtitlesで作った文字起こしファイルを削除する
 
         :return: None
         """
-        os.remove(self.text_filepath)
+        os.remove(self.subtitles_filepath)
 
     def movie_dividing(self,
                        threshold=0.05,
@@ -397,7 +398,7 @@ class MovieHelper:
         os.remove(self.wave_filepath)
         return self.movie_dividing_filepath
 
-    def movie_dividing_to_text(self):
+    def movie_dividing_to_subtitles(self):
         """
         分割動画ファイル群から文字起こしして返す。ファイルにも保存する
 
@@ -426,7 +427,7 @@ def test01():
     """
     mh = MovieHelper('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/JPIC3316.MOV')
     mh.movie_dividing()
-    mov, m_h, m_t = mh.movie_dividing_to_text()
+    mov, m_h, m_t = mh.movie_dividing_to_subtitles()
     for m1, m2, t1 in zip(mov, m_h, m_t):
         print(m1, ': ', m2.movie_value.target_basename, ': ', t1)
     # 生成ファイルを削除する
