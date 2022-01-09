@@ -1,10 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-動画ファイルを扱うヘルパー
-    * 動画ファイルから音声ファイルを作成
-    * 動画(音声)ファイルから文字起こし
-    * 動画ファイルから無音部分を除いた、動画ファイルを作成
+動画ファイルを扱うヘルパー MovieHelper
+    * 動画ファイルから音声ファイルを作成する mov_to_wave
+    * 動画ファイルから文字起こしする mov_to_text
+    * 動画ファイルから無音部分を除いた動画ファイル群を作成する movie_dividing
+MovieHelperの関連関数
+    * 音声ファイルから文字起こしする wav_to_text
+    * 動画ファイル群から文字起こしする movies_to_subtitles
+    * ディレクトリ内の全ての動画ファイルから文字起こしする movie_to_subtitles_in_directory
 """
 import sys  # 終了時のエラー有無
 import os  # ファイルパス分解
@@ -18,25 +22,6 @@ from pydub import AudioSegment
 import pyperclip
 import subprocess
 import soundfile as sf
-
-
-def movie_folder(target_path):
-    """
-    指定フォルダ内の全てのmovファイルについて、無音部分をカットした動画に分割し、それぞれ文字起こしする
-
-    :param target_path: 動画ファイルが含まれるパス
-    :return: None
-    """
-    if not os.path.isdir(target_path):
-        print('フォルダが存在しません。', target_path)
-        sys.exit()
-    _movie_list = glob.glob(os.path.join(target_path, '**/*.mov'), recursive=True)
-    for _movie in _movie_list:
-        _mh = MovieHelper(_movie)
-        movie_dividing_list = _mh.movie_dividing()
-        for movie_dividing in movie_dividing_list:
-            _mh_dividing = MovieHelper(movie_dividing)
-            _mh_dividing.mov_to_text()
 
 
 def wav_to_text(wav_filepath):
@@ -59,9 +44,41 @@ def wav_to_text(wav_filepath):
         audio = r.record(source)
         try:
             text = r.recognize_google(audio, language='ja-JP')
-        except Exception:
-            text = '[文字起こしでエラー]'
+        except Exception as e:
+            text = f'[文字起こしでエラー:{e}]'
     return text
+
+
+def movies_to_subtitles(movies):
+    """
+    動画ファイル群から文字起こしする
+
+    :param movies: 文字起こしする動画ファイル群のファイルパスリスト
+    :return: None
+    """
+    if movies is None:
+        print('引数moviesが不正です。', movies)
+        sys.exit()
+    for _movie in movies:
+        _mh = MovieHelper(_movie)
+        movie_dividing_list = _mh.movie_dividing()
+        for movie_dividing in movie_dividing_list:
+            _mh_dividing = MovieHelper(movie_dividing)
+            _mh_dividing.mov_to_text()
+
+
+def movie_to_subtitles_in_directory(movies):
+    """
+    指定ディレクトリ内の全てのmovファイルについて、無音部分をカットした動画に分割し、それぞれ文字起こしする
+
+    :param movies: 動画ファイルが含まれるパス
+    :return: None
+    """
+    if not os.path.isdir(movies):
+        print('ディレクトリが存在しません。', movies)
+        sys.exit()
+    _movie_list = glob.glob(os.path.join(movies, '**/*.mov'), recursive=True)
+    movies_to_subtitles(_movie_list)
 
 
 @dataclass(frozen=True)
@@ -314,5 +331,5 @@ if __name__ == '__main__':  # インポート時には動かない
         sys.exit()
     print(target_path)
 
-    # 指定フォルダ内のすべての動画文字起こし
-    movie_folder(target_path)
+    # 指定ディレクトリ内のすべての動画文字起こし
+    movie_to_subtitles_in_directory(target_path)
