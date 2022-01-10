@@ -372,13 +372,19 @@ class MovieHelper:
         """
         動画ファイルの文字起こしして返す。ファイルにも保存する
         一時的にWaveファイルを作るが、使い終わったら削除する
+        既に文字起こしファイルがある場合は、読み込んで返す
 
         :return: str 文字起こし結果の文字列
         """
+        output_subtitles = ''
+        # 既に文字起こし結果がある
+        if os.path.isfile(self.subtitles_filepath):
+            with open(self.subtitles_filepath, 'r') as fp:
+                output_subtitles = fp.read()
+            return output_subtitles
         # 動画ファイルについて、指定秒数単位に分割した音声ファイルを作り、そのパスリストを返す
         split_waves = self._split_wave()
         # 分割した音声ファイルを消費して、文字起こしする
-        output_subtitles = ''
         for wav_filepath in split_waves:
             # 各ファイルの出力結果の結合
             output_subtitles += wav_to_subtitles(wav_filepath) + '\n'

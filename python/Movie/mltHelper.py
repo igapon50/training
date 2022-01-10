@@ -12,6 +12,7 @@ MltHelperの関連関数
 ShotValue
     * playlistに追加するshotのodを作って返す create_shot_playlist
     * producerに追加するshotのodを作って返す create_shot_producer
+MltValue
 """
 import datetime
 import glob
@@ -119,7 +120,7 @@ class ShotValue:
         """
         完全コンストラクタパターン
             * 動画の時は、index,contents,in_time,out_time,creation_time,shotcut_hash
-            * 字幕の時は、index,contents,in_time,out_time todo 取得した字幕はキャッシュしたい
+            * 字幕の時は、index,contents,in_time,out_time
 
         :param index: int 登録するインデックス番号
         :param contents: str 動画のファイルパス、または、str テロップの文字列
@@ -157,15 +158,20 @@ class ShotValue:
                                           ('@out', self.out_time)])
         return od
 
-    def create_shot_producer(self):
+    def create_shot_producer(self, index=None):
         """
         producerに追加するshotのodを作って返す
+        todo indexの渡し方がビミョー
 
+        :param index: str filterの次の登録番号
         :return: collections.OrderedDict playlistに追加するshot
         """
         if self.shotcut_hash is None:
-            # 字幕の時 todo filterのindex
-            od2 = collections.OrderedDict([('@id', self.filter_name + str(self.index)),
+            # 字幕の時
+            if index is None:
+                print('引数indexがNoneです')
+                sys.exit()
+            od2 = collections.OrderedDict([('@id', self.filter_name + index),
                                            ('@out', self.out_time),
                                            (self.property_name, []),
                                            ])
@@ -508,10 +514,9 @@ class MltHelper:
         """
         self.filter_entry.clear()
 
-    def __add_item_to_playlist(self, playlist_id, shot_value):
+    def __add_shot_to_playlist(self, playlist_id, shot_value):
         """
         playlistにshotを追加する
-        todo 作ったばかりのplaylistには、entryがまだないので、このメソッドで例外が起きる。
 
         :param playlist_id: str 追加するプレイリストのID
         :param shot_value: ShotValue shot(動画やテロップなど操作の単位)の値クラス
@@ -520,21 +525,31 @@ class MltHelper:
         for target_root in self.dict_data.get(self.mlt_name).get(self.playlist_name):
             if target_root.get('@id') == playlist_id:
                 od = shot_value.create_shot_playlist()
-                target_root.get('entry').append(od)
+                if target_root.get('entry') is None:
+                    # 作ったばかりのplaylistでentryがない場合作る
+                    target_root['entry'] = od
+                    # blankがあったら削除する
+                    if not target_root.get('blank') is None:
+                        del target_root['blank']
+                else:
+                    target_root.get('entry').append(od)
                 return
         print('プロジェクトファイルに指定のplaylistがありません')
         sys.exit()
 
-    def __add_item_to_producer(self, shot_value):
+    def __add_shot_to_producer(self, shot_value):
         """
         producerにshotを追加する
 
-        :param shot_value: ShotValue shot(動画やテロップなど操作の単位)の値クラス
+        :param shot_value: ShotValue shot(動画や字幕など操作の単位)の値クラス
         :return: None
         """
+        # filter(字幕など)の空き番号を調べる
+        index = self.__get_next_index_filter_entry()
         mlt_dict = self.dict_data.get('mlt').get(self.producer_name)
-        od = shot_value.create_shot_producer()
+        od = shot_value.create_shot_producer(str(index))
         mlt_dict.append(od)
+        self.__register_index_filter_entry(index)
 
     def add_movie(self, playlist_id, movie):
         """
@@ -555,16 +570,16 @@ class MltHelper:
         if not os.path.isfile(path):
             print('ファイルが見つかりません。処理を中止します。')
             sys.exit()
-        # item(動画)の空き番号を調べる
+        # shot(動画や字幕など)の空き番号を調べる
         index = self.__get_next_index_producer_entry()
-        # item(動画)の情報を集める
+        # shot(動画や字幕など)の情報を集める
         mh = MovieHelper(path)
         shot_value = ShotValue(index, path, mh.get_in_time(), mh.get_out_time(), mh.get_creation_time(), mh.get_md5())
-        # playlistにitem(動画)を追加する
-        self.__add_item_to_playlist(playlist_id, shot_value)
-        # producerにitem(動画)を追加する
-        self.__add_item_to_producer(shot_value)
-        # 追加したitem(動画)の管理番号を登録する
+        # playlistにshot(動画や字幕など)を追加する
+        self.__add_shot_to_playlist(playlist_id, shot_value)
+        # producerにshot(動画や字幕など)を追加する
+        self.__add_shot_to_producer(shot_value)
+        # 追加したshot(動画や字幕など)の管理番号を登録する
         self.__register_index_producer_entry(index)
 
     def add_movies(self, playlist_id, movie_list):
@@ -586,7 +601,7 @@ class MltHelper:
 
     def add_subtitle(self, playlist_id, movie):
         """
-        プレイリストに字幕を追加する
+        動画ファイルから文字起こしして、プレイリストに字幕を追加する
 
         :param playlist_id: str 対象のプレイリストのID
         :param movie: str 動画ファイルパス
@@ -598,28 +613,26 @@ class MltHelper:
         if movie is None:
             print('引数movieが空です')
             sys.exit()
-        # todo 動画ファイルから文字起こしする
-        # todo プレイリストに文字起こし結果を追加する
         path = get_abs_path(movie)
         if not os.path.isfile(path):
             print('ファイルが見つかりません。処理を中止します。')
             sys.exit()
-        # item(動画)の空き番号を調べる
+        # shot(動画や字幕など)の空き番号を調べる
         index = self.__get_next_index_producer_entry()
-        # item(動画)の情報を集める
+        # shot(動画や字幕など)の情報を集める
         mh = MovieHelper(path)
         contents = mh.mov_to_subtitles()
         shot_value = ShotValue(index, contents, mh.get_in_time(), mh.get_out_time())
-        # playlistにitem(動画)を追加する
-        self.__add_item_to_playlist(playlist_id, shot_value)
-        # producerにitem(動画)を追加する
-        self.__add_item_to_producer(shot_value)
-        # 追加したitem(動画)の管理番号を登録する
+        # playlistにshot(動画や字幕など)を追加する
+        self.__add_shot_to_playlist(playlist_id, shot_value)
+        # producerにshot(動画や字幕など)を追加する
+        self.__add_shot_to_producer(shot_value)
+        # 追加したshot(動画や字幕など)の管理番号を登録する
         self.__register_index_producer_entry(index)
 
     def add_subtitles(self, playlist_id, movies):
         """
-        プレイリストに字幕を追加する
+        動画ファイルから文字起こしして、プレイリストに字幕を追加する
 
         :param playlist_id: str 対象のプレイリストのID
         :param movies: list[str] 動画ファイルパスのリスト
@@ -673,15 +686,18 @@ class MltHelper:
         < track producer = "playlist2" / >
 
         :param index: int 登録するplaylistの番号
-        :return: None
+        :return: str trackのproducer名
         """
+        ret_producer = self.playlist_name + str(index)
         track_root = self.dict_data.get('mlt').get(self.tractor_name).get(self.track_name)
-        od = collections.OrderedDict([('@producer', self.playlist_name + str(index))])
+        od = collections.OrderedDict([('@producer', ret_producer)])
         track_root.append(od)
+        return ret_producer
 
     def __add_transition_to_tractor(self):
         """
         mltのtractorにtransitionを二つ追加する
+        todo 値を変えないと、mix表示できないっぽい、要仕様調査
 
         < transition id = "transition0" >
             < property name = "a_track" > 0 < / property >
@@ -741,6 +757,7 @@ class MltHelper:
         """
         タイムラインにトラックを追加する(mltファイルのplaylistタグid=playlist0..)
         videoトラック追加用
+        todo playlistタグidをreturnしたい
 
         Todo:
             * mltにplaylist id="main_bin"がなければmain_binを追加し、mltのproducer="main_bin"に変更する
@@ -748,18 +765,19 @@ class MltHelper:
             * mltにplaylist id="background"がなければbackgroundを追加し、tractorにtrackを追加する
 
         :param name: str トラック名(他のトラックと重複可能)
-        :return: None
+        :return: str プレイリスト名
         """
         # 追加するプレイリストの管理番号を取得する
         index = self.__get_next_index_playlist_entry()
         # mltにplaylist id="playlist{index}"を追加する
         self.__add_playlist_to_mlt(index, name)
         # tractorにtrackを追加する
-        self.__add_track_to_tractor(index)
+        ret_playlist = self.__add_track_to_tractor(index)
         # 追加したplaylistの管理番号を登録する
         self.__register_index_playlist_entry(index)
         # tractorにtransitionを追加する、一個目,二個目
         self.__add_transition_to_tractor()
+        return ret_playlist
 
     def add_producer(self, movie):
         """
@@ -851,19 +869,22 @@ if __name__ == '__main__':  # インポート時には動かない
 
     mov = ['C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/JPIC3316.MOV']
     app = MltHelper('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/テンプレート.mlt')
-    # 動画をプレイリストに追加
+    # 動画や字幕用のトラックを追加'playlist2'
+    playlist_id = app.add_track('V2')
+    app.save_xml('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/テンプレート_add_track.mlt')
+    # 動画をプレイリストに追加'main_bin'
     app.add_movies('main_bin', mov)
-    # 動画をタイムラインに追加
-    app.add_movies('playlist0', mov)
-    app.save_xml('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/テンプレート_add_mov.mlt')
-    # テロップ用のトラックを追加'playlist2'
-    app.add_track('V2')
-    app.save_xml('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/テンプレート_add_mov_track.mlt')
-    # TODO 動画ファイルから文字起こししてプレイリストに追加'main_bin'
+    # 動画をプレイリストに追加'playlist2'
+    app.add_movies(playlist_id, mov)
+    app.save_xml('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/テンプレート_add_track_mov.mlt')
+    # 動画や字幕用のトラックを追加'playlist3'
+    playlist_id = app.add_track('V3')
+    app.save_xml('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/テンプレート_add_track_mov_track.mlt')
+    # 動画ファイルから文字起こししてプレイリストに追加'main_bin'
     app.add_subtitles('main_bin', mov)
-    # TODO 動画ファイルから文字起こししてタイムラインに追加'playlist2'
-    app.add_subtitles('playlist0', mov)
-    app.save_xml('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/テンプレート_add_mov_track_subtitles.mlt')
+    # 動画ファイルから文字起こししてタイムラインに追加'playlist3'
+    app.add_subtitles(playlist_id, mov)
+    app.save_xml('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/テンプレート_add_track_mov_track_subtitles.mlt')
 
     # test01(target_file_path)
     # test02(target_file_path)
