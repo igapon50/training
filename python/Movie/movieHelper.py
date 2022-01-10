@@ -2,6 +2,10 @@
 # -*- coding: utf-8 -*-
 """
 動画ファイルを扱うヘルパー MovieHelper
+    * 動画ファイルのMD5を取得する get_md5
+    * 動画ファイルのin_timeを取得する get_in_time
+    * 動画ファイルのout_timeを取得する get_out_time
+    * 動画ファイルのcreation_timeを取得する get_creation_time
     * 動画ファイルから音声ファイルを作成する mov_to_wave
     * 動画ファイルから文字起こしして返す。ファイルにも保存する mov_to_subtitles
     * 動画ファイルから無音部分を除いた動画ファイル群を作成する movie_dividing
@@ -9,6 +13,7 @@
     * mov_to_subtitlesで作った文字起こしファイルを削除する clear_subtitles
     * movie_dividingで作った動画ファイル群を削除する clear_movie_dividing
 MovieHelperの関連関数
+    * 動画のstart_timeとdurationよりdatetimeを作る　time_to_dt
     * 音声ファイルから文字起こしする wav_to_subtitles
     * 動画ファイル群からMovieHelperリストを作る movies_to_helpers
     * MovieHelperリストから文字起こしする helpers_to_subtitles
@@ -19,6 +24,7 @@ MovieHelperの関連関数
 """
 import sys  # 終了時のエラー有無
 import os  # ファイルパス分解
+import datetime
 import glob
 from dataclasses import dataclass
 
@@ -29,6 +35,30 @@ from pydub import AudioSegment
 import pyperclip
 import subprocess
 import soundfile as sf
+import ffmpeg
+import hashlib
+
+
+def time_to_dt(time, tzinfo=None):
+    """
+    動画のstart_timeとdurationよりdatetimeを作る
+    参考)windowsでMD5ハッシュを出力するコマンド例
+    > certutil -hashfile C:\Git\igapon50\traning\python\Movie\せんちゃんネル\mov\BPUB2392.MP4 MD5
+
+    :param time: float 秒[s]
+    :param tzinfo:
+    :return: datetime
+    """
+    time_s = int(float(time))
+    time_micro = int((float(time) - float(time_s)) * 1000000)
+    time_m = int(time_s / 60)
+    if time_m > 0:
+        time_s = time_s % 60
+    time_h = int(time_m / 60)
+    if time_h > 0:
+        time_m = time_m % 60
+    dt = datetime.time(hour=time_h, minute=time_m, second=time_s, microsecond=time_micro, tzinfo=tzinfo)
+    return dt
 
 
 def wav_to_subtitles(wav_filepath):
@@ -164,6 +194,7 @@ class MovieValue:
     target_dirname: 'str 対象のディレクトリ'
     target_filename: 'str 対象のファイル名'
     target_ext: 'str 対象の拡張子'
+    video_info: 'Any 動画の情報'
 
     def __init__(self, target_filepath):
         """
@@ -186,6 +217,7 @@ class MovieValue:
         object.__setattr__(self, "target_filename", target_filename)
         target_ext = os.path.splitext(target_basename)[1]
         object.__setattr__(self, "target_ext", target_ext)
+        object.__setattr__(self, "video_info", ffmpeg.probe(target_filepath))
 
 
 class MovieHelper:
@@ -218,6 +250,60 @@ class MovieHelper:
         self.subtitles_filepath = os.path.join(self.movie_value.target_dirname,
                                                self.movie_value.target_filename + '.txt',
                                                )
+
+    def get_md5(self):
+        """
+        動画ファイルのMD5を取得する
+
+        :return: str MD5値
+        """
+        algo = 'md5'
+        hash_object = hashlib.new(algo)
+        hash_size = hash_object.block_size * 0x800
+        with open(self.movie_filepath, 'rb') as fp:
+            binary_data = fp.read(hash_size)
+            while binary_data:
+                hash_object.update(binary_data)
+                binary_data = fp.read(hash_size)
+        return hash_object.hexdigest()
+
+    def get_in_time(self):
+        """
+        動画ファイルのin_timeを取得する
+
+        :return: str 開始time
+        """
+        start_time = self.movie_value.video_info.get('format').get('start_time')
+        dt = time_to_dt(start_time)
+        in_time = dt.strftime('%H:%M:%S.%f')[:12]
+        return in_time
+
+    def get_out_time(self):
+        """
+        動画ファイルのout_timeを取得する
+
+        :return: str 終了time
+        """
+        end_time = self.movie_value.video_info.get('format').get('duration')
+        dt = time_to_dt(end_time)
+        out_time = dt.strftime('%H:%M:%S.%f')[:12]
+        return out_time
+
+    def get_creation_time(self):
+        """
+        動画ファイルのcreation_timeを取得する
+
+        :return: str 作成time
+        """
+        creation_str = self.movie_value.video_info.get('format').get('tags').get('creation_time')
+        if creation_str is None:
+            c_time = os.path.getctime(self.movie_value.target_filepath)
+            dt = datetime.datetime.fromtimestamp(c_time)
+            creation_time = dt.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+        else:
+            date_dt = datetime.datetime.strptime(creation_str, '%Y-%m-%dT%H:%M:%S.%fZ')
+            creation_time = date_dt.strftime('%Y-%m-%dT%H:%M:%S')
+        return creation_time
 
     def mov_to_wave(self):
         """
