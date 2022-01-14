@@ -414,6 +414,14 @@ class MltHelper:
             self.xml_data = xmltodict.unparse(self.dict_data, pretty=True)
             fp.write(self.xml_data)
 
+    def __get_count_playlist_entry(self):
+        """
+        現在のトラック数を取得する
+
+        :return: int トラック数
+        """
+        return len(self.playlist_entry)
+
     def __get_next_index_playlist_entry(self):
         """
         次の登録番号を取得する
@@ -697,23 +705,24 @@ class MltHelper:
     def __add_transition_to_tractor(self):
         """
         mltのtractorにtransitionを二つ追加する
-        todo 値を変えないと、mix表示できないっぽい、要仕様調査
+        ※映像トラック追加時に使用する
+        ※先にplaylistの登録__register_index_playlist_entry()を行うこと
 
         < transition id = "transition0" >
-            < property name = "a_track" > 0 < / property >
-            < property name = "b_track" > 3 < / property >
-            < property name = "mlt_service" > mix < / property >
-            < property name = "always_active" > 1 < / property >
-            < property name = "sum" > 1 < / property >
+            < property name = "a_track" > 0 < / property > 固定
+            < property name = "b_track" > 3 < / property > track毎にインクリメント、1スタート、前詰め
+            < property name = "mlt_service" > mix < / property > 固定
+            < property name = "always_active" > 1 < / property > 固定
+            < property name = "sum" > 1 < / property > 固定
         < / transition >
 
         < transition id = "transition1" >
-            < property name = "a_track" > 1 < / property >
-            < property name = "b_track" > 3 < / property >
-            < property name = "version" > 0.9 < / property >
-            < property name = "mlt_service" > frei0r.cairoblend < / property >
-            < property name = "threads" > 0 < / property >
-            < property name = "disable" > 0 < / property >
+            < property name = "a_track" > 1 < / property > 一つ目のトラック=0、二つ目以降=1
+            < property name = "b_track" > 3 < / property > track毎にインクリメント、1スタート、前詰め
+            < property name = "version" > 0.9 < / property > 固定
+            < property name = "mlt_service" > frei0r.cairoblend < / property > 固定
+            < property name = "threads" > 0 < / property > 固定
+            < property name = "disable" > 0 < / property > 一つ目のトラック=1、二つ目以降=0
         < / transition >
 
         :return: None
@@ -724,9 +733,9 @@ class MltHelper:
                                       (self.property_name, []),
                                       ])
         transition_root.append(od)
-        # TODO 値の仕様が不明
         property_list = [collections.OrderedDict([('@name', 'a_track'), ('#text', '0')]),
-                         collections.OrderedDict([('@name', 'b_track'), ('#text', '3')]),
+                         collections.OrderedDict([('@name', 'b_track'),
+                                                  ('#text', str(self.__get_count_playlist_entry()))]),
                          collections.OrderedDict([('@name', 'mlt_service'), ('#text', 'mix')]),
                          collections.OrderedDict([('@name', 'always_active'), ('#text', '1')]),
                          collections.OrderedDict([('@name', 'sum'), ('#text', '1')]),
@@ -740,9 +749,9 @@ class MltHelper:
                                       (self.property_name, []),
                                       ])
         transition_root.append(od)
-        # TODO 値の仕様が不明
         property_list = [collections.OrderedDict([('@name', 'a_track'), ('#text', '1')]),
-                         collections.OrderedDict([('@name', 'b_track'), ('#text', '3')]),
+                         collections.OrderedDict([('@name', 'b_track'),
+                                                  ('#text', str(self.__get_count_playlist_entry()))]),
                          collections.OrderedDict([('@name', 'version'), ('#text', '0.9')]),
                          collections.OrderedDict([('@name', 'mlt_service'), ('#text', 'frei0r.cairoblend')]),
                          collections.OrderedDict([('@name', 'threads'), ('#text', '0')]),
@@ -757,9 +766,8 @@ class MltHelper:
         """
         タイムラインにトラックを追加する(mltファイルのplaylistタグid=playlist0..)
         videoトラック追加用
-        todo playlistタグidをreturnしたい
 
-        Todo:
+        Todo: トラックが一つもない時に未対応
             * mltにplaylist id="main_bin"がなければmain_binを追加し、mltのproducer="main_bin"に変更する
             * mltにtractorがなければ、playlist id="playlist0"をtractor id="tractor0"に変更し、tractorにtransitionを追加する
             * mltにplaylist id="background"がなければbackgroundを追加し、tractorにtrackを追加する
@@ -801,51 +809,115 @@ class MltHelper:
         return movie
 
 
-def test01(target_file_path):
+def test01():
     """
-    単体テスト
+    絶対パスでmltファイルを読み込み、保存する
 
-    :param target_file_path: str 対象のファイルパス
-    :return:
+    :return: None
     """
-    # 絶対パスでmltファイルを読み込み、保存する
-    app1 = MltHelper('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/テンプレート.mlt')
-    app1.save_xml('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test1.mlt')
-    # 相対パスでmltファイルを読み込み、動画を2つプレイリストに追加して、保存する
-    app2 = MltHelper('./せんちゃんネル/テンプレート.mlt')
+    app = MltHelper('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/テンプレート.mlt')
+    app.save_xml('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/テンプレート_test01.mlt')
+
+
+def test02():
+    """
+    相対パスでmltファイルを読み込み、動画を2つプレイリストに追加して、保存する
+
+    :return: None
+    """
+    app = MltHelper('./せんちゃんネル/test/テンプレート.mlt')
     movies = [
         './せんちゃんネル/mov/BPUB2392.MP4',
         './せんちゃんネル/20210306/JGWU8992.MOV',
     ]
-    app2.add_movies('main_bin', movies)
-    app2.save_xml('./せんちゃんネル/test2.mlt')
-    # さらに、カレントフォルダ以下で「*_part*.mov」を再起検索して、見つけたファイルをトラックplaylist0に追加して、保存する
+    app.add_movies('main_bin', movies)
+    app.save_xml('./せんちゃんネル/test/テンプレート_test02.mlt')
+
+
+def test03():
+    """
+    カレントフォルダ以下で「*_part*.mov」を再起検索して、見つけたファイルをトラックplaylist0に追加して、保存する
+
+    :return: None
+    """
+    app = MltHelper('./せんちゃんネル/test/テンプレート.mlt')
     movies = glob.glob('./**/*_part*.mov', recursive=True)
-    app2.add_movies('playlist0', movies)
-    app2.save_xml('./せんちゃんネル/test3.mlt')
-    # さらに、トラックを1つ追加して、保存する
-    target_playlist = app2.add_track('V2')
-    app2.save_xml('./せんちゃんネル/test4.mlt')
-    # TODO さらに、前手順で追加したトラックに、動画を2つ追加して、保存する
-    # app2.add_movies(target_playlist, movies)
-    # app2.save_xml('./test5.mlt')
+    app.add_movies('playlist0', movies)
+    app.save_xml('./せんちゃんネル/test/テンプレート_test03.mlt')
 
 
-def test02(target_file_path):
+def test04():
+    """
+    トラックを1つ追加して、保存する
+
+    :return: None
+    """
+    app = MltHelper('./せんちゃんネル/test/テンプレート.mlt')
+    target_playlist = app.add_track('V2')
+    app.save_xml('./せんちゃんネル/test/テンプレート_test04.mlt')
+
+
+def test05():
+    """
+    トラックを1つ追加し、カレントフォルダ以下で「*_part*.mov」を再起検索して、見つけたファイルを追加したトラックに追加して、保存する
+    todo add_moviesでエラー
+
+    :return: None
+    """
+    app = MltHelper('./せんちゃんネル/test/テンプレート.mlt')
+    playlist_id = app.add_track('V2')
+    movies = glob.glob('./**/*_part*.mov', recursive=True)
+    app.add_movies(playlist_id, movies)
+    app.save_xml('./せんちゃんネル/test/テンプレート_test05.mlt')
+
+
+def test06(target_file_path):
+    """
+    todo mltHelperでエラー
+
+    :param target_file_path:
+    :return:
+    """
     # パスを作成
     target_folder = os.path.dirname(target_file_path)
     target_mlt_basename = os.path.basename(target_file_path)
     target_mlt_file_name = os.path.splitext(target_mlt_basename)[0]
     target_mlt_file_ext = os.path.splitext(target_mlt_basename)[1]
     search_path = target_folder + '\\**\\*_part*.mov'
-    create_mlt_path = os.path.join(target_folder, target_mlt_file_name + '_new' + target_mlt_file_ext)
+    create_mlt_path = os.path.join(target_folder, target_mlt_file_name + '_test06' + target_mlt_file_ext)
     movies = glob.glob(search_path, recursive=True)
     app = MltHelper(target_file_path)
     # 動画をプレイリストに追加
-    app.add_movies('main_bin', mov)
+    app.add_movies('main_bin', movies)
     # 動画をタイムラインに追加
-    app.add_movies('playlist0', mov)
+    app.add_movies('playlist0', movies)
     app.save_xml(create_mlt_path)
+
+
+def test07():
+    """
+    todo
+
+    :return:
+    """
+    movies = ['C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/JPIC3316.MOV']
+    app = MltHelper('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/テンプレート.mlt')
+    # 動画や字幕用のトラックを追加'playlist2'
+    playlist_id = app.add_track('V2')
+    app.save_xml('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/テンプレート_test07_add_track.mlt')
+    # 動画をプレイリストに追加'main_bin'
+    app.add_movies('main_bin', movies)
+    # 動画をプレイリストに追加'playlist2'
+    app.add_movies(playlist_id, movies)
+    app.save_xml('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/テンプレート_test07_add_track_mov.mlt')
+    # 動画や字幕用のトラックを追加'playlist3'
+    playlist_id = app.add_track('V3')
+    app.save_xml('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/テンプレート_test07_add_track_mov_track.mlt')
+    # 動画ファイルから文字起こししてプレイリストに追加'main_bin'
+    app.add_subtitles('main_bin', movies)
+    # 動画ファイルから文字起こししてタイムラインに追加'playlist3'
+    app.add_subtitles(playlist_id, movies)
+    app.save_xml('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/テンプレート_test07_add_track_mov_track_subtitles.mlt')
 
 
 # 検証コード
@@ -867,24 +939,10 @@ if __name__ == '__main__':  # インポート時には動かない
         sys.exit()
     print(target_file_path)
 
-    mov = ['C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/JPIC3316.MOV']
-    app = MltHelper('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/テンプレート.mlt')
-    # 動画や字幕用のトラックを追加'playlist2'
-    playlist_id = app.add_track('V2')
-    app.save_xml('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/テンプレート_add_track.mlt')
-    # 動画をプレイリストに追加'main_bin'
-    app.add_movies('main_bin', mov)
-    # 動画をプレイリストに追加'playlist2'
-    app.add_movies(playlist_id, mov)
-    app.save_xml('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/テンプレート_add_track_mov.mlt')
-    # 動画や字幕用のトラックを追加'playlist3'
-    playlist_id = app.add_track('V3')
-    app.save_xml('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/テンプレート_add_track_mov_track.mlt')
-    # 動画ファイルから文字起こししてプレイリストに追加'main_bin'
-    app.add_subtitles('main_bin', mov)
-    # 動画ファイルから文字起こししてタイムラインに追加'playlist3'
-    app.add_subtitles(playlist_id, mov)
-    app.save_xml('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/テンプレート_add_track_mov_track_subtitles.mlt')
-
-    # test01(target_file_path)
-    # test02(target_file_path)
+    test01()
+    test02()
+    test03()
+    test04()
+    # test05()
+    # test06(target_file_path)
+    test07()
