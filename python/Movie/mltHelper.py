@@ -535,12 +535,11 @@ class MltHelper:
                 od = shot_value.create_shot_playlist()
                 if target_root.get('entry') is None:
                     # 作ったばかりのplaylistでentryがない場合作る
-                    target_root['entry'] = od
+                    target_root['entry'] = []
                     # blankがあったら削除する
                     if not target_root.get('blank') is None:
                         del target_root['blank']
-                else:
-                    target_root.get('entry').append(od)
+                target_root.get('entry').append(od)
                 return
         print('プロジェクトファイルに指定のplaylistがありません')
         sys.exit()
@@ -836,7 +835,7 @@ def test02():
 
 def test03():
     """
-    カレントフォルダ以下で「*_part*.mov」を再起検索して、見つけたファイルをトラックplaylist0に追加して、保存する
+    カレントフォルダ以下で「*_part*.mov」を再帰検索して、見つけたファイルをトラックplaylist0に追加して、保存する
 
     :return: None
     """
@@ -860,7 +859,6 @@ def test04():
 def test05():
     """
     トラックを1つ追加し、カレントフォルダ以下で「*_part*.mov」を再起検索して、見つけたファイルを追加したトラックに追加して、保存する
-    todo add_moviesでエラー
 
     :return: None
     """
@@ -943,6 +941,6 @@ if __name__ == '__main__':  # インポート時には動かない
     test02()
     test03()
     test04()
-    # test05()
+    test05()
     # test06(target_file_path)
     test07()
