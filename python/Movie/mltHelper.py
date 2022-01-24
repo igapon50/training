@@ -140,13 +140,24 @@ class ShotValue:
         object.__setattr__(self, "in_time", in_time)
         object.__setattr__(self, "out_time", out_time)
 
+    def is_filter(self):
+        """
+        フィルター(字幕)の判定
+
+        :return: bool フィルター(字幕)ならTrue/そうでないならFalse
+        """
+        if self.shotcut_hash is None:
+            return True
+        else:
+            return False
+
     def create_shot_playlist(self):
         """
         playlistに追加するshotのodを作って返す
 
         :return: collections.OrderedDict playlistに追加するshot
         """
-        if self.shotcut_hash is None:
+        if self.is_filter():
             # 字幕の時
             od = collections.OrderedDict([('@' + self.producer_name, self.producer_name + str(self.index)),
                                           ('@in', self.in_time),
@@ -166,7 +177,7 @@ class ShotValue:
         :param index: str filterの次の登録番号
         :return: collections.OrderedDict playlistに追加するshot
         """
-        if self.shotcut_hash is None:
+        if self.is_filter():
             # 字幕の時
             if index is None:
                 print('引数indexがNoneです')
@@ -374,7 +385,7 @@ class MltHelper:
             if not number.isdecimal():
                 print('producer_entryに追加するindexを決定できなかった')
                 sys.exit()
-            self.__register_index_producer_entry(int(number))
+            self.__register_index_filter_entry(int(number))
 
     def load_xml(self):
         """
@@ -551,12 +562,15 @@ class MltHelper:
         :param shot_value: ShotValue shot(動画や字幕など操作の単位)の値クラス
         :return: None
         """
-        # filter(字幕など)の空き番号を調べる
-        index = self.__get_next_index_filter_entry()
-        mlt_dict = self.dict_data.get('mlt').get(self.producer_name)
-        od = shot_value.create_shot_producer(str(index))
-        mlt_dict.append(od)
-        self.__register_index_filter_entry(index)
+        target_root = self.dict_data.get('mlt').get(self.producer_name)
+        if shot_value.is_filter():
+            index = self.__get_next_index_filter_entry()
+            od = shot_value.create_shot_producer(str(index))
+            target_root.append(od)
+            self.__register_index_filter_entry(index)
+        else:
+            od = shot_value.create_shot_producer()
+            target_root.append(od)
 
     def add_movie(self, playlist_id, movie):
         """
@@ -869,19 +883,19 @@ def test05():
     app.save_xml('./せんちゃんネル/test/テンプレート_test05.mlt')
 
 
-def test06(target_file_path):
+def test06():
     """
     todo mltHelperでエラー
 
-    :param target_file_path:
     :return:
     """
     # パスを作成
+    target_file_path = 'C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/テンプレート.mlt'
     target_folder = os.path.dirname(target_file_path)
     target_mlt_basename = os.path.basename(target_file_path)
     target_mlt_file_name = os.path.splitext(target_mlt_basename)[0]
     target_mlt_file_ext = os.path.splitext(target_mlt_basename)[1]
-    search_path = target_folder + '\\**\\*_part*.mov'
+    search_path = target_folder + '\\..\\**\\*_part*.mov'
     create_mlt_path = os.path.join(target_folder, target_mlt_file_name + '_test06' + target_mlt_file_ext)
     movies = glob.glob(search_path, recursive=True)
     app = MltHelper(target_file_path)
@@ -942,5 +956,5 @@ if __name__ == '__main__':  # インポート時には動かない
     test03()
     test04()
     test05()
-    # test06(target_file_path)
+    test06()
     test07()
