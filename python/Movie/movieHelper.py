@@ -281,6 +281,7 @@ class MovieHelper:
     def get_out_time(self):
         """
         動画ファイルのout_timeを取得する
+        todo shotcutで開くと、字幕と動画で0.01秒ずれる、-0.01した方がいいかも。
 
         :return: str 終了time
         """
