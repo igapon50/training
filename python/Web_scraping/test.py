@@ -1,15 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-##
-# @file test.py
-# @version 1.0.0
-# @author Ryosuke Igarashi(HN:igapon)
-# @date 2021/10/10
-# @brief 検証コード
-# @details
-# @warning 
-# @note 
-
+"""
+検証コード
+"""
 # local source
 # from const import *
 # from func import *
@@ -38,14 +31,14 @@ if __name__ == '__main__':  # インポート時には動かない
         print(msg_error_exit)
         sys.exit()
     print(target_url)
-#    crawling = crawling(target_url, img_css_select, img_attr)  # 'img.vimg[src*="jpg"]'
-    crawling = crawling(target_url, 'img.vimg[src*="jpg"]', img_attr)  #
+#    crawling = Crawling(target_url, img_css_select, img_attr)  # 'img.vimg[src*="jpg"]'
+    crawling = Crawling(target_url, 'img.vimg[src*="jpg"]', img_attr)  #
     crawling.save_text(RESULT_FILE_PATH)
     value_objects = crawling.get_value_objects()
     crawling.save_pickle(RESULT_FILE_PATH + '1.pkl')
     crawling.load_pickle(RESULT_FILE_PATH + '1.pkl')
     crawling.save_text(RESULT_FILE_PATH + '1.txt')
-    crawling2 = crawling(None, None, None, value_objects)
+    crawling2 = Crawling(value_objects)
     crawling2.save_pickle(RESULT_FILE_PATH + '2.pkl')
     crawling2.load_pickle(RESULT_FILE_PATH + '2.pkl')
     crawling2.save_text(RESULT_FILE_PATH + '2.txt')

@@ -1,15 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-##
-# @file const.py
-# @version 1.0.0
-# @author Ryosuke Igarashi(HN:igapon)
-# @date 2021/01/26
-# @brief 共通な定数を定義する
-# @details 共通な定数を定義する
-# @warning 
-# @note 
-
+"""
+共通な定数を定義する
+"""
 __author__ = "Ryosuke Igarashi(HN:igapon)"
 __copyright__ = "Copyright (c) 2021 igapon"
 __credits__ = ["Ryosuke Igarashi"]

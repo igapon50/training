@@ -1,5 +1,5 @@
 <?xml version="1.0" standalone="no"?>
-<mlt LC_NUMERIC="C" version="7.0.0" title="Shotcut version UNSTABLE-21.02.09" producer="main_bin">
+<mlt LC_NUMERIC="C" version="7.1.0" title="Shotcut version 21.10.31" producer="main_bin">
   <profile description="automatic" width="1920" height="1080" progressive="1" sample_aspect_num="1" sample_aspect_den="1" display_aspect_num="1920" display_aspect_den="1080" frame_rate_num="18750" frame_rate_den="937" colorspace="601"/>
   <producer id="producer1" in="00:00:00.000" out="00:00:18.140">
     <property name="length">00:00:18.190</property>
@@ -200,7 +200,7 @@
     <entry producer="producer13" in="00:00:00.000" out="00:00:59.968"/>
     <entry producer="producer14" in="00:00:00.000" out="00:00:44.676"/>
   </playlist>
-  <tractor id="tractor6" title="Shotcut version UNSTABLE-21.02.09" global_feed="1" in="00:00:00.000" out="00:02:44.726">
+  <tractor id="tractor6" title="Shotcut version 21.10.31" in="00:00:00.000" out="00:02:44.726">
     <property name="shotcut">1</property>
     <property name="shotcut:projectAudioChannels">2</property>
     <property name="shotcut:projectFolder">1</property>

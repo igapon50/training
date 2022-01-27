@@ -1,15 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-##
-# @file HTML2imglist.py
-# @version 1.0.0
-# @author Ryosuke Igarashi(HN:igapon)
-# @date 2021/10/10
-# @brief Webサイトから画像のURLリストを作る
-# @details Webサイトから画像のURLリストを作ってホワイトボードにコピーし、ファイルにも保存する
-# @warning 
-# @note 
-
+"""
+Webサイトから画像のURLリストを作ってクリップボードにコピーし、ファイルにも保存する
+"""
 # local source
 from const import *
 from func import *
@@ -40,7 +33,7 @@ if __name__ == '__main__':  # インポート時には動かない
     print(target_url)
 
     # ファイルのURLリストを作成
-    crawling = crawling(target_url, img_css_select, img_attr)
+    crawling = Crawling(target_url, img_css_select, img_attr)
     if not crawling:
         print(msg_error_exit)
         sys.exit(crawling)

@@ -1,18 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-##
-# @file scraping.py
-# @version 1.0.0
-# @author Ryosuke Igarashi(HN:igapon)
-# @date 2021/10/10
-# @brief
-# @details
-# @warning 
-# @note
-
+"""
+スクレイピングユーティリティ
+    * URLリストと、保存フォルダを指定して、スクレイピングする
+        * URLリストのファイルをダウンロードする
+        * ダウンロードしたファイルの名前を、ナンバリングした名前に付けなおす
+        * 保存フォルダを圧縮する
+        * 保存フォルダ内のファイルを削除する
+"""
 # standard library
 import sys  # 終了時のエラー有無
+import re  # 正規表現モジュール
+import zipfile  # zipファイル
 import os  # ファイルパス分解
+import shutil  # 高水準のファイル操作
 from urllib.parse import urlparse  # URLパーサー
 from urllib.parse import urljoin  # URL結合
 
@@ -29,91 +30,120 @@ from urllib3.util.retry import Retry
 # local source
 from const import *
 
+# 最大再起回数を1万回にする
 sys.setrecursionlimit(10000)
 
 
-##
-# @brief Value Objects
-# @details scrapingクラスの値オブジェクト。
-# @warning
-# @note
 @dataclass(frozen=True)
-class scrapingValue:
+class ScrapingValue:
+    """
+    スクレイピング値オブジェクト
+    """
     image_list: list = None
     save_path: str = None
 
-    # 完全コンストラクタパターン
-    def __init__(self,
-                 image_list: 'list ダウンロードするURLのリスト',
-                 save_path: 'str ダウンロード後に保存するフォルダパス',
-                 ):
+    def __init__(self, image_list, save_path):
+        """
+        完全コンストラクタパターン
+
+        :param image_list: list ダウンロードするURLのリスト
+        :param save_path: str ダウンロード後に保存するフォルダパス
+        """
         if 0 < len(image_list):
             object.__setattr__(self, "image_list", image_list)
         if save_path is not None:
             object.__setattr__(self, "save_path", save_path)
 
 
-##
-# @brief
-# @details
-# @warning
-# @note
-
-class scraping:
-    files_downloader_value: scrapingValue = None
+class Scraping:
+    """
+    スクレイピングのユーティリティ
+        * 指定のフォルダにダウンロードする
+        * ダウンロードしたファイル群の名前を付け直す
+        * 指定のフォルダを圧縮する
+        * 指定のフォルダ内のファイルを削除する
+    """
+    files_downloader_value: ScrapingValue = None
     image_list: list = None
     save_path: str = None
     src_file_list: list = []
     dst_file_list: list = []
     rename_file_dic: dict = None
 
-    # コンストラクタ
-    def __init__(self,
-                 image_list: 'list ダウンロードするURLのリスト' = None,
-                 save_path: 'str ダウンロード後に保存するフォルダパス' = None,
-                 files_downloader_value: 'scrapingValue 値オブジェクト' = None,
-                 ):
-        if files_downloader_value is not None:
-            self.files_downloader_value = files_downloader_value
-            if 0 < len(self.files_downloader_value.image_list):
+    def __init__(self, target_value, save_path=None):
+        """
+        コンストラクタ
+
+        :param target_value: list ダウンロードするURLのリスト、または、ScrapingValue 値オブジェクト
+        :param save_path: str ダウンロード後に保存するフォルダパス
+        """
+        if target_value is None:
+            print('target_valueがNoneです')
+            sys.exit(1)
+        if isinstance(target_value, ScrapingValue):
+            if 0 < len(target_value.image_list):
+                self.files_downloader_value = target_value
                 self.image_list = self.files_downloader_value.image_list
                 if self.files_downloader_value.save_path is not None:
                     self.save_path = self.files_downloader_value.save_path
                     self.initialize()
         else:
-            if 0 < len(image_list):
-                self.image_list = image_list
-                if save_path is not None:
-                    self.save_path = save_path
-                    self.initialize()
+            if isinstance(target_value, list):
+                if 0 < len(target_value):
+                    self.image_list = target_value
+                    if save_path is not None:
+                        self.save_path = save_path
+                        self.initialize()
 
-    # 値オブジェクトを取得する
-    def get_value_objects(self
-                          ) -> 'scrapingValue 値オブジェクト':
+    def get_value_objects(self):
+        """
+        値オブジェクトを取得する
+
+        :return: ScrapingValue 値オブジェクト
+        """
         return copy.deepcopy(self.files_downloader_value)
 
-    # 画像URLリストを取得する
-    def get_image_list(self
-                       ) -> 'list 画像URLリスト':
+    def get_image_list(self):
+        """
+        画像URLリストを取得する
+
+        :return: list 画像URLリスト
+        """
         return copy.deepcopy(self.files_downloader_value.image_list)
 
-    # 保存ファイルパスリストを取得する
-    def get_src_file_list(self
-                          ) -> 'list 保存ファイルパスリスト':
+    def get_src_file_list(self):
+        """
+        リネーム前の、保存ファイルパスリストを取得する
+
+        :return: list ダウンロードファイルパスリスト
+        """
         return copy.deepcopy(self.src_file_list)
 
-    # 保存ファイルパスリストを取得する
-    def get_dst_file_list(self
-                          ) -> 'list リネームファイルパスリスト':
+    def get_dst_file_list(self):
+        """
+        リネーム後の、保存ファイルパスリストを取得する
+
+        :return: list リネームファイルパスリスト
+        """
         return copy.deepcopy(self.dst_file_list)
 
-    # リネームファイルパス辞書を取得する
-    def get_dic_file_list(self
-                          ) -> 'dict リネームファイルパス辞書':
+    def get_dic_file_list(self):
+        """
+        リネームファイルパス辞書を取得する
+
+        :return: dict リネームファイルパス辞書
+        """
         return copy.deepcopy(self.rename_file_dic)
 
-    # 初期化、画像URLリストと保存ファイルパスから、保存ファイルパスリストを作る。辞書も作る。フォルダがなければフォルダも作る。
     def initialize(self):
+        """
+        初期化
+            * 画像URLリストと保存ファイルパスから、保存ファイルパスリストを作る
+            * 辞書も作る
+            * フォルダがなければフォルダも作る
+
+        :return: None
+        """
         dst_file_namelist = []
         for image_url in self.image_list:
             temp_img_filename = image_url.rsplit('/', 1)[1].replace('?', '_')  # 禁則文字の変換
@@ -129,9 +159,12 @@ class scraping:
         self.rename_file_dic = {key: val for key, val in zip(self.image_list, self.src_file_list)}
         return
 
-    # target_urlに接続して、image_attrでスクレイピングして、titleとimage_listを更新する
-    def download(self
-                 ) -> 'bool 成功/失敗=True/False':
+    def download(self):
+        """
+        target_urlに接続して、image_attrでスクレイピングして、titleとimage_listを更新する
+
+        :return: bool 成功/失敗=True/False
+        """
         # フォルダーがなければ作成する
         if not os.path.isdir(self.save_path):
             os.makedirs(self.save_path)
@@ -153,11 +186,14 @@ class scraping:
                 return False
         return True
 
-    # 指定したURLのimageをgetして返す。サーバー落ちているとリダイレクトでエラー画像になることがあるのでリダイレクトFalse
-    def download_image(self,
-                       image_url: 'str ダウンロードするURL' = None,
-                       timeout: 'int タイムアウト時間[s]' = 30,
-                       ) -> 'bytes 読み込んだimageのバイナリデータ':
+    def download_image(self, image_url=None, timeout=30):
+        """
+        指定したURLのimageをgetして返す。サーバー落ちているとリダイレクトでエラー画像になることがあるのでリダイレクトFalse
+
+        :param image_url: str ダウンロードするURL
+        :param timeout: int タイムアウト時間[s]
+        :return: bytes 読み込んだimageのバイナリデータ
+        """
         response = requests.get(image_url, allow_redirects=False, timeout=timeout)
         if response.status_code != requests.codes.ok:
             e = Exception("HTTP status: " + str(response.status_code))  # + " " + file_url + " " + response.url)
@@ -168,15 +204,17 @@ class scraping:
             raise e
         return response.content
 
-    # 指定したファイルパスリストから、ファイル名部分をナンバリングし直したファイルパスリストを作る
-    def renameimg(self
-                  ) -> 'bool 成功/失敗=True/False':
+    def rename_images(self):
+        """
+        指定したファイルパスリストから、ファイル名部分をナンバリングし直したファイルパスリストを作る
+
+        :return: bool 成功/失敗=True/False
+        """
         # ファイルの存在確認
         for src_file_path in self.src_file_list:
             if not os.path.isfile(src_file_path):
                 print('ファイル[' + src_file_path + ']が存在しません。')
                 print(msg_error_exit)
-                # sys.exit()
                 return False
         count = 0
         for src_file_path in self.src_file_list:
@@ -189,6 +227,41 @@ class scraping:
             self.dst_file_list.append(dst_img_path)
             os.rename(src_file_path, dst_img_path)
         return True
+
+    def make_zip_file(self):
+        """
+        リネーム後のダウンロードファイルを、一つの圧縮ファイルにする
+
+        :return: None
+        """
+        with zipfile.ZipFile(self.save_path + '.zip', 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            for img_path in self.dst_file_list:
+                zip_file.write(img_path)
+
+    def download_file_clear(self):
+        """
+        保存フォルダからダウンロードファイルを削除する
+
+        :return: None
+        """
+        print('ファイル削除します(フォルダごと削除して、フォルダを作り直します)')
+        shutil.rmtree(self.save_path)
+        if self.save_path[len(self.save_path) - 1] == '\\':
+            os.mkdir(self.save_path)
+        else:
+            os.mkdir(self.save_path + '\\')
+
+    def rename_zip_file(self, title):
+        """
+        圧縮ファイルの名前を付けなおす
+
+        :param title: str 付け直すファイル名(禁則文字は削除される)
+        :return: None
+        """
+        # 禁則文字を削除する
+        zip_file_new_name = '.\\' + re.sub(r'[\\/:*?"<>|]+', '', title)
+        print(f'圧縮ファイル名を付け直します:{zip_file_new_name}.zip')
+        os.rename(self.save_path + '.zip', zip_file_new_name + '.zip')
 
 
 # 検証コード
@@ -215,10 +288,11 @@ if __name__ == '__main__':  # インポート時には動かない
         print(msg_error_exit)
         sys.exit()
     print(target_url)
+
     image_url_list = [
         'https://1.bp.blogspot.com/-tzoOQwlaRac/X1LskKZtKEI/AAAAAAABa_M/89phuGIVDkYGY_uNKvFB6ZiNHxR7bQYcgCNcBGAsYHQ/s180-c/fashion_dekora.png',
         'https://1.bp.blogspot.com/-gTf4sWnRdDw/X0B4RSQQLrI/AAAAAAABarI/MJ9DW90dSVwtMjuUoErxemnN4nPXBnXUwCNcBGAsYHQ/s180-c/otaku_girl_fashion.png',
     ]
-    fileDownloader = scraping(image_url_list, folder_path)
+    fileDownloader = Scraping(image_url_list, folder_path)
     fileDownloader.download()
-    fileDownloader.renameimg()
+    fileDownloader.rename_images()
