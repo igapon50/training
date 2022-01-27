@@ -4,6 +4,7 @@
 動画編集アプリshotcutのmltプロジェクトファイルを扱うヘルパー MltHelper
     * shotcutのmltプロジェクトファイルの読込と保存 load_xml/save_xml
     * 指定の動画ファイルについて、playlistにshotを追加する add_movie/add_movies
+        * todo 音声がOFFになっている
     * 指定の動画ファイルから文字起こししたテロップについて、playlistにshotを追加する add_subtitle/add_subtitles
     * タイムラインに(映像)トラックを追加する add_track
 MltHelperの関連関数
@@ -575,6 +576,54 @@ class MltHelper:
         else:
             od = shot_value.create_shot_producer()
             target_root.append(od)
+
+    def __add_shot_to_chain(self, shot_value):
+        # < chain id = "chain0" out = "00:00:00.750" >
+        #     < property name = "length" > 00:00: 00.800 < / property >
+        #     < property name = "eof" > pause < / property >
+        #     < property name = "resource" > JPIC3316_part000.MOV < / property >
+        #     < property name = "mlt_service" > avformat < / property >
+        #     < property name = "seekable" > 1 < / property >
+        #     < property name = "audio_index" > 1 < / property >
+        #     < property name = "video_index" > 0 < / property >
+        #     < property name = "mute_on_pause" > 1 < / property >
+        #     < property name = "video_delay" > 0 < / property >
+        #     < property name = "shotcut:hash" > 99d30cfe463e84e14e1c7a592647f35e < / property >
+        #     < property name = "shotcut:defaultAudioIndex" > -1 < / property >
+        #     < property name = "shotcut:caption" > JPIC3316_part000.MOV < / property >
+        #     < property name = "xml" > was here < / property >
+        # < / chain >
+        # < chain id = "chain1" out = "00:00:00.700" >
+        #     < property name = "length" > 00:00: 00.750 < / property >
+        #     < property name = "eof" > pause < / property >
+        #     < property name = "resource" > JPIC3316_part001.MOV < / property >
+        #     < property name = "mlt_service" > avformat < / property >
+        #     < property name = "seekable" > 1 < / property >
+        #     < property name = "audio_index" > 1 < / property >
+        #     < property name = "video_index" > 0 < / property >
+        #     < property name = "mute_on_pause" > 1 < / property >
+        #     < property name = "video_delay" > 0 < / property >
+        #     < property name = "shotcut:hash" > be018efbcd1936fa29fe68e34f086b94 < / property >
+        #     < property name = "shotcut:defaultAudioIndex" > -1 < / property >
+        #     < property name = "shotcut:caption" > JPIC3316_part001.MOV < / property >
+        #     < property name = "xml" > was here < / property >
+        # < / chain >
+        # < chain id = "chain2" out = "00:00:01.149" >
+        #     < property name = "length" > 00:00: 01.199 < / property >
+        #     < property name = "eof" > pause < / property >
+        #     < property name = "resource" > JPIC3316_part002.MOV < / property >
+        #     < property name = "mlt_service" > avformat < / property >
+        #     < property name = "seekable" > 1 < / property >
+        #     < property name = "audio_index" > 1 < / property >
+        #     < property name = "video_index" > 0 < / property >
+        #     < property name = "mute_on_pause" > 1 < / property >
+        #     < property name = "video_delay" > 0 < / property >
+        #     < property name = "shotcut:hash" > c985aa324064c15dab345f86be63d9e1 < / property >
+        #     < property name = "shotcut:defaultAudioIndex" > -1 < / property >
+        #     < property name = "shotcut:caption" > JPIC3316_part002.MOV < / property >
+        #     < property name = "xml" > was here < / property >
+        # < / chain >
+
 
     def add_movie(self, playlist_id, movie):
         """
