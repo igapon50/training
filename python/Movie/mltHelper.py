@@ -3,13 +3,14 @@
 """
 動画編集アプリshotcutのmltプロジェクトファイルを扱うヘルパー MltHelper
     * shotcutのmltプロジェクトファイルの読込と保存 load_xml/save_xml
-    * todo playlistにshotを追加する
-    * todo producerにshotを追加する
-    * todo mltにplaylistを追加する
+    * 指定の動画ファイルについて、playlistにshotを追加する add_movie/add_movies
+    * 指定の動画ファイルから文字起こししたテロップについて、playlistにshotを追加する add_subtitle/add_subtitles
+    * タイムラインに(映像)トラックを追加する add_track
 MltHelperの関連関数
     * 相対パスが指定されたら絶対パスを返す　get_abs_path
     * リストに無い次の(アルファベット+十進数値な)名前のindex(管理番号)を返す get_next_index_entry
 ShotValue
+    * ShotValueが字幕か判定する is_filter
     * playlistに追加するshotのodを作って返す create_shot_playlist
     * producerに追加するshotのodを作って返す create_shot_producer
 MltValue
@@ -103,6 +104,7 @@ class ShotValue:
     contents: str = None
     in_time: str = None
     out_time: str = None
+    length_time: str = None
     creation_time: str = None
     shotcut_hash: str = None
 
@@ -116,7 +118,7 @@ class ShotValue:
     property_name: str = 'property'
     filter_name: str = 'filter'
 
-    def __init__(self, index, contents, in_time, out_time, creation_time=None, shotcut_hash=None):
+    def __init__(self, index, contents, in_time, out_time, length_time, creation_time=None, shotcut_hash=None):
         """
         完全コンストラクタパターン
             * 動画の時は、index,contents,in_time,out_time,creation_time,shotcut_hash
@@ -126,10 +128,11 @@ class ShotValue:
         :param contents: str 動画のファイルパス、または、str テロップの文字列
         :param in_time: str 開始時刻
         :param out_time: str 終了時刻
+        :param length_time: str 長さ
         :param creation_time: str 作成時刻
         :param shotcut_hash: str 動画のハッシュ
         """
-        if contents is None or in_time is None or out_time is None:
+        if contents is None or in_time is None or out_time is None or length_time is None:
             print('引数が不正です。')
             sys.exit()
         if not shotcut_hash is None or not creation_time is None:
@@ -139,6 +142,7 @@ class ShotValue:
         object.__setattr__(self, "index", index)
         object.__setattr__(self, "in_time", in_time)
         object.__setattr__(self, "out_time", out_time)
+        object.__setattr__(self, "length_time", length_time)
 
     def is_filter(self):
         """
@@ -231,7 +235,7 @@ class ShotValue:
                                           ('@out', self.out_time),
                                           (self.property_name, []),
                                           ])
-            property_list = [collections.OrderedDict([('@name', 'length'), ('#text', self.out_time)]),
+            property_list = [collections.OrderedDict([('@name', 'length'), ('#text', self.length_time)]),
                              collections.OrderedDict([('@name', 'eof'), ('#text', 'pause')]),
                              collections.OrderedDict([('@name', 'resource'), ('#text', self.contents)]),
                              collections.OrderedDict([('@name', 'audio_index'), ('#text', '-1')]),
@@ -595,7 +599,14 @@ class MltHelper:
         index = self.__get_next_index_producer_entry()
         # shot(動画や字幕など)の情報を集める
         mh = MovieHelper(path)
-        shot_value = ShotValue(index, path, mh.get_in_time(), mh.get_out_time(), mh.get_creation_time(), mh.get_md5())
+        shot_value = ShotValue(index,
+                               path,
+                               mh.get_in_time(),
+                               mh.get_out_time(),
+                               mh.get_length_time(),
+                               mh.get_creation_time(),
+                               mh.get_md5(),
+                               )
         # playlistにshot(動画や字幕など)を追加する
         self.__add_shot_to_playlist(playlist_id, shot_value)
         # producerにshot(動画や字幕など)を追加する
@@ -643,7 +654,7 @@ class MltHelper:
         # shot(動画や字幕など)の情報を集める
         mh = MovieHelper(path)
         contents = mh.mov_to_subtitles()
-        shot_value = ShotValue(index, contents, mh.get_in_time(), mh.get_out_time())
+        shot_value = ShotValue(index, contents, mh.get_in_time(), mh.get_out_time(), mh.get_length_time())
         # playlistにshot(動画や字幕など)を追加する
         self.__add_shot_to_playlist(playlist_id, shot_value)
         # producerにshot(動画や字幕など)を追加する
@@ -777,7 +788,7 @@ class MltHelper:
 
     def add_track(self, name):
         """
-        タイムラインにトラックを追加する(mltファイルのplaylistタグid=playlist0..)
+        タイムラインに(映像)トラックを追加する(mltファイルのplaylistタグid=playlist0..)
         videoトラック追加用
 
         Todo: トラックが一つもない時に未対応
@@ -872,7 +883,7 @@ def test04():
 
 def test05():
     """
-    トラックを1つ追加し、カレントフォルダ以下で「*_part*.mov」を再起検索して、見つけたファイルを追加したトラックに追加して、保存する
+    トラックを1つ追加し、カレントフォルダ以下で「*_part*.mov」を再帰検索して、見つけたファイルを追加したトラックに追加して、保存する
 
     :return: None
     """
@@ -885,9 +896,9 @@ def test05():
 
 def test06():
     """
-    todo mltHelperでエラー
+    target_file_pathの親フォルダ以下で「*_part*.mov」を再帰検索して、見つけたファイルをプレイリストとV1トラックに追加して、保存する
 
-    :return:
+    :return: None
     """
     # パスを作成
     target_file_path = 'C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/テンプレート.mlt'
@@ -908,9 +919,12 @@ def test06():
 
 def test07():
     """
-    todo
+    V2トラックを追加して、保存する。
+    さらに、動画をプレイリストと追加したV2トラックに追加して、保存する。
+    さらに、V3トラックを追加して、保存する。
+    さらに、動画から文字起こしして、プレイリストと追加したV3トラックに追加して、保存する。
 
-    :return:
+    :return: None
     """
     movies = ['C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/JPIC3316.MOV']
     app = MltHelper('C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/テンプレート.mlt')

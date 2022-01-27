@@ -10,25 +10,28 @@ from movieHelper import MovieHelper
 from mltHelper import MltHelper
 
 if __name__ == '__main__':  # インポート時には動かない
+    mlt_file_path = 'C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/テンプレート.mlt'
     target_file_path = 'C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/JPIC3316.MOV'
     # 引数チェック
-    if 2 == len(sys.argv):
+    if 3 == len(sys.argv):
         # Pythonに以下の2つ引数を渡す想定
         # 0は固定でスクリプト名
         # 1.対象のファイルパス
+        # 2.対象のmltプロジェクトファイルパス
+        target_file_path = sys.argv[1]
+        mlt_file_path = sys.argv[2]
+    elif 2 == len(sys.argv):
         target_file_path = sys.argv[1]
     elif 1 == len(sys.argv):
-        # 引数がなければ、クリップボードから得る
         paste_str = pyperclip.paste()
-        if 0 < len(paste_str):
+        if os.path.isfile(paste_str):
             target_file_path = paste_str
-    # クリップボードが空なら、デフォルトを用いる
     else:
         print('引数が不正です。')
         sys.exit()
+    print(mlt_file_path)
     print(target_file_path)
 
-    mlt_file_path = 'C:/Git/igapon50/traning/python/Movie/せんちゃんネル/test/テンプレート.mlt'
     target_folder = os.path.dirname(mlt_file_path)
     target_mlt_basename = os.path.basename(mlt_file_path)
     target_mlt_file_name = os.path.splitext(target_mlt_basename)[0]

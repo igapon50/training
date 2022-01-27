@@ -3,6 +3,8 @@
 """
 動画ファイルを扱うヘルパー MovieHelper
     * 動画ファイルのMD5を取得する get_md5
+    * 動画ファイルのduration_timeを取得する get_duration_time
+    * 動画ファイルのlength_timeを取得する get_length_time
     * 動画ファイルのin_timeを取得する get_in_time
     * 動画ファイルのout_timeを取得する get_out_time
     * 動画ファイルのcreation_timeを取得する get_creation_time
@@ -42,8 +44,6 @@ import hashlib
 def time_to_dt(time, tzinfo=None):
     """
     動画のstart_timeとdurationよりdatetimeを作る
-    参考)windowsでMD5ハッシュを出力するコマンド例
-    > certutil -hashfile C:\Git\igapon50\traning\python\Movie\せんちゃんネル\mov\BPUB2392.MP4 MD5
 
     :param time: float 秒[s]
     :param tzinfo:
@@ -254,6 +254,8 @@ class MovieHelper:
     def get_md5(self):
         """
         動画ファイルのMD5を取得する
+        参考)windowsでMD5ハッシュを出力するコマンド例
+        > certutil -hashfile C:\Git\igapon50\traning\python\Movie\せんちゃんネル\mov\BPUB2392.MP4 MD5
 
         :return: str MD5値
         """
@@ -266,6 +268,26 @@ class MovieHelper:
                 hash_object.update(binary_data)
                 binary_data = fp.read(hash_size)
         return hash_object.hexdigest()
+
+    def get_duration_time(self):
+        """
+        動画ファイルの長さ(秒)を取得する
+
+        :return: float 長さ(秒)
+        """
+        length_time = self.movie_value.video_info.get('format').get('duration')
+        return float(length_time)
+
+    def get_length_time(self):
+        """
+        動画ファイルの長さ(秒)を取得する
+
+        :return: str 長さtime
+        """
+        duration_time = self.get_duration_time()
+        dt = time_to_dt(duration_time)
+        length_time = dt.strftime('%H:%M:%S.%f')[:12]
+        return length_time
 
     def get_in_time(self):
         """
@@ -281,12 +303,15 @@ class MovieHelper:
     def get_out_time(self):
         """
         動画ファイルのout_timeを取得する
-        todo shotcutで開くと、字幕と動画で0.01秒ずれる、-0.01した方がいいかも。
+        shotcutのout_timeは、動画の長さより0.05秒短い
+        todo 動画の長さによって0.05秒は変わるかも
 
         :return: str 終了time
         """
-        end_time = self.movie_value.video_info.get('format').get('duration')
-        dt = time_to_dt(end_time)
+        duration_time = self.get_duration_time()
+        if duration_time > 0.05:
+            duration_time -= 0.05
+        dt = time_to_dt(duration_time)
         out_time = dt.strftime('%H:%M:%S.%f')[:12]
         return out_time
 
