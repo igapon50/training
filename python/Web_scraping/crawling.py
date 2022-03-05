@@ -274,13 +274,20 @@ if __name__ == '__main__':  # インポート時には動かない
         sys.exit(1)
     print(target_url)
 
-    crawling = Crawling(target_url, img_css_select, img_attr)  # 'img.vimg[src*="jpg"]'
+    # テスト　女の子の顔のアイコン | かわいいフリー素材集 いらすとや
+    crawling = Crawling('https://www.irasutoya.com/2013/10/blog-post_3974.html',
+                        'div.entry > p:nth-child(1) > a > img',
+                        'src')
     crawling.save_text(RESULT_FILE_PATH)
+    # 値オブジェクトを生成
     value_objects = crawling.get_value_objects()
+    # 保存や読込を繰り返す
     crawling.save_pickle(RESULT_FILE_PATH + '1.pkl')
     crawling.load_pickle(RESULT_FILE_PATH + '1.pkl')
     crawling.save_text(RESULT_FILE_PATH + '1.txt')
+    # 値オブジェクトでインスタンス作成
     crawling2 = Crawling(value_objects)
+    # 保存や読込を繰り返す
     crawling2.save_pickle(RESULT_FILE_PATH + '2.pkl')
     crawling2.load_pickle(RESULT_FILE_PATH + '2.pkl')
     crawling2.save_text(RESULT_FILE_PATH + '2.txt')
