@@ -1,22 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-数値URLを展開して、リストにして、ファイルに保存する
+数値URLを展開して、リストにして、ファイルに保存する。irvineを起動して、終了したらリネームしてzipする。
     http:/hoge/10.jpg
     ↓
     http:/hoge/1.jpg ～ http:/hoge/10.jpg
 """
 import urllib.parse
-# from urllib.parse import urlparse  # URLパーサー
-# from urllib.parse import urljoin  # URL結合
-import sys
-import pyperclip
+import subprocess
+from scraping import *
 
 
 # 検証コード
 if __name__ == '__main__':  # インポート時には動かない
     target_url = None
-    folder_path = None
+    folder_path = OUTPUT_FOLDER_PATH
     parse = None
     url_list = []
     # 引数チェック
@@ -28,7 +26,6 @@ if __name__ == '__main__':  # インポート時には動かない
     elif 1 == len(sys.argv):
         # 引数がなければ、クリップボードからURLを得る
         paste_str = pyperclip.paste()
-    # クリップボードが空なら、デフォルトURLを用いる
     else:
         print('引数が不正です。')
         sys.exit(1)
@@ -67,3 +64,15 @@ if __name__ == '__main__':  # インポート時には動かない
         for absolute_path in url_list:
             buff += absolute_path + '\n'  # 画像URL追加
         work_file.write(buff)  # ファイルへの保存
+    fileDownloader = Scraping(url_list, folder_path)
+    # irvineを起動して、終了されるのを待つ
+    cmd = 'c:\\Program1\\irvine1_3_0\\irvine.exe ./result_list.txt'
+    proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+    running = False
+    for line in proc.stdout:
+        if "irvine.exe" in str(line):
+            running = True
+    fileDownloader.rename_images()
+    fileDownloader.make_zip_file()
+    # fileDownloader.rename_zip_file('ファイル名')
+    fileDownloader.download_file_clear()

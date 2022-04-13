@@ -13,8 +13,12 @@ __email__ = "igapon@gmail.com"
 __status__ = "Development"  # "Prototype" or "Development" or "Production"
 
 msg_error_exit = 'エラー終了します。'
+# chromeなら、拡張機能のコンソールに「navigator.userAgent;」と入力して確認する
 HEADERS_DIC = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.97 Safari/537.36"}
+    "User-Agent":
+#    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.97 Safari/537.36"
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36"
+    }
 DEFAULT_TARGET_URL = 'https://www.hot-ishikawa.jp/photo/'
 
 RESULT_FILE_PATH = './result.txt'  # タイトルと、ダウンロードするファイルのURLの列挙を書き込むファイル
