@@ -153,6 +153,32 @@ class Crawling:
                                             )
         return True
 
+    def create_save_text(self):
+        """
+        保存用文字列の作成
+
+        :return: str 保存用文字列の作成
+        """
+        buff = self.crawling_value.target_url + '\n'  # サイトURL追加
+        buff += self.crawling_value.css_image_selector + '\n'  # cssセレクタ追加
+        buff += self.crawling_value.image_attr + '\n'  # 属性追加
+        buff += self.crawling_value.title + '\n'  # タイトル追加
+        for absolute_path in self.crawling_value.image_list:
+            buff += absolute_path + '\n'  # 画像URL追加
+        return buff
+
+    def clip_copy(self):
+        """
+        クローリング結果をクリップボードにコピーする
+
+        :return: bool 成功/失敗=True/False
+        """
+        if self.crawling_value is None:
+            return False
+        buff = self.create_save_text()
+        pyperclip.copy(buff)  # クリップボードへのコピー
+        return True
+
     def save_text(self, save_path):
         """
         データをファイルに、以下の独自フォーマットで保存する
@@ -168,12 +194,7 @@ class Crawling:
         if self.crawling_value is None:
             return False
         with open(save_path, 'w', encoding='utf-8') as work_file:
-            buff = self.crawling_value.target_url + '\n'  # サイトURL追加
-            buff += self.crawling_value.css_image_selector + '\n'  # cssセレクタ追加
-            buff += self.crawling_value.image_attr + '\n'  # 属性追加
-            buff += self.crawling_value.title + '\n'  # タイトル追加
-            for absolute_path in self.crawling_value.image_list:
-                buff += absolute_path + '\n'  # 画像URL追加
+            buff = self.create_save_text()
             work_file.write(buff)  # ファイルへの保存
             return True
 
@@ -230,23 +251,6 @@ class Crawling:
         with open(load_path, 'rb') as work_file:
             self.crawling_value = pickle.load(work_file)
             return True
-
-    def clip_copy(self):
-        """
-        クローリング結果をクリップボードにコピーする
-
-        :return: bool 成功/失敗=True/False
-        """
-        if self.crawling_value is None:
-            return False
-        buff = self.crawling_value.target_url + '\n'  # サイトURL追加
-        buff += self.crawling_value.css_image_selector + '\n'  # cssセレクタ追加
-        buff += self.crawling_value.image_attr + '\n'  # 属性追加
-        buff += self.crawling_value.title + '\n'  # タイトル追加
-        for absolute_path in self.crawling_value.image_list:
-            buff += absolute_path + '\n'  # 画像URL追加
-        pyperclip.copy(buff)  # クリップボードへのコピー
-        return True
 
 
 # 検証コード
