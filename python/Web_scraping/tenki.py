@@ -1,14 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-検証コード
+requestsでスクレイピングできないページのスクレイピング
 
+参考資料料
+https://gammasoft.jp/blog/how-to-download-web-page-created-javascript/
 https://docs.python-requests.org/projects/requests-html/en/latest/
 https://commte.net/7628
+
+requests-htmlのGitHub
+https://github.com/kennethreitz/requests-html
 """
 from requests_html import HTMLSession
 from crawling import *
 import json
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 
 
 @dataclass(frozen=True)
@@ -21,8 +28,9 @@ class TenkiValue:
     attrs: dict
     title: str
     forecasts: dict
+    counters: dict
 
-    def __init__(self, target_url, css_selectors, attrs, title, forecasts):
+    def __init__(self, target_url, css_selectors, attrs, title, forecasts, counters):
         """
         完全コンストラクタパターン
 
@@ -31,6 +39,7 @@ class TenkiValue:
         :param attrs: dict スクレイピングする際の属性辞書
         :param title: str 対象サイトタイトル
         :param forecasts: dict スクレイピングして得た属性のリスト
+        :param counters: dict スクレイピングして得た属性のリストの個数リスト
         """
         if target_url is not None:
             object.__setattr__(self, "target_url", target_url)
@@ -42,6 +51,8 @@ class TenkiValue:
             object.__setattr__(self, "title", title)
         if 0 < len(forecasts):
             object.__setattr__(self, "forecasts", forecasts)
+        if 0 < len(counters):
+            object.__setattr__(self, "counters", counters)
 
 
 class Tenki:
@@ -124,6 +135,7 @@ class Tenki:
             }
         """
         forecasts = {}
+        counters = {}
         session = HTMLSession()
         r = session.get(self.target_url)
         # ブラウザエンジンでHTMLを生成させる
@@ -133,6 +145,7 @@ class Tenki:
 
         for key in self.css_selectors:
             forecasts[key] = []
+            counters[key] = []
         target_rows = r.html.find(target_root_css)
         if target_rows:
             # todo 既に経過した時間は表示されない、開始点と終了店が違うので調整が必要
@@ -147,11 +160,13 @@ class Tenki:
                     else:
                         for buf in buffer:
                             forecasts[key].append(buf.text)
+                    counters[key].append(len(forecasts[key]))
         self.tenki_value = TenkiValue(self.target_url,
                                       self.css_selectors,
                                       self.attrs,
                                       title,
                                       forecasts,
+                                      counters,
                                       )
 
     def create_save_text(self):
@@ -165,6 +180,7 @@ class Tenki:
         buff += json.dumps(self.tenki_value.attrs, ensure_ascii=False) + '\n'  # 属性追加
         buff += self.tenki_value.title + '\n'  # タイトル追加
         buff += json.dumps(self.tenki_value.forecasts, ensure_ascii=False) + '\n'  # 画像URL追加
+        buff += json.dumps(self.tenki_value.counters, ensure_ascii=False) + '\n'  # 画像URL追加
         return buff
 
     def clip_copy(self):
@@ -216,13 +232,45 @@ class Tenki:
             title = buff[0].rstrip('\n')
             del buff[0]
             forecasts: dict = json.loads(buff[0].rstrip('\n'))
+            del buff[0]
+            counters: dict = json.loads(buff[0].rstrip('\n'))
             self.tenki_value = TenkiValue(self.target_url,
                                           self.css_selectors,
                                           self.attrs,
                                           title,
                                           forecasts,
+                                          counters,
                                           )
             return True
+
+    def spreadsheet_write(self):
+        scope = ['https://spreadsheets.google.com/feeds',
+                 'https://www.googleapis.com/auth/drive']
+        credentials = ServiceAccountCredentials.from_json_keyfile_name(
+            'C:\\Git\\igapon50\\traning\\python\\Web_scraping\\tenki-347610-1bc0fec79f90.json', scope)
+        gc = gspread.authorize(credentials)
+        workbook = gc.open('天気予報')
+        s1 = workbook.worksheet('七尾市和倉町data')
+        # row_list = s1.row_values(1)
+        # cell_list = s1.get_all_values()
+        # cell_dict = s1.get_all_records(empty2zero=False, head=1, default_blank='')
+        count = 1
+        for key, value_list in self.tenki_value.forecasts.items():
+            num = len(value_list)
+            cell_str = gspread.utils.rowcol_to_a1(1, count) + ":" + gspread.utils.rowcol_to_a1(num, count)
+            cell_list = s1.range(cell_str)
+            for (cell, value) in zip(cell_list, value_list):
+                cell.value = value
+            s1.update_cells(cell_list)
+            count += 1
+        for key, value_list in self.tenki_value.counters.items():
+            num = len(value_list)
+            cell_str = gspread.utils.rowcol_to_a1(1, count) + ":" + gspread.utils.rowcol_to_a1(num, count)
+            cell_list = s1.range(cell_str)
+            for (cell, value) in zip(cell_list, value_list):
+                cell.value = value
+            s1.update_cells(cell_list)
+            count += 1
 
 
 if __name__ == '__main__':  # インポート時には動かない
@@ -285,3 +333,4 @@ if __name__ == '__main__':  # インポート時には動かない
     # tenki2.save_pickle(RESULT_FILE_PATH + '3.pkl')
     # tenki2.load_pickle(RESULT_FILE_PATH + '3.pkl')
     tenki2.save_text(RESULT_FILE_PATH + '3.txt')
+    tenki.spreadsheet_write()
