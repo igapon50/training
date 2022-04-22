@@ -127,7 +127,7 @@ class Tenki:
         session = HTMLSession()
         r = session.get(self.target_url)
         # ブラウザエンジンでHTMLを生成させる
-        val = r.html.render(script=script, reload=False)
+        val = r.html.render(script=script, reload=False, timeout=20)
         # スクレイピング
         title = r.html.find("html > head > title", first=True).text
 
