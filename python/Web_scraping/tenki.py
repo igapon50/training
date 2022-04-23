@@ -15,6 +15,15 @@ from requests_html import HTMLSession
 from spreadsheet import *
 
 
+def is_num(s):
+    try:
+        float(s)
+    except ValueError:
+        return False
+    else:
+        return True
+
+
 @dataclass(frozen=True)
 class TenkiValue:
     """
@@ -124,8 +133,9 @@ class Tenki:
             right = left + value[left:].find(']')
             new_list = value[left:right].split(',')
             for item in new_list:
-                temp_item_forecasts.append(item)
-            count += len(new_list)
+                if is_num(item):
+                    temp_item_forecasts.append(str(item) + "℃")
+                    count += 1
             temp_item_counters.append(count)
         # 末日の予報なしに対応
         pre = -1
