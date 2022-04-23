@@ -12,10 +12,7 @@ requests-htmlのGitHub
 https://github.com/kennethreitz/requests-html
 """
 from requests_html import HTMLSession
-from crawling import *
-import json
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+from spreadsheet import *
 
 
 @dataclass(frozen=True)
@@ -24,17 +21,19 @@ class TenkiValue:
     クローリング値オブジェクト
     """
     target_url: str
+    css_root: str
     css_selectors: dict
     attrs: dict
     title: str
     forecasts: dict
     counters: dict
 
-    def __init__(self, target_url, css_selectors, attrs, title, forecasts, counters):
+    def __init__(self, target_url, css_root, css_selectors, attrs, title, forecasts, counters):
         """
         完全コンストラクタパターン
 
         :param target_url: str 処理対象サイトURL
+        :param css_root: str スクレイピングする際のルートCSSセレクタ
         :param css_selectors: dict スクレイピングする際のCSSセレクタ辞書
         :param attrs: dict スクレイピングする際の属性辞書
         :param title: str 対象サイトタイトル
@@ -43,6 +42,8 @@ class TenkiValue:
         """
         if target_url is not None:
             object.__setattr__(self, "target_url", target_url)
+        if css_root is not None:
+            object.__setattr__(self, "css_root", css_root)
         if css_selectors is not None:
             object.__setattr__(self, "css_selectors", css_selectors)
         if attrs is not None:
@@ -65,14 +66,16 @@ class Tenki:
     """
     tenki_value: TenkiValue = None
     target_url: str = None
+    css_root: str = None
     css_selectors: dict = None
     attrs: dict = None
 
-    def __init__(self, target_value=None, css_selectors=None, attrs=None):
+    def __init__(self, target_value=None, css_root=None, css_selectors=None, attrs=None):
         """
         コンストラクタ
 
         :param target_value: str 対象となるサイトURL、または、TenkiValue 値オブジェクト
+        :param css_root: str スクレイピングする際のルートCSSセレクタ
         :param css_selectors: dict スクレイピングする際のCSSセレクタ
         :param attrs: dict スクレイピングする際の属性
         """
@@ -82,6 +85,8 @@ class Tenki:
                 self.tenki_value = tenki_value
                 if tenki_value.target_url is not None:
                     self.target_url = tenki_value.target_url
+                if tenki_value.css_root is not None:
+                    self.css_root = tenki_value.css_root
                 if tenki_value.css_selectors is not None:
                     self.css_selectors = tenki_value.css_selectors
                 if tenki_value.attrs is not None:
@@ -89,33 +94,77 @@ class Tenki:
             else:
                 if isinstance(target_value, str):
                     self.target_url = target_value
-                    if css_selectors is not None:
-                        self.css_selectors = css_selectors
-                        if attrs is not None:
-                            self.attrs = attrs
-                            self.request()
+                    if css_root is not None:
+                        self.css_root = css_root
+                        if css_selectors is not None:
+                            self.css_selectors = css_selectors
+                            if attrs is not None:
+                                self.attrs = attrs
+                                self.request()
+
+    def special_func_temp(self):
+        """
+        特別製
+        :return:
+        """
+        temp_item_forecasts = []
+        temp_item_counters = []
+        count = 0
+        left_find = 'data: ['
+        sp_key = 'temp-item'
+        # 初日の予報なしに対応
+        for value in self.tenki_value.counters[sp_key]:
+            if value:
+                break
+            else:
+                temp_item_counters.append(value)
+        # スクリプトの中から気温を探して登録しなおす
+        for value in self.tenki_value.forecasts[sp_key]:
+            left = value.find(left_find) + len(left_find)
+            right = left + value[left:].find(']')
+            new_list = value[left:right].split(',')
+            for item in new_list:
+                temp_item_forecasts.append(item)
+            count += len(new_list)
+            temp_item_counters.append(count)
+        # 末日の予報なしに対応
+        pre = -1
+        for value in self.tenki_value.counters[sp_key]:
+            if value == pre:
+                temp_item_counters.append(count)
+            pre = value
+        self.tenki_value.forecasts[sp_key] = temp_item_forecasts
+        self.tenki_value.counters[sp_key] = temp_item_counters
 
     def get_value_objects(self):
         """
         値オブジェクトを取得する
 
-        :return: crawling_value 値オブジェクト
+        :return: TenkiValue 値オブジェクト
         """
         return copy.deepcopy(self.tenki_value)
 
-    def get_forecast_list(self):
+    def get_result_forecasts(self):
         """
         クローリング結果を取得する
 
-        :return: tenki_value.forecast_list クローリング結果
+        :return: dict クローリング結果
         """
         return copy.deepcopy(self.tenki_value.forecasts)
+
+    def get_result_counters(self):
+        """
+        クローリング結果を取得する
+
+        :return: dict クローリング結果
+        """
+        return copy.deepcopy(self.tenki_value.counters)
 
     def get_title(self):
         """
         対象サイトタイトルを取得する
 
-        :return: crawling_value.title 対象サイトタイトル
+        :return: str 対象サイトタイトル
         """
         return self.tenki_value.title
 
@@ -137,18 +186,17 @@ class Tenki:
         forecasts = {}
         counters = {}
         session = HTMLSession()
-        r = session.get(self.target_url)
+        response = session.get(self.target_url)
         # ブラウザエンジンでHTMLを生成させる
-        val = r.html.render(script=script, reload=False, timeout=20)
+        response.html.render(script=script, reload=False, timeout=0, sleep=10)
         # スクレイピング
-        title = r.html.find("html > head > title", first=True).text
+        title = response.html.find("html > head > title", first=True).text
 
         for key in self.css_selectors:
             forecasts[key] = []
             counters[key] = []
-        target_rows = r.html.find(target_root_css)
+        target_rows = response.html.find(self.css_root)
         if target_rows:
-            # todo 既に経過した時間は表示されない、開始点と終了店が違うので調整が必要
             for row in target_rows:
                 for key in self.css_selectors:
                     buffer = row.find(self.css_selectors[key])
@@ -162,6 +210,7 @@ class Tenki:
                             forecasts[key].append(buf.text)
                     counters[key].append(len(forecasts[key]))
         self.tenki_value = TenkiValue(self.target_url,
+                                      self.css_root,
                                       self.css_selectors,
                                       self.attrs,
                                       title,
@@ -176,6 +225,7 @@ class Tenki:
         :return: str 保存用文字列の作成
         """
         buff = self.tenki_value.target_url + '\n'  # サイトURL追加
+        buff += self.tenki_value.css_root + '\n'  # ルートcssセレクタ追加
         buff += json.dumps(self.tenki_value.css_selectors, ensure_ascii=False) + '\n'  # cssセレクタ追加
         buff += json.dumps(self.tenki_value.attrs, ensure_ascii=False) + '\n'  # 属性追加
         buff += self.tenki_value.title + '\n'  # タイトル追加
@@ -199,6 +249,7 @@ class Tenki:
         """
         データをファイルに、以下の独自フォーマットで保存する
             * 処理対象サイトURL
+            * ルートCSSセレクタ
             * CSSセレクタ
             * 属性
             * タイトル
@@ -225,6 +276,8 @@ class Tenki:
             buff = work_file.readlines()
             self.target_url = buff[0].rstrip('\n')
             del buff[0]
+            self.css_root = buff[0].rstrip('\n')
+            del buff[0]
             self.css_selectors = json.loads(buff[0].rstrip('\n'))
             del buff[0]
             self.attrs = json.loads(buff[0].rstrip('\n'))
@@ -235,6 +288,7 @@ class Tenki:
             del buff[0]
             counters: dict = json.loads(buff[0].rstrip('\n'))
             self.tenki_value = TenkiValue(self.target_url,
+                                          self.css_root,
                                           self.css_selectors,
                                           self.attrs,
                                           title,
@@ -243,43 +297,9 @@ class Tenki:
                                           )
             return True
 
-    def spreadsheet_init(self):
-        scope = ['https://spreadsheets.google.com/feeds',
-                 'https://www.googleapis.com/auth/drive']
-        credentials = ServiceAccountCredentials.from_json_keyfile_name(
-            'C:\\Git\\igapon50\\traning\\python\\Web_scraping\\tenki-347610-1bc0fec79f90.json', scope)
-        gc = gspread.authorize(credentials)
-        workbook = gc.open('天気予報')
-        s1 = workbook.worksheet('七尾市和倉町data')
-        return s1
-
-    def spreadsheet_write(self, sheet):
-        count = 1
-        for key, col_list in self.tenki_value.forecasts.items():
-            self.spreadsheet_write_cols(sheet, col_list, (1, count))
-            count += 1
-        for key, col_list in self.tenki_value.counters.items():
-            self.spreadsheet_write_cols(sheet, col_list, (1, count))
-            count += 1
-
-    def spreadsheet_write_cols(self,
-                               sheet,
-                               cols_list,
-                               offset=(1, 1),
-                               ):
-        row, col = offset
-        value_list = cols_list
-        num = len(value_list)
-        cell_str = gspread.utils.rowcol_to_a1(row, col) + ":" + gspread.utils.rowcol_to_a1(row + num, col)
-        cell_list = sheet.range(cell_str)
-        for (cell, value) in zip(cell_list, value_list):
-            cell.value = value
-        sheet.update_cells(cell_list)
-
 
 if __name__ == '__main__':  # インポート時には動かない
     target_url = "https://tenki.jp/forecast/4/20/5620/17202/10days.html"
-    target_root_css = "dd.forecast10days-actab"
     # 引数チェック
     if 2 == len(sys.argv):
         # Pythonに以下の2つ引数を渡す想定
@@ -300,11 +320,13 @@ if __name__ == '__main__':  # インポート時には動かない
         sys.exit()
     print(target_url)
 
+    css_root = "dd.forecast10days-actab"
     css_selectors = {"days_item": "div.days",
                      "time_item": "dd.time-item > span",
                      "forecast_item": "dd.forecast-item > p > img",
                      "prob_precip_item": "dd.prob-precip-item > span > span",
                      "precip_item": "dd.precip-item > span > span",
+                     "temp-item": "dd.temp-item > script",
                      "wind_item_blow": "dd.wind-item > p > img",
                      "wind_item_speed": "dd.wind-item > p > span",
                      }
@@ -313,10 +335,12 @@ if __name__ == '__main__':  # インポート時には動かない
              "forecast_item": "alt",
              "prob_precip_item": "",
              "precip_item": "",
+             "temp-item": "",
              "wind_item_blow": "alt",
              "wind_item_speed": "",
              }
     tenki = Tenki("https://tenki.jp/forecast/4/20/5620/17202/10days.html",
+                  css_root,
                   css_selectors,
                   attrs,
                   )
@@ -340,5 +364,30 @@ if __name__ == '__main__':  # インポート時には動かない
     tenki3 = Tenki()
     tenki.load_text(RESULT_FILE_PATH + '3.txt')
     tenki2.save_text(RESULT_FILE_PATH + '4.txt')
-    s1 = tenki.spreadsheet_init()
-    tenki.spreadsheet_write(s1)
+
+    json_keyfile_name = 'C:\\Git\\igapon50\\traning\\python\\Web_scraping\\tenki-347610-1bc0fec79f90.json'
+    workbook_name = '天気予報'
+    worksheet_name = '七尾市和倉町data'
+    spreadsheet = Spreadsheet(json_keyfile_name,
+                              workbook_name,
+                              worksheet_name,
+                              )
+    spreadsheet.save_text(RESULT_FILE_PATH + '5.txt')
+    spreadsheet.write_dict_columns(tenki.get_result_forecasts(), (1, 1))
+    num = len(tenki.get_result_forecasts())
+    spreadsheet.write_dict_columns(tenki.get_result_counters(), (1, 1 + num))
+
+    json_keyfile_name = 'C:\\Git\\igapon50\\traning\\python\\Web_scraping\\tenki-347610-1bc0fec79f90.json'
+    workbook_name = '天気予報'
+    worksheet_name = '七尾市和倉町conv'
+    spreadsheet = Spreadsheet(json_keyfile_name,
+                              workbook_name,
+                              worksheet_name,
+                              )
+    spreadsheet.save_text(RESULT_FILE_PATH + '6.txt')
+    tenki.special_func_temp()
+    spreadsheet.write_dict_columns(tenki.get_result_forecasts(), (1, 1))
+    num = len(tenki.get_result_forecasts())
+    spreadsheet.write_dict_columns(tenki.get_result_counters(), (1, 1 + num))
+    spreadsheet.save_text(RESULT_FILE_PATH + '7.txt')
+    tenki.save_text(RESULT_FILE_PATH + '8.txt')

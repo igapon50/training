@@ -5,11 +5,17 @@ google Spreadsheetを操作する
 
 参考資料料
 """
-from requests_html import HTMLSession
-from crawling import *
+import sys
+import copy
+import pyperclip
+from urllib.parse import urlparse  # URLパーサー
+from dataclasses import dataclass
 import json
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+
+# local source
+from const import *
 
 
 @dataclass(frozen=True)
@@ -85,7 +91,6 @@ class Spreadsheet:
                         if worksheet_name is not None:
                             self.worksheet_name = worksheet_name
                             self.open()
-                            # todo スプレッドシートから読み込んでdataを作る
                             self.data = self.worksheet.get_all_values()
                             self.spreadsheet_value = SpreadsheetValue(self.json_keyfile_name,
                                                                       self.workbook_name,
@@ -115,7 +120,7 @@ class Spreadsheet:
         """
         return copy.deepcopy(self.spreadsheet_value)
 
-    def get_data_list(self):
+    def get_result_data(self):
         """
         スプレッドシートの値リストを取得する
 
@@ -291,7 +296,6 @@ if __name__ == '__main__':  # インポート時には動かない
     # クリップボードが空なら、デフォルトURLを用いる
     else:
         print('引数が不正です。')
-        print(msg_error_exit)
         sys.exit()
     print(target_url)
 
