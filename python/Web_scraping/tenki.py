@@ -243,7 +243,7 @@ class Tenki:
                                           )
             return True
 
-    def spreadsheet_write(self):
+    def spreadsheet_init(self):
         scope = ['https://spreadsheets.google.com/feeds',
                  'https://www.googleapis.com/auth/drive']
         credentials = ServiceAccountCredentials.from_json_keyfile_name(
@@ -251,26 +251,30 @@ class Tenki:
         gc = gspread.authorize(credentials)
         workbook = gc.open('天気予報')
         s1 = workbook.worksheet('七尾市和倉町data')
-        # row_list = s1.row_values(1)
-        # cell_list = s1.get_all_values()
-        # cell_dict = s1.get_all_records(empty2zero=False, head=1, default_blank='')
+        return s1
+
+    def spreadsheet_write(self, sheet):
         count = 1
-        for key, value_list in self.tenki_value.forecasts.items():
-            num = len(value_list)
-            cell_str = gspread.utils.rowcol_to_a1(1, count) + ":" + gspread.utils.rowcol_to_a1(num, count)
-            cell_list = s1.range(cell_str)
-            for (cell, value) in zip(cell_list, value_list):
-                cell.value = value
-            s1.update_cells(cell_list)
+        for key, col_list in self.tenki_value.forecasts.items():
+            self.spreadsheet_write_cols(sheet, col_list, (1, count))
             count += 1
-        for key, value_list in self.tenki_value.counters.items():
-            num = len(value_list)
-            cell_str = gspread.utils.rowcol_to_a1(1, count) + ":" + gspread.utils.rowcol_to_a1(num, count)
-            cell_list = s1.range(cell_str)
-            for (cell, value) in zip(cell_list, value_list):
-                cell.value = value
-            s1.update_cells(cell_list)
+        for key, col_list in self.tenki_value.counters.items():
+            self.spreadsheet_write_cols(sheet, col_list, (1, count))
             count += 1
+
+    def spreadsheet_write_cols(self,
+                               sheet,
+                               cols_list,
+                               offset=(1, 1),
+                               ):
+        row, col = offset
+        value_list = cols_list
+        num = len(value_list)
+        cell_str = gspread.utils.rowcol_to_a1(row, col) + ":" + gspread.utils.rowcol_to_a1(row + num, col)
+        cell_list = sheet.range(cell_str)
+        for (cell, value) in zip(cell_list, value_list):
+            cell.value = value
+        sheet.update_cells(cell_list)
 
 
 if __name__ == '__main__':  # インポート時には動かない
@@ -333,4 +337,8 @@ if __name__ == '__main__':  # インポート時には動かない
     # tenki2.save_pickle(RESULT_FILE_PATH + '3.pkl')
     # tenki2.load_pickle(RESULT_FILE_PATH + '3.pkl')
     tenki2.save_text(RESULT_FILE_PATH + '3.txt')
-    tenki.spreadsheet_write()
+    tenki3 = Tenki()
+    tenki.load_text(RESULT_FILE_PATH + '3.txt')
+    tenki2.save_text(RESULT_FILE_PATH + '4.txt')
+    s1 = tenki.spreadsheet_init()
+    tenki.spreadsheet_write(s1)
