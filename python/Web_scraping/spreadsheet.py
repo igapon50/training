@@ -254,7 +254,7 @@ class Spreadsheet:
         cell_list = self.worksheet.range(cell_str)
         for (cell, value) in zip(cell_list, value_list):
             cell.value = value
-        self.worksheet.update_cells(cell_list)
+        self.worksheet.update_cells(cell_list, value_input_option="USER_ENTERED")
         return num
 
     def write_list_rows(self,
@@ -274,7 +274,7 @@ class Spreadsheet:
         cell_list = self.worksheet.range(cell_str)
         for (cell, value) in zip(cell_list, value_list):
             cell.value = value
-        self.worksheet.update_cells(cell_list)
+        self.worksheet.update_cells(cell_list, value_input_option="USER_ENTERED")
         return num
 
 

@@ -164,6 +164,8 @@ class Tenki:
         sp_key = 'forecast_item'  # 日付以外で数が少ない項目を使用する
         target_key = 'days_item'
         data[target_key] = []
+        sub_key = 'week_item'
+        data[sub_key] = []
         pre = 0
         for index in range(len(counters[sp_key])):  # 0-13
             num = counters[sp_key][index] - pre
@@ -171,7 +173,10 @@ class Tenki:
                 for i in range(num):  # 3, 4, 4...
                     num1 = counters[target_key][index]
                     _buff = forecasts[target_key][num1 - 1]
-                    data[target_key].append(_buff)
+                    left = _buff.find('(')
+                    right = _buff.find(')')
+                    data[target_key].append(_buff[:left])
+                    data[sub_key].append(_buff[left + 1:right])
                 pre = counters[sp_key][index]
 
         # 時間列作成
@@ -478,31 +483,8 @@ class Tenki:
         tenki3.save_text(RESULT_FILE_PATH + '4.txt')
 
     def test02(self):
-        css_root = "dd.forecast10days-actab"
-        css_selectors = {"days_item": "div.days",
-                         "time_item": "dd.time-item > span",
-                         "forecast_item": "dd.forecast-item > p > img",
-                         "prob_precip_item": "dd.prob-precip-item > span > span",
-                         "precip_item": "dd.precip-item > span > span",
-                         "temp_item": "dd.temp-item > script",
-                         "wind_item_blow": "dd.wind-item > p > img",
-                         "wind_item_speed": "dd.wind-item > p > span",
-                         }
-        attrs = {"days_item": "",
-                 "time_item": "",
-                 "forecast_item": "alt",
-                 "prob_precip_item": "",
-                 "precip_item": "",
-                 "temp_item": "",
-                 "wind_item_blow": "alt",
-                 "wind_item_speed": "",
-                 }
-        tenki = Tenki("https://tenki.jp/forecast/4/20/5620/17202/10days.html",
-                      css_root,
-                      css_selectors,
-                      attrs,
-                      )
-        tenki.save_text(RESULT_FILE_PATH + '1.txt')
+        tenki = Tenki()
+        tenki.load_text(RESULT_FILE_PATH + '1.txt')
         json_keyfile_name = 'C:\\Git\\igapon50\\traning\\python\\Web_scraping\\tenki-347610-1bc0fec79f90.json'
         workbook_name = '天気予報'
         worksheet_name = '七尾市和倉町data'
