@@ -60,7 +60,7 @@ class Spreadsheet:
     worksheet_name: str = None
     data: list = None
     workbook: gspread.Worksheet = None
-    worksheet: gspread.spreadsheet.Spreadsheet = None
+    worksheet: gspread.Spreadsheet = None
 
     def __init__(self, target_value=None, workbook_name=None, worksheet_name=None):
         """
@@ -279,6 +279,13 @@ class Spreadsheet:
 
 
 if __name__ == '__main__':  # インポート時には動かない
+    moduleList = sys.modules
+    ENV_COLAB = False
+    if 'google.colab' in moduleList:
+        print("google_colab")
+        ENV_COLAB = True
+    else:
+        print("Not google_colab")
     target_url = ""
     # 引数チェック
     if 2 == len(sys.argv):

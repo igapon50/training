@@ -517,6 +517,13 @@ class Tenki:
 
 
 if __name__ == '__main__':  # インポート時には動かない
+    moduleList = sys.modules
+    ENV_COLAB = False
+    if 'google.colab' in moduleList:
+        print("google_colab")
+        ENV_COLAB = True
+    else:
+        print("Not google_colab")
     target_url = "https://tenki.jp/forecast/4/20/5620/17202/10days.html"
     # 引数チェック
     if 2 == len(sys.argv):
