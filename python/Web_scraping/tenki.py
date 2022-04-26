@@ -167,10 +167,10 @@ class Tenki:
         sub_key = 'week_item'
         data[sub_key] = []
         pre = 0
-        for index in range(len(counters[sp_key])):  # 0-13
+        for index in range(len(counters[sp_key])):
             num = counters[sp_key][index] - pre
             if num:  # 0または、増加していない時以外
-                for i in range(num):  # 3, 4, 4...
+                for i in range(num):
                     num1 = counters[target_key][index]
                     _buff = forecasts[target_key][num1 - 1]
                     left = _buff.find('(')
@@ -185,13 +185,13 @@ class Tenki:
         data[target_key] = []
         pre_sp_key = 0
         pre_target_key = 0
-        for index in range(len(counters[sp_key])):  # 0-13
+        for index in range(len(counters[sp_key])):
             num = counters[sp_key][index] - pre_sp_key
             start = pre_target_key + cycle - num
             end = counters[target_key][index] - 1
             if num:
                 for i in range(start, end):
-                    _buff = forecasts[target_key][i] + '-' + forecasts[target_key][i + 1]
+                    _buff = forecasts[target_key][i] + '時-' + forecasts[target_key][i + 1] + '時'
                     data[target_key].append(_buff)
                 pre_target_key = counters[target_key][index]
                 pre_sp_key = counters[sp_key][index]
@@ -200,7 +200,7 @@ class Tenki:
         target_key = 'forecast_item'
         data[target_key] = []
         pre_target_key = 0
-        for index in range(len(counters[sp_key])):  # 0-13
+        for index in range(len(counters[sp_key])):
             num = counters[target_key][index] - pre_target_key
             start = pre_target_key
             end = counters[target_key][index]
@@ -213,7 +213,7 @@ class Tenki:
         target_key = 'prob_precip_item'
         data[target_key] = []
         pre_target_key = 0
-        for index in range(len(counters[sp_key])):  # 0-13
+        for index in range(len(counters[sp_key])):
             num = counters[target_key][index] - pre_target_key
             start = pre_target_key
             end = counters[target_key][index]
@@ -226,7 +226,7 @@ class Tenki:
         target_key = 'precip_item'
         data[target_key] = []
         pre_target_key = 0
-        for index in range(len(counters[sp_key])):  # 0-13
+        for index in range(len(counters[sp_key])):
             num = counters[target_key][index] - pre_target_key
             start = pre_target_key
             end = counters[target_key][index]
@@ -241,10 +241,10 @@ class Tenki:
         data[target_key] = []
         pre_sp_key = 0
         pre_target_key = 0
-        for index in range(len(counters[sp_key])):  # 0-13
-            num = counters[sp_key][index] - pre_sp_key  # 3,4,4,
-            start = pre_target_key  # 0,4,9
-            end = counters[target_key][index] - 1  # 4,9,14
+        for index in range(len(counters[sp_key])):
+            num = counters[sp_key][index] - pre_sp_key
+            start = pre_target_key
+            end = counters[target_key][index] - 1
             if num:
                 for i in range(start, end):
                     _buff = forecasts[target_key][i] + '-' + forecasts[target_key][i + 1]
@@ -256,7 +256,7 @@ class Tenki:
         data[target_key] = []
         pre_sp_key = 0
         pre_target_key = 0
-        for index in range(len(counters[sp_key])):  # 0-13
+        for index in range(len(counters[sp_key])):
             num = counters[sp_key][index] - pre_sp_key
             start = pre_target_key
             end = counters[target_key][index] - 1
@@ -271,7 +271,7 @@ class Tenki:
         data[target_key] = []
         pre_sp_key = 0
         pre_target_key = 0
-        for index in range(len(counters[sp_key])):  # 0-13
+        for index in range(len(counters[sp_key])):
             num = counters[sp_key][index] - pre_sp_key
             start = pre_target_key
             end = counters[target_key][index] - 1
