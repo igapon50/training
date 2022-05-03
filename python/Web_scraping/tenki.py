@@ -444,86 +444,9 @@ class Tenki:
                                           )
             return True
 
-    def test01(self):
-        css_root = "dd.forecast10days-actab"
-        css_selectors = {"days_item": "div.days",
-                         "time_item": "dd.time-item > span",
-                         "forecast_item": "dd.forecast-item > p > img",
-                         "prob_precip_item": "dd.prob-precip-item > span > span",
-                         "precip_item": "dd.precip-item > span > span",
-                         "temp_item": "dd.temp-item > script",
-                         "wind_item_blow": "dd.wind-item > p > img",
-                         "wind_item_speed": "dd.wind-item > p > span",
-                         }
-        attrs = {"days_item": "",
-                 "time_item": "",
-                 "forecast_item": "alt",
-                 "prob_precip_item": "",
-                 "precip_item": "",
-                 "temp_item": "",
-                 "wind_item_blow": "alt",
-                 "wind_item_speed": "",
-                 }
-        tenki = Tenki("https://tenki.jp/forecast/4/20/5620/17202/10days.html",
-                      css_root,
-                      css_selectors,
-                      attrs,
-                      )
-        tenki.save_text(RESULT_FILE_PATH + '1.txt')
-        # 値オブジェクトを生成
-        value_objects = tenki.get_value_objects()
-        # 値オブジェクトでインスタンス作成
-        tenki2 = Tenki(value_objects)
-        # 保存や読込を繰り返す
-        tenki2.save_text(RESULT_FILE_PATH + '2.txt')
-        tenki2.load_text(RESULT_FILE_PATH + '2.txt')
-        tenki2.save_text(RESULT_FILE_PATH + '3.txt')
-        tenki3 = Tenki()
-        tenki3.load_text(RESULT_FILE_PATH + '3.txt')
-        tenki3.save_text(RESULT_FILE_PATH + '4.txt')
-
-    def test02(self):
-        tenki = Tenki()
-        tenki.load_text(RESULT_FILE_PATH + '1.txt')
-        json_keyfile_name = 'C:\\Git\\igapon50\\traning\\python\\Web_scraping\\tenki-347610-1bc0fec79f90.json'
-        workbook_name = '天気予報'
-        worksheet_name = '七尾市和倉町data'
-        spreadsheet = Spreadsheet(json_keyfile_name,
-                                  workbook_name,
-                                  worksheet_name,
-                                  )
-        spreadsheet.save_text(RESULT_FILE_PATH + '2.txt')
-        spreadsheet.write_dict_columns(tenki.get_result_forecasts(), (1, 1))
-        num = len(tenki.get_result_forecasts())
-        spreadsheet.write_dict_columns(tenki.get_result_counters(), (1, 1 + num))
-        worksheet_name = '七尾市和倉町conv'
-        spreadsheet = Spreadsheet(json_keyfile_name,
-                                  workbook_name,
-                                  worksheet_name,
-                                  )
-        spreadsheet.save_text(RESULT_FILE_PATH + '3.txt')
-        tenki.special_func_temp()
-        spreadsheet.write_dict_columns(tenki.get_result_forecasts(), (1, 1))
-        num = len(tenki.get_result_forecasts())
-        spreadsheet.write_dict_columns(tenki.get_result_counters(), (1, 1 + num))
-        spreadsheet.save_text(RESULT_FILE_PATH + '4.txt')
-        tenki.save_text(RESULT_FILE_PATH + '5.txt')
-
-    def test03(self):
-        tenki = Tenki()
-        tenki.load_text(RESULT_FILE_PATH + '1.txt')
-        tenki.special_func_temp()
-        tenki.create_LINE_BOT_TOBA_format()
-
 
 if __name__ == '__main__':  # インポート時には動かない
-    moduleList = sys.modules
-    ENV_COLAB = False
-    if 'google.colab' in moduleList:
-        print("google_colab")
-        ENV_COLAB = True
-    else:
-        print("Not google_colab")
+    RESULT_FILE_PATH = './result.txt'
     target_url = "https://tenki.jp/forecast/4/20/5620/17202/10days.html"
     # 引数チェック
     if 2 == len(sys.argv):
@@ -541,7 +464,6 @@ if __name__ == '__main__':  # インポート時には動かない
     # クリップボードが空なら、デフォルトURLを用いる
     else:
         print('引数が不正です。')
-        print(msg_error_exit)
         sys.exit()
     print(target_url)
 

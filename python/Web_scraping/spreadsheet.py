@@ -12,10 +12,6 @@ from urllib.parse import urlparse  # URLパーサー
 from dataclasses import dataclass
 import json
 import gspread
-from oauth2client.service_account import ServiceAccountCredentials
-
-# local source
-from const import *
 
 
 @dataclass(frozen=True)
@@ -61,6 +57,7 @@ class Spreadsheet:
     data: list = None
     workbook: gspread.Worksheet = None
     worksheet: gspread.Spreadsheet = None
+    is_google_colabo: bool = False
 
     def __init__(self, target_value=None, workbook_name=None, worksheet_name=None):
         """
@@ -104,10 +101,20 @@ class Spreadsheet:
 
         :return: bool 成功/失敗=True/False
         """
-        scope = ['https://spreadsheets.google.com/feeds',
-                 'https://www.googleapis.com/auth/drive']
-        credentials = ServiceAccountCredentials.from_json_keyfile_name(self.json_keyfile_name, scope)
-        gc = gspread.authorize(credentials)
+        if 'google.colab' in sys.modules:
+            self.is_google_colabo = True
+            from google.colab import auth
+            from oauth2client.client import GoogleCredentials
+            auth.authenticate_user()
+            gc = gspread.authorize(GoogleCredentials.get_application_default())
+            print("google_colab")
+        else:
+            from oauth2client.service_account import ServiceAccountCredentials
+            scope = ['https://spreadsheets.google.com/feeds',
+                     'https://www.googleapis.com/auth/drive']
+            credentials = ServiceAccountCredentials.from_json_keyfile_name(self.json_keyfile_name, scope)
+            gc = gspread.authorize(credentials)
+            print("Not google_colab")
         self.workbook = gc.open(self.workbook_name)
         self.worksheet = self.workbook.worksheet(self.worksheet_name)
         return True
@@ -279,13 +286,6 @@ class Spreadsheet:
 
 
 if __name__ == '__main__':  # インポート時には動かない
-    moduleList = sys.modules
-    ENV_COLAB = False
-    if 'google.colab' in moduleList:
-        print("google_colab")
-        ENV_COLAB = True
-    else:
-        print("Not google_colab")
     target_url = ""
     # 引数チェック
     if 2 == len(sys.argv):
@@ -305,63 +305,3 @@ if __name__ == '__main__':  # インポート時には動かない
         print('引数が不正です。')
         sys.exit()
     print(target_url)
-
-    json_keyfile_name = 'C:\\Git\\igapon50\\traning\\python\\Web_scraping\\tenki-347610-1bc0fec79f90.json'
-    workbook_name = '天気予報'
-    worksheet_name = '七尾市和倉町data'
-    spreadsheet = Spreadsheet(json_keyfile_name,
-                              workbook_name,
-                              worksheet_name,
-                              )
-    spreadsheet.save_text(RESULT_FILE_PATH)
-    # 値オブジェクトを生成
-    value_objects = spreadsheet.get_value_objects()
-    # 保存や読込を繰り返す
-    # spreadsheet.save_pickle(RESULT_FILE_PATH + '1.pkl')
-    # spreadsheet.load_pickle(RESULT_FILE_PATH + '1.pkl')
-    # spreadsheet.save_text(RESULT_FILE_PATH + '1.txt')
-    # 値オブジェクトでインスタンス作成
-    spreadsheet2 = Spreadsheet(value_objects)
-    # 保存や読込を繰り返す
-    # spreadsheet2.save_pickle(RESULT_FILE_PATH + '2.pkl')
-    # spreadsheet2.load_pickle(RESULT_FILE_PATH + '2.pkl')
-    spreadsheet2.save_text(RESULT_FILE_PATH + '2.txt')
-    spreadsheet2.load_text(RESULT_FILE_PATH + '2.txt')
-    # spreadsheet2.save_pickle(RESULT_FILE_PATH + '3.pkl')
-    # spreadsheet2.load_pickle(RESULT_FILE_PATH + '3.pkl')
-    spreadsheet2.save_text(RESULT_FILE_PATH + '3.txt')
-    spreadsheet3 = Spreadsheet()
-    spreadsheet3.load_text(RESULT_FILE_PATH + '3.txt')
-    spreadsheet3.save_text(RESULT_FILE_PATH + '4.txt')
-
-    spreadsheet3.write_list_columns([100, 200, 300, 50], (1, 1))
-    spreadsheet3.write_list_columns([99, 98, 97, 96], (1, 3))
-    spreadsheet3.write_list_rows([1, 2, 3, 4], (5, 5))
-    spreadsheet3.write_list_rows([10, 20, 30, 40], (7, 5))
-    tenki = {"days_item": ["04月17日(日)", "04月18日(月)", "04月19日(火)", "04月20日(水)", "04月21日(木)", "04月22日(金)", "04月23日(土)",
-                           "04月24日(日)", "04月25日(月)", "04月26日(火)", "04月27日(水)", "04月28日(木)", "04月29日(金)", "04月30日(土)"],
-             "time_item": ["00", "06", "12", "18", "24", "00", "06", "12", "18", "24", "00", "06", "12", "18", "24",
-                           "00", "06", "12", "18", "24", "00", "06", "12", "18", "24", "00", "06", "12", "18", "24",
-                           "00", "06", "12", "18", "24", "00", "06", "12", "18", "24", "00", "06", "12", "18", "24",
-                           "00", "06", "12", "18", "24", "00", "06", "12", "18", "24"],
-             "forecast_item": ["晴", "晴", "晴", "晴", "晴", "晴", "晴", "晴", "晴", "晴", "晴", "晴", "晴", "晴", "曇", "曇", "曇のち雨",
-                               "雨", "雨のち曇", "曇のち晴", "晴", "晴", "晴", "晴", "曇", "曇", "曇", "曇", "曇のち晴", "晴", "晴", "晴",
-                               "晴のち曇", "曇のち雨", "雨のち晴", "晴", "晴", "晴", "晴", "曇", "曇"],
-             "prob_precip_item": ["0%", "10%", "10%", "10%", "10%", "10%", "0%", "0%", "0%", "0%", "0%", "0%", "0%",
-                                  "20%", "40%", "40%", "70%", "90%", "70%", "40%", "20%", "20%", "20%", "20%", "50%",
-                                  "50%", "50%", "40%", "30%", "10%", "20%", "20%", "30%", "60%", "60%", "0%", "0%",
-                                  "0%", "20%", "40%", "40%"],
-             "precip_item": ["0㎜", "0㎜", "0㎜", "0㎜", "0㎜", "0㎜", "0㎜", "0㎜", "0㎜", "0㎜", "0㎜", "0㎜", "0㎜", "0㎜", "0㎜",
-                             "0㎜", "1㎜", "12㎜", "1㎜", "0㎜", "0㎜", "0㎜", "0㎜", "0㎜", "0㎜", "0㎜", "0㎜", "0㎜", "0㎜", "0㎜",
-                             "0㎜", "0㎜", "0㎜", "4㎜", "4㎜", "0㎜", "0㎜", "0㎜", "0㎜", "0㎜", "0㎜"],
-             "wind_item_blow": ["南", "南", "南", "南南西", "南西", "南", "南南西", "南南西", "北東", "北東", "東北東", "南", "南", "南", "北東",
-                                "南南東", "南南東", "南南東", "南", "南西", "東", "南南東", "南南東", "東北東", "北北東", "南南西", "南西", "南西",
-                                "南西", "南西", "西南西", "西", "西", "東", "北東", "北北東", "西南西", "西南西", "南西", "南西", "南", "南西",
-                                "南西", "西南西", "西北西", "西", "南西", "南西", "南西", "西南西", "西南西"],
-             "wind_item_speed": ["2m/s", "1m/s", "1m/s", "1m/s", "3m/s", "1m/s", "1m/s", "1m/s", "2m/s", "2m/s", "1m/s",
-                                 "1m/s", "1m/s", "1m/s", "1m/s", "1m/s", "1m/s", "1m/s", "2m/s", "1m/s", "2m/s", "2m/s",
-                                 "2m/s", "1m/s", "2m/s", "2m/s", "3m/s", "3m/s", "4m/s", "5m/s", "3m/s", "1m/s", "1m/s",
-                                 "1m/s", "1m/s", "1m/s", "1m/s", "1m/s", "1m/s", "1m/s", "1m/s", "4m/s", "4m/s", "5m/s",
-                                 "4m/s", "2m/s", "2m/s", "2m/s", "2m/s", "2m/s", "3m/s"]}
-    spreadsheet3.write_dict_columns(tenki, (10, 10))
-    spreadsheet3.write_dict_rows(tenki, (10, 17))
