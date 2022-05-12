@@ -467,6 +467,7 @@ if __name__ == '__main__':  # インポート時には動かない
         sys.exit()
     print(target_url)
 
+    url = "https://tenki.jp/forecast/4/20/5620/17202/10days.html"
     css_root = "dd.forecast10days-actab"
     css_selectors = {"days_item": "div.days",
                      "time_item": "dd.time-item > span",
@@ -486,7 +487,7 @@ if __name__ == '__main__':  # インポート時には動かない
              "wind_item_blow": "alt",
              "wind_item_speed": "",
              }
-    tenki = Tenki("https://tenki.jp/forecast/4/20/5620/17202/10days.html",
+    tenki = Tenki(url,
                   css_root,
                   css_selectors,
                   attrs,

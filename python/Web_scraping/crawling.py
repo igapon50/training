@@ -21,6 +21,7 @@ import bs4  # Beautiful Soup
 import pyperclip  # クリップボード
 from dataclasses import dataclass
 from urllib3.util.retry import Retry
+from requests_html import HTMLSession
 
 # local source
 from const import *
@@ -101,7 +102,8 @@ class Crawling:
                         self.css_image_selector = css_image_selector
                         if image_attr is not None:
                             self.image_attr = image_attr
-                            self.request()
+                            # self.request()
+                            self.request_html()
 
     def get_value_objects(self):
         """
@@ -152,6 +154,47 @@ class Crawling:
                                             image_list,
                                             )
         return True
+
+    def request_html(self):
+        """
+
+        :return:
+        """
+        script = """
+            () => {
+                return {
+                    width: document.documentElement.clientWidth,
+                    height: document.documentElement.clientHeight,
+                    deviceScaleFactor: window.devicePixelRatio,
+                }
+            }
+        """
+        session = HTMLSession()
+        response = session.get(self.target_url)
+        # ブラウザエンジンでHTMLを生成させる
+        response.html.render(script=script, reload=False, timeout=0, sleep=10)
+        # スクレイピング
+        title = response.html.find("html > head > title", first=True).text
+
+        image_list: list = []
+        target_rows = response.html.find(self.css_image_selector)
+        if target_rows:
+            for row in target_rows:
+                if not self.image_attr == "":
+                    absolute_path = row.attrs[self.image_attr]
+                    parse_path = urlparse(absolute_path)
+                    if 0 == len(parse_path.scheme):  # 絶対パスかチェックする
+                        absolute_path = urljoin(self.target_url, absolute_path)
+                    image_list.append(absolute_path)
+                # else:
+                #     image_list.append(row)
+        self.crawling_value = CrawlingValue(self.target_url,
+                                            self.css_image_selector,
+                                            self.image_attr,
+                                            title,
+                                            image_list,
+                                            )
+
 
     def create_save_text(self):
         """
@@ -279,9 +322,13 @@ if __name__ == '__main__':  # インポート時には動かない
     print(target_url)
 
     # テスト　女の子の顔のアイコン | かわいいフリー素材集 いらすとや
-    crawling = Crawling('https://www.irasutoya.com/2013/10/blog-post_3974.html',
-                        'div.entry > p:nth-child(1) > a > img',
-                        'src')
+    url = 'https://www.irasutoya.com/2013/10/blog-post_3974.html'
+    css_selector = 'div.entry > p:nth-child(1) > a > img'
+    attr = 'src'
+    crawling = Crawling(url,
+                        css_selector,
+                        attr,
+                        )
     crawling.save_text(RESULT_FILE_PATH)
     # 値オブジェクトを生成
     value_objects = crawling.get_value_objects()
