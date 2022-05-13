@@ -33,8 +33,9 @@ if __name__ == '__main__':  # インポート時には動かない
         sys.exit()
     print(target_url)
 
+    urls = [target_url]
     # クローリングを開始する
-    crawling = Crawling(target_url, img_css_select, img_attr)
+    crawling = Crawling(urls, img_css_select, img_attr)
     if not crawling:
         print(msg_error_exit)
         sys.exit()

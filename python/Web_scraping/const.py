@@ -42,8 +42,8 @@ OUTPUT_FOLDER_PATH = '.\\folder01'  # ダウンロードしたファイルの保
 # img_css_select = 'html body div.kijibox p a'
 # img_attr = 'href'
 
-# img_css_select = 'html body noscript img.list-img'
-# img_attr = 'src'
+img_css_select = ['div.thumb-container > a', '#image-container > a > img']
+img_attr = ['href', 'src']
 
 # img_css_select = 'html body div .content a'
 # img_attr = 'href'
@@ -51,8 +51,8 @@ OUTPUT_FOLDER_PATH = '.\\folder01'  # ダウンロードしたファイルの保
 # img_css_select = 'html body main noscript img.vimg'
 # img_attr = 'src'
 
-img_css_select = 'html body div .photoItem img'
-img_attr = 'src'
+# img_css_select = ['html body div .photoItem img']
+# img_attr = ['src']
 
 # img_css_select = 'html body article noscript img'
 # img_attr = 'src'

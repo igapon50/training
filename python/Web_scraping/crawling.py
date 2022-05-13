@@ -22,6 +22,7 @@ import pyperclip  # クリップボード
 from dataclasses import dataclass
 from urllib3.util.retry import Retry
 from requests_html import HTMLSession
+import json
 
 # local source
 from const import *
@@ -35,28 +36,28 @@ class CrawlingValue:
     """
     クローリング値オブジェクト
     """
-    target_url: str
-    css_image_selector: str
-    image_attr: str
+    urls: list
+    css_selectors: list
+    attrs: list
     title: str
     image_list: list
 
-    def __init__(self, target_url, css_image_selector, image_attr, title, image_list):
+    def __init__(self, urls, css_selectors, attrs, title, image_list):
         """
         完全コンストラクタパターン
 
-        :param target_url: str 処理対象サイトURL
-        :param css_image_selector: str スクレイピングする際のCSSセレクタ
-        :param image_attr: str スクレイピングする際の属性
+        :param urls: list 処理対象サイトURLリスト
+        :param css_selectors: list スクレイピングする際のCSSセレクタリスト
+        :param attrs: list スクレイピングする際の属性リスト
         :param title: str 対象サイトタイトル
         :param image_list: list スクレイピングして得た属性のリスト
         """
-        if target_url is not None:
-            object.__setattr__(self, "target_url", target_url)
-        if css_image_selector is not None:
-            object.__setattr__(self, "css_image_selector", css_image_selector)
-        if image_attr is not None:
-            object.__setattr__(self, "image_attr", image_attr)
+        if urls is not None:
+            object.__setattr__(self, "urls", urls)
+        if css_selectors is not None:
+            object.__setattr__(self, "css_selectors", css_selectors)
+        if attrs is not None:
+            object.__setattr__(self, "attrs", attrs)
         if title is not None:
             object.__setattr__(self, "title", title)
         if 0 < len(image_list):
@@ -72,36 +73,44 @@ class Crawling:
         * CrawlingValueをファイルに保存したり読み込んだりできる
     """
     crawling_value: CrawlingValue = None
-    target_url: str = None
-    css_image_selector: str = None
-    image_attr: str = None
+    urls: list = None
+    css_selectors: list = None
+    attrs: list = None
+    script = """
+        () => {
+            return {
+                width: document.documentElement.clientWidth,
+                height: document.documentElement.clientHeight,
+                deviceScaleFactor: window.devicePixelRatio,
+            }
+        }
+    """
 
-    def __init__(self, target_value=None, css_image_selector=None, image_attr=None):
+    def __init__(self, target_value=None, css_selectors=None, attrs=None):
         """
         コンストラクタ
 
-        :param target_value: str 対象となるサイトURL、または、CrawlingValue 値オブジェクト
-        :param css_image_selector: str スクレイピングする際のCSSセレクタ
-        :param image_attr: str スクレイピングする際の属性
+        :param target_value: list 対象となるサイトURLリスト、または、CrawlingValue 値オブジェクト
+        :param css_selectors: list スクレイピングする際のCSSセレクタリスト
+        :param attrs: list スクレイピングする際の属性リスト
         """
         if target_value is not None:
             if isinstance(target_value, CrawlingValue):
                 crawling_value = target_value
                 self.crawling_value = crawling_value
-                if crawling_value.target_url is not None:
-                    self.target_url = crawling_value.target_url
-                if crawling_value.css_image_selector is not None:
-                    self.css_image_selector = crawling_value.css_image_selector
-                if crawling_value.image_attr is not None:
-                    self.image_attr = crawling_value.image_attr
+                if crawling_value.urls is not None:
+                    self.urls = crawling_value.urls
+                if crawling_value.css_selectors is not None:
+                    self.css_selectors = crawling_value.css_selectors
+                if crawling_value.attrs is not None:
+                    self.attrs = crawling_value.attrs
             else:
-                if isinstance(target_value, str):
-                    self.target_url = target_value
-                    # targetUrlを指定したら、誰か解析してcssImageSelector作ってくれないかな。
-                    if css_image_selector is not None:
-                        self.css_image_selector = css_image_selector
-                        if image_attr is not None:
-                            self.image_attr = image_attr
+                if isinstance(target_value, list):
+                    self.urls = target_value
+                    if css_selectors is not None:
+                        self.css_selectors = css_selectors
+                        if attrs is not None:
+                            self.attrs = attrs
                             # self.request()
                             self.request_html()
 
@@ -131,25 +140,28 @@ class Crawling:
 
     def request(self):
         """
-        target_urlに接続して、image_attrでスクレイピングして、titleとimage_listを更新する
+        urlsに接続して、attrsでスクレイピングして、titleとimage_listを更新する
 
         :return: bool 成功/失敗=True/False
         """
+        image_list: list = []
+        title: str = ""
         retries = Retry(connect=5, read=2, redirect=5)
         http = urllib3.PoolManager(retries=retries)
-        res = http.request('GET', self.target_url, timeout=10, headers=HEADERS_DIC)
-        soup = bs4.BeautifulSoup(res.data, 'html.parser')
-        title = str(soup.title.string)
-        image_list: list = []
-        for img in soup.select(self.css_image_selector):
-            absolute_path = str(img[self.image_attr])
-            parse_path = urlparse(absolute_path)
-            if 0 == len(parse_path.scheme):  # 絶対パスかチェックする
-                absolute_path = urljoin(self.target_url, absolute_path)
-            image_list.append(absolute_path)
-        self.crawling_value = CrawlingValue(self.target_url,
-                                            self.css_image_selector,
-                                            self.image_attr,
+        for url in self.urls:
+            res = http.request('GET', url, timeout=10, headers=HEADERS_DIC)
+            soup = bs4.BeautifulSoup(res.data, 'html.parser')
+            title = str(soup.title.string)
+            for css_selector, attr in zip(self.css_selectors, self.attrs):
+                for img in soup.select(css_selector):
+                    absolute_path = str(img[attr])
+                    parse_path = urlparse(absolute_path)
+                    if 0 == len(parse_path.scheme):  # 絶対パスかチェックする
+                        absolute_path = urljoin(url, absolute_path)
+                    image_list.append(absolute_path)
+        self.crawling_value = CrawlingValue(self.urls,
+                                            self.css_selectors,
+                                            self.attrs,
                                             title,
                                             image_list,
                                             )
@@ -157,44 +169,50 @@ class Crawling:
 
     def request_html(self):
         """
+        todo たどった先のページの画像を集めるようにする。css_selectorsをlistにする
 
         :return:
         """
-        script = """
-            () => {
-                return {
-                    width: document.documentElement.clientWidth,
-                    height: document.documentElement.clientHeight,
-                    deviceScaleFactor: window.devicePixelRatio,
-                }
-            }
-        """
         session = HTMLSession()
-        response = session.get(self.target_url)
+        response = session.get(self.urls[0])
         # ブラウザエンジンでHTMLを生成させる
-        response.html.render(script=script, reload=False, timeout=0, sleep=10)
+        response.html.render(script=self.script, reload=False, timeout=0, sleep=10)
         # スクレイピング
         title = response.html.find("html > head > title", first=True).text
-
-        image_list: list = []
-        target_rows = response.html.find(self.css_image_selector)
-        if target_rows:
-            for row in target_rows:
-                if not self.image_attr == "":
-                    absolute_path = row.attrs[self.image_attr]
-                    parse_path = urlparse(absolute_path)
-                    if 0 == len(parse_path.scheme):  # 絶対パスかチェックする
-                        absolute_path = urljoin(self.target_url, absolute_path)
-                    image_list.append(absolute_path)
-                # else:
-                #     image_list.append(row)
-        self.crawling_value = CrawlingValue(self.target_url,
-                                            self.css_image_selector,
-                                            self.image_attr,
+        target_url = self.urls
+        for css_selector, attr in zip(self.css_selectors, self.attrs):
+            target_url = self.get_url_list(target_url, css_selector, attr)
+        image_list = target_url
+        self.crawling_value = CrawlingValue(self.urls,
+                                            self.css_selectors,
+                                            self.attrs,
                                             title,
                                             image_list,
                                             )
 
+    def get_url_list(self,
+                     urls,
+                     css_selector,
+                     attr,
+                     ):
+        session = HTMLSession()
+        url_list: list = []
+        for url in urls:
+            response = session.get(url)
+            # ブラウザエンジンでHTMLを生成させる
+            response.html.render(script=self.script, reload=False, timeout=0, sleep=10)
+            target_rows = response.html.find(css_selector)
+            if target_rows:
+                for row in target_rows:
+                    if not attr == "":
+                        absolute_path = row.attrs[attr]
+                    else:
+                        absolute_path = row.text
+                    parse_path = urlparse(absolute_path)
+                    if 0 == len(parse_path.scheme):  # 絶対パスかチェックする
+                        absolute_path = urljoin(url, absolute_path)
+                    url_list.append(absolute_path)
+        return url_list
 
     def create_save_text(self):
         """
@@ -202,9 +220,9 @@ class Crawling:
 
         :return: str 保存用文字列の作成
         """
-        buff = self.crawling_value.target_url + '\n'  # サイトURL追加
-        buff += self.crawling_value.css_image_selector + '\n'  # cssセレクタ追加
-        buff += self.crawling_value.image_attr + '\n'  # 属性追加
+        buff = json.dumps(self.crawling_value.urls, ensure_ascii=False) + '\n'  # サイトURL追加
+        buff += json.dumps(self.crawling_value.css_selectors, ensure_ascii=False) + '\n'  # cssセレクタ追加
+        buff += json.dumps(self.crawling_value.attrs, ensure_ascii=False) + '\n'  # 属性追加
         buff += self.crawling_value.title + '\n'  # タイトル追加
         for absolute_path in self.crawling_value.image_list:
             buff += absolute_path + '\n'  # 画像URL追加
@@ -250,20 +268,20 @@ class Crawling:
         """
         with open(load_path, 'r', encoding='utf-8') as work_file:
             buff = work_file.readlines()
-            self.target_url = buff[0].rstrip('\n')
+            self.urls = json.loads(buff[0].rstrip('\n'))
             del buff[0]
-            self.css_image_selector = buff[0].rstrip('\n')
+            self.css_selectors = json.loads(buff[0].rstrip('\n'))
             del buff[0]
-            self.image_attr = buff[0].rstrip('\n')
+            self.attrs = json.loads(buff[0].rstrip('\n'))
             del buff[0]
             title = buff[0].rstrip('\n')
             del buff[0]
             image_list: list = []
             for line in buff:
                 image_list.append(line.rstrip('\n'))
-            self.crawling_value = CrawlingValue(self.target_url,
-                                                self.css_image_selector,
-                                                self.image_attr,
+            self.crawling_value = CrawlingValue(self.urls,
+                                                self.css_selectors,
+                                                self.attrs,
                                                 title,
                                                 image_list,
                                                 )
@@ -322,12 +340,15 @@ if __name__ == '__main__':  # インポート時には動かない
     print(target_url)
 
     # テスト　女の子の顔のアイコン | かわいいフリー素材集 いらすとや
-    url = 'https://www.irasutoya.com/2013/10/blog-post_3974.html'
-    css_selector = 'div.entry > p:nth-child(1) > a > img'
-    attr = 'src'
-    crawling = Crawling(url,
-                        css_selector,
-                        attr,
+    urls = ['https://www.irasutoya.com/2013/10/blog-post_3974.html',
+            ]
+    css_selectors = ['div.entry > p:nth-child(1) > a > img',
+                     ]
+    attrs = ['src',
+             ]
+    crawling = Crawling(urls,
+                        css_selectors,
+                        attrs,
                         )
     crawling.save_text(RESULT_FILE_PATH)
     # 値オブジェクトを生成
