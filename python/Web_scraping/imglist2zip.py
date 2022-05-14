@@ -6,7 +6,7 @@ imglistファイルからファイル名リストを作り、ダウンロード�
 # local source
 from const import *
 from func import *
-from crawling import *
+from scraping import *
 from downloading import *
 
 if __name__ == '__main__':  # インポート時には動かない
@@ -29,15 +29,15 @@ if __name__ == '__main__':  # インポート時には動かない
     print(imglist_filepath)
 
     # ファイルのURLリストを作成
-    crawling = Crawling()
+    crawling = Scraping()
     if not crawling:
         print(msg_error_exit)
         sys.exit(crawling)
     crawling.load_text(RESULT_FILE_PATH + '1.txt')
     file_url_list = crawling.get_image_list()
     title = crawling.get_title()
-    # スクレイピングを開始する
-    scraping = Downloading(file_url_list, folder_path)
+    # ダウンロードを開始する
+    downloading = Downloading(file_url_list, folder_path)
 
     # ファイルのダウンロード
     print('ファイルリストを読み込み済み、irvineでダウンロード完了まで待つ')
@@ -47,13 +47,13 @@ if __name__ == '__main__':  # インポート時には動かない
     os.system('PAUSE')
 
     # ダウンロードファイルを変名する(ナンバリング)
-    if not scraping.rename_images():
+    if not downloading.rename_images():
         # ダウンロードされていないファイルがあった
         print(msg_error_exit)
         sys.exit(1)
     # 圧縮ファイル作成
-    scraping.make_zip_file()
+    downloading.make_zip_file()
     # 圧縮ファイル名付け直し
-    scraping.rename_zip_file(title)
+    downloading.rename_zip_file(title)
     # ファイルの削除
-    scraping.download_file_clear()
+    downloading.download_file_clear()

@@ -6,7 +6,7 @@ Webサイトから画像のURLリストを作り、ダウンロードしてzip�
 # local source
 from func import *
 from python.Web_scraping.func import *
-from python.Web_scraping.crawling import Crawling
+from python.Web_scraping.scraping import Scraping
 from python.Web_scraping.downloading import Downloading
 
 if __name__ == '__main__':  # インポート時には動かない
@@ -42,27 +42,27 @@ if __name__ == '__main__':  # インポート時には動かない
         sys.exit(ret)
 
     # ファイルのURLリストを作成
-    crawling = Crawling(target_url, img_css_select, img_attr)
-    if not crawling:
+    scraping = Scraping(target_url, img_css_select, img_attr)
+    if not scraping:
         print(msg_error_exit)
         sys.exit()
-    crawling.save_text(RESULT_FILE_PATH + '1.txt')
-    crawling.save_pickle(RESULT_FILE_PATH + '1.pkl')
+    scraping.save_text(RESULT_FILE_PATH + '1.txt')
+    scraping.save_pickle(RESULT_FILE_PATH + '1.pkl')
     # target_data = crawling.get_value_objects()
-    file_url_list = crawling.get_image_list()
-    title = crawling.get_title()
-    # スクレイピングを開始する
-    scraping = Downloading(file_url_list, folder_path)
+    file_url_list = scraping.get_image_list()
+    title = scraping.get_title()
+    # ダウンロードを開始する
+    downloading = Downloading(file_url_list, folder_path)
     # 画像ファイルのダウンロード
-    scraping.download()
+    downloading.download()
     # ダウンロードファイルを変名する(ナンバリング)
-    if not scraping.rename_images():
+    if not downloading.rename_images():
         # ダウンロードされていないファイルがあった
         print(msg_error_exit)
         sys.exit()
     # 圧縮ファイル作成
-    scraping.make_zip_file()
+    downloading.make_zip_file()
     # 圧縮ファイル名付け直し
-    scraping.rename_zip_file(title)
+    downloading.rename_zip_file(title)
     # ファイルの削除
-    scraping.download_file_clear()
+    downloading.download_file_clear()

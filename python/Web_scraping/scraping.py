@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-クローリングユーティリティ
-    * 処理対象サイトURLと、CSSセレクタと、処理対象属性を指定して、クローリングする
-    * クローリング結果を以下のファイルに保存したり、読み込んだりできる
+スクレイピングユーティリティ
+    * 処理対象サイトURLと、CSSセレクタと、処理対象属性を指定して、スクレイピングする
+    * スクレイピング結果を以下のファイルに保存したり、読み込んだりできる
         * pickle: ライブラリpickleを参照のこと
         * 独自フォーマット: ダウンロードする画像ファイルのURLが展開されているので、ダウンローダーにコピペしやすい
 """
@@ -32,9 +32,9 @@ sys.setrecursionlimit(10000)
 
 
 @dataclass(frozen=True)
-class CrawlingValue:
+class ScrapingValue:
     """
-    クローリング値オブジェクト
+    スクレイピング値オブジェクト
     """
     urls: list
     css_selectors: list
@@ -64,15 +64,15 @@ class CrawlingValue:
             object.__setattr__(self, "image_list", image_list)
 
 
-class Crawling:
+class Scraping:
     """
-    クローリングのユーティリティ
+    スクレイピングのユーティリティ
         * 指定のサイトを読み込む
-        * 指定のCSSセレクタ(css_image_select)と属性でクローリングする
-        * クローリング結果でCrawlingValueを生成する
+        * 指定のCSSセレクタ(css_image_select)と属性でスクレイピングする
+        * スクレイピング結果でCrawlingValueを生成する
         * CrawlingValueをファイルに保存したり読み込んだりできる
     """
-    crawling_value: CrawlingValue = None
+    crawling_value: ScrapingValue = None
     urls: list = None
     css_selectors: list = None
     attrs: list = None
@@ -90,12 +90,12 @@ class Crawling:
         """
         コンストラクタ
 
-        :param target_value: list 対象となるサイトURLリスト、または、CrawlingValue 値オブジェクト
+        :param target_value: list 対象となるサイトURLリスト、または、ScrapingValue 値オブジェクト
         :param css_selectors: list スクレイピングする際のCSSセレクタリスト
         :param attrs: list スクレイピングする際の属性リスト
         """
         if target_value is not None:
-            if isinstance(target_value, CrawlingValue):
+            if isinstance(target_value, ScrapingValue):
                 crawling_value = target_value
                 self.crawling_value = crawling_value
                 if crawling_value.urls is not None:
@@ -159,7 +159,7 @@ class Crawling:
                     if 0 == len(parse_path.scheme):  # 絶対パスかチェックする
                         absolute_path = urljoin(url, absolute_path)
                     image_list.append(absolute_path)
-        self.crawling_value = CrawlingValue(self.urls,
+        self.crawling_value = ScrapingValue(self.urls,
                                             self.css_selectors,
                                             self.attrs,
                                             title,
@@ -183,7 +183,7 @@ class Crawling:
         for css_selector, attr in zip(self.css_selectors, self.attrs):
             target_url = self.get_url_list(target_url, css_selector, attr)
         image_list = target_url
-        self.crawling_value = CrawlingValue(self.urls,
+        self.crawling_value = ScrapingValue(self.urls,
                                             self.css_selectors,
                                             self.attrs,
                                             title,
@@ -284,7 +284,7 @@ class Crawling:
             image_list: list = []
             for line in buff:
                 image_list.append(line.rstrip('\n'))
-            self.crawling_value = CrawlingValue(self.urls,
+            self.crawling_value = ScrapingValue(self.urls,
                                                 self.css_selectors,
                                                 self.attrs,
                                                 title,
@@ -351,7 +351,7 @@ if __name__ == '__main__':  # インポート時には動かない
                      ]
     attrs = ['src',
              ]
-    crawling = Crawling(urls,
+    crawling = Scraping(urls,
                         css_selectors,
                         attrs,
                         )
@@ -363,7 +363,7 @@ if __name__ == '__main__':  # インポート時には動かない
     crawling.load_pickle(RESULT_FILE_PATH + '1.pkl')
     crawling.save_text(RESULT_FILE_PATH + '1.txt')
     # 値オブジェクトでインスタンス作成
-    crawling2 = Crawling(value_objects)
+    crawling2 = Scraping(value_objects)
     # 保存や読込を繰り返す
     crawling2.save_pickle(RESULT_FILE_PATH + '2.pkl')
     crawling2.load_pickle(RESULT_FILE_PATH + '2.pkl')

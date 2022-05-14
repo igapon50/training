@@ -6,7 +6,7 @@ Webサイトから画像のURLリストを作り、ダウンロードしてzip�
 # local source
 from const import *
 from func import *
-from crawling import *
+from scraping import *
 from downloading import *
 
 if __name__ == '__main__':  # インポート時には動かない
@@ -34,18 +34,18 @@ if __name__ == '__main__':  # インポート時には動かない
     print(target_url)
 
     urls = [target_url]
-    # クローリングを開始する
-    crawling = Crawling(urls, img_css_select, img_attr)
-    if not crawling:
+    # スクレイピングを開始する
+    scraping = Scraping(urls, img_css_select, img_attr)
+    if not scraping:
         print(msg_error_exit)
         sys.exit()
-    # クローリング情報をファイルに保存する
-    crawling.save_text(RESULT_FILE_PATH + '1.txt')
-    crawling.save_pickle(RESULT_FILE_PATH + '1.pkl')
+    # 情報をファイルに保存する
+    scraping.save_text(RESULT_FILE_PATH + '1.txt')
+    scraping.save_pickle(RESULT_FILE_PATH + '1.pkl')
     # target_data = crawling.get_value_objects()
-    # スクレイピングで使用する情報を取得する
-    file_url_list = crawling.get_image_list()
-    title = crawling.get_title()
+    # 使用する情報を取得する
+    file_url_list = scraping.get_image_list()
+    title = scraping.get_title()
     # ダウンロードを開始する
     downloading = Downloading(file_url_list, folder_path)
     # 画像ファイルのダウンロード
