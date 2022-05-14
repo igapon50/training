@@ -7,7 +7,7 @@ Webサイトから画像のURLリストを作り、ダウンロードしてzip�
 from const import *
 from func import *
 from crawling import *
-from scraping import *
+from downloading import *
 
 if __name__ == '__main__':  # インポート時には動かない
     imglist_filepath = RESULT_FILE_PATH
@@ -46,18 +46,18 @@ if __name__ == '__main__':  # インポート時には動かない
     # スクレイピングで使用する情報を取得する
     file_url_list = crawling.get_image_list()
     title = crawling.get_title()
-    # スクレイピングを開始する
-    scraping = Scraping(file_url_list, folder_path)
+    # ダウンロードを開始する
+    downloading = Downloading(file_url_list, folder_path)
     # 画像ファイルのダウンロード
-    scraping.download()
+    downloading.download()
     # ダウンロードファイルを変名する(ナンバリング)
-    if not scraping.rename_images():
+    if not downloading.rename_images():
         # ダウンロードされていないファイルがあった
         print(msg_error_exit)
         sys.exit()
     # 圧縮ファイル作成
-    scraping.make_zip_file()
+    downloading.make_zip_file()
     # 圧縮ファイル名付け直し
-    scraping.rename_zip_file(title)
+    downloading.rename_zip_file(title)
     # ファイルの削除
-    scraping.download_file_clear()
+    downloading.download_file_clear()

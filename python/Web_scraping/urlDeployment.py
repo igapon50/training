@@ -8,7 +8,7 @@
 """
 import urllib.parse
 import subprocess
-from scraping import *
+from downloading import *
 
 
 # 検証コード
@@ -64,7 +64,7 @@ if __name__ == '__main__':  # インポート時には動かない
         for absolute_path in url_list:
             buff += absolute_path + '\n'  # 画像URL追加
         work_file.write(buff)  # ファイルへの保存
-    fileDownloader = Scraping(url_list, folder_path)
+    fileDownloader = Downloading(url_list, folder_path)
     # irvineを起動して、終了されるのを待つ
     cmd = 'c:\\Program1\\irvine1_3_0\\irvine.exe ./result_list.txt'
     proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)

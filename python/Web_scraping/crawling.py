@@ -140,7 +140,7 @@ class Crawling:
 
     def request(self):
         """
-        urlsに接続して、attrsでスクレイピングして、titleとimage_listを更新する
+        ページをたどって画像のurlを集める。値オブジェクトを生成する。
 
         :return: bool 成功/失敗=True/False
         """
@@ -169,9 +169,9 @@ class Crawling:
 
     def request_html(self):
         """
-        todo たどった先のページの画像を集めるようにする。css_selectorsをlistにする
+        ページを再帰的にたどって画像のurlを集める。値オブジェクトを生成する。
 
-        :return:
+        :return: bool 成功/失敗=True/False
         """
         session = HTMLSession()
         response = session.get(self.urls[0])
@@ -189,6 +189,7 @@ class Crawling:
                                             title,
                                             image_list,
                                             )
+        return True
 
     def get_url_list(self,
                      urls,
@@ -202,6 +203,8 @@ class Crawling:
             # ブラウザエンジンでHTMLを生成させる
             response.html.render(script=self.script, reload=False, timeout=0, sleep=10)
             target_rows = response.html.find(css_selector)
+            count = len(target_rows)
+            print(count)
             if target_rows:
                 for row in target_rows:
                     if not attr == "":
@@ -212,6 +215,8 @@ class Crawling:
                     if 0 == len(parse_path.scheme):  # 絶対パスかチェックする
                         absolute_path = urljoin(url, absolute_path)
                     url_list.append(absolute_path)
+                    print(str(count) + " " + absolute_path)
+                    count -= 1
         return url_list
 
     def create_save_text(self):

@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-スクレイピングユーティリティ
-    * URLリストと、保存フォルダを指定して、スクレイピングする
+ダウンロードユーティリティ
+    * URLリストと、保存フォルダを指定して、ダウンロードする
         * URLリストのファイルをダウンロードする
         * ダウンロードしたファイルの名前を、ナンバリングした名前に付けなおす
         * 保存フォルダを圧縮する
@@ -35,9 +35,9 @@ sys.setrecursionlimit(10000)
 
 
 @dataclass(frozen=True)
-class ScrapingValue:
+class DownloadingValue:
     """
-    スクレイピング値オブジェクト
+    ダウンロード値オブジェクト
     """
     image_list: list = None
     save_path: str = None
@@ -55,15 +55,15 @@ class ScrapingValue:
             object.__setattr__(self, "save_path", save_path)
 
 
-class Scraping:
+class Downloading:
     """
-    スクレイピングのユーティリティ
+    ダウンロードのユーティリティ
         * 指定のフォルダにダウンロードする
         * ダウンロードしたファイル群の名前を付け直す
         * 指定のフォルダを圧縮する
         * 指定のフォルダ内のファイルを削除する
     """
-    files_downloader_value: ScrapingValue = None
+    files_downloader_value: DownloadingValue = None
     image_list: list = None
     save_path: str = None
     src_file_list: list = []
@@ -74,13 +74,13 @@ class Scraping:
         """
         コンストラクタ
 
-        :param target_value: list ダウンロードするURLのリスト、または、ScrapingValue 値オブジェクト
+        :param target_value: list ダウンロードするURLのリスト、または、DownloadingValue 値オブジェクト
         :param save_path: str ダウンロード後に保存するフォルダパス
         """
         if target_value is None:
             print('target_valueがNoneです')
             sys.exit(1)
-        if isinstance(target_value, ScrapingValue):
+        if isinstance(target_value, DownloadingValue):
             if 0 < len(target_value.image_list):
                 self.files_downloader_value = target_value
                 self.image_list = self.files_downloader_value.image_list
@@ -294,7 +294,7 @@ if __name__ == '__main__':  # インポート時には動かない
         'https://1.bp.blogspot.com/-tzoOQwlaRac/X1LskKZtKEI/AAAAAAABa_M/89phuGIVDkYGY_uNKvFB6ZiNHxR7bQYcgCNcBGAsYHQ/s180-c/fashion_dekora.png',
         'https://1.bp.blogspot.com/-gTf4sWnRdDw/X0B4RSQQLrI/AAAAAAABarI/MJ9DW90dSVwtMjuUoErxemnN4nPXBnXUwCNcBGAsYHQ/s180-c/otaku_girl_fashion.png',
     ]
-    fileDownloader = Scraping(image_url_list, folder_path)
+    fileDownloader = Downloading(image_url_list, folder_path)
     fileDownloader.download()
     fileDownloader.rename_images()
     fileDownloader.make_zip_file()

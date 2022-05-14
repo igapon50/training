@@ -7,7 +7,7 @@ imglistファイルからファイル名リストを作り、ダウンロード�
 from const import *
 from func import *
 from crawling import *
-from scraping import *
+from downloading import *
 
 if __name__ == '__main__':  # インポート時には動かない
     imglist_filepath = RESULT_FILE_PATH
@@ -37,7 +37,7 @@ if __name__ == '__main__':  # インポート時には動かない
     file_url_list = crawling.get_image_list()
     title = crawling.get_title()
     # スクレイピングを開始する
-    scraping = Scraping(file_url_list, folder_path)
+    scraping = Downloading(file_url_list, folder_path)
 
     # ファイルのダウンロード
     print('ファイルリストを読み込み済み、irvineでダウンロード完了まで待つ')
