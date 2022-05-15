@@ -39,16 +39,18 @@ class ScrapingValue:
     urls: list
     css_selectors: list
     attrs: list
+    title_css: str
     title: str
     image_list: list
 
-    def __init__(self, urls, css_selectors, attrs, title, image_list):
+    def __init__(self, urls, css_selectors, attrs, title_css, title, image_list):
         """
         完全コンストラクタパターン
 
         :param urls: list 処理対象サイトURLリスト
         :param css_selectors: list スクレイピングする際のCSSセレクタリスト
         :param attrs: list スクレイピングする際の属性リスト
+        :param title_css: str 対象サイトタイトルのCSSセレクタ
         :param title: str 対象サイトタイトル
         :param image_list: list スクレイピングして得た属性のリスト
         """
@@ -58,6 +60,8 @@ class ScrapingValue:
             object.__setattr__(self, "css_selectors", css_selectors)
         if attrs is not None:
             object.__setattr__(self, "attrs", attrs)
+        if title_css is not None:
+            object.__setattr__(self, "title_css", title_css)
         if title is not None:
             object.__setattr__(self, "title", title)
         if 0 < len(image_list):
@@ -72,7 +76,7 @@ class Scraping:
         * スクレイピング結果でCrawlingValueを生成する
         * CrawlingValueをファイルに保存したり読み込んだりできる
     """
-    crawling_value: ScrapingValue = None
+    value_object: ScrapingValue = None
     urls: list = None
     css_selectors: list = None
     attrs: list = None
@@ -86,24 +90,27 @@ class Scraping:
         }
     """
 
-    def __init__(self, target_value=None, css_selectors=None, attrs=None):
+    def __init__(self, target_value=None, css_selectors=None, attrs=None, title_css=None):
         """
         コンストラクタ
 
         :param target_value: list 対象となるサイトURLリスト、または、ScrapingValue 値オブジェクト
         :param css_selectors: list スクレイピングする際のCSSセレクタリスト
         :param attrs: list スクレイピングする際の属性リスト
+        :param title_css: str タイトルのCSSセレクタ
         """
         if target_value is not None:
             if isinstance(target_value, ScrapingValue):
-                crawling_value = target_value
-                self.crawling_value = crawling_value
-                if crawling_value.urls is not None:
-                    self.urls = crawling_value.urls
-                if crawling_value.css_selectors is not None:
-                    self.css_selectors = crawling_value.css_selectors
-                if crawling_value.attrs is not None:
-                    self.attrs = crawling_value.attrs
+                value_object = target_value
+                self.value_object = value_object
+                if value_object.urls is not None:
+                    self.urls = value_object.urls
+                if value_object.css_selectors is not None:
+                    self.css_selectors = value_object.css_selectors
+                if value_object.attrs is not None:
+                    self.attrs = value_object.attrs
+                if value_object.title_css is not None:
+                    self.attrs = value_object.title_css
             else:
                 if isinstance(target_value, list):
                     self.urls = target_value
@@ -111,8 +118,10 @@ class Scraping:
                         self.css_selectors = css_selectors
                         if attrs is not None:
                             self.attrs = attrs
-                            # self.request()
-                            self.request_html()
+                            if title_css is not None:
+                                self.title_css = title_css
+                                # self.request()
+                                self.request_html()
 
     def get_value_objects(self):
         """
@@ -120,7 +129,7 @@ class Scraping:
 
         :return: crawling_value 値オブジェクト
         """
-        return copy.deepcopy(self.crawling_value)
+        return copy.deepcopy(self.value_object)
 
     def get_image_list(self):
         """
@@ -128,7 +137,7 @@ class Scraping:
 
         :return: crawling_value.image_list 画像URLリスト
         """
-        return copy.deepcopy(self.crawling_value.image_list)
+        return copy.deepcopy(self.value_object.image_list)
 
     def get_title(self):
         """
@@ -136,7 +145,7 @@ class Scraping:
 
         :return: crawling_value.title 対象サイトタイトル
         """
-        return self.crawling_value.title
+        return self.value_object.title
 
     def request(self):
         """
@@ -151,7 +160,8 @@ class Scraping:
         for url in self.urls:
             res = http.request('GET', url, timeout=10, headers=HEADERS_DIC)
             soup = bs4.BeautifulSoup(res.data, 'html.parser')
-            title = str(soup.title.string)
+            # title = str(soup.title.string)
+            title = str(soup.select(self.title_css))
             for css_selector, attr in zip(self.css_selectors, self.attrs):
                 for img in soup.select(css_selector):
                     absolute_path = str(img[attr])
@@ -159,12 +169,13 @@ class Scraping:
                     if 0 == len(parse_path.scheme):  # 絶対パスかチェックする
                         absolute_path = urljoin(url, absolute_path)
                     image_list.append(absolute_path)
-        self.crawling_value = ScrapingValue(self.urls,
-                                            self.css_selectors,
-                                            self.attrs,
-                                            title,
-                                            image_list,
-                                            )
+        self.value_object = ScrapingValue(self.urls,
+                                          self.css_selectors,
+                                          self.attrs,
+                                          self.title_css,
+                                          title,
+                                          image_list,
+                                          )
         return True
 
     def request_html(self):
@@ -178,17 +189,19 @@ class Scraping:
         # ブラウザエンジンでHTMLを生成させる
         response.html.render(script=self.script, reload=False, timeout=0, sleep=10)
         # スクレイピング
-        title = response.html.find("html > head > title", first=True).text
+        # title = response.html.find("html > head > title", first=True).text
+        title = response.html.find(self.title_css, first=True).text
         target_url = self.urls
         for css_selector, attr in zip(self.css_selectors, self.attrs):
             target_url = self.get_url_list(target_url, css_selector, attr)
         image_list = target_url
-        self.crawling_value = ScrapingValue(self.urls,
-                                            self.css_selectors,
-                                            self.attrs,
-                                            title,
-                                            image_list,
-                                            )
+        self.value_object = ScrapingValue(self.urls,
+                                          self.css_selectors,
+                                          self.attrs,
+                                          self.title_css,
+                                          title,
+                                          image_list,
+                                          )
         return True
 
     def get_url_list(self,
@@ -225,11 +238,12 @@ class Scraping:
 
         :return: str 保存用文字列の作成
         """
-        buff = json.dumps(self.crawling_value.urls, ensure_ascii=False) + '\n'  # サイトURL追加
-        buff += json.dumps(self.crawling_value.css_selectors, ensure_ascii=False) + '\n'  # cssセレクタ追加
-        buff += json.dumps(self.crawling_value.attrs, ensure_ascii=False) + '\n'  # 属性追加
-        buff += self.crawling_value.title + '\n'  # タイトル追加
-        for absolute_path in self.crawling_value.image_list:
+        buff = json.dumps(self.value_object.urls, ensure_ascii=False) + '\n'  # サイトURL追加
+        buff += json.dumps(self.value_object.css_selectors, ensure_ascii=False) + '\n'  # cssセレクタ追加
+        buff += json.dumps(self.value_object.attrs, ensure_ascii=False) + '\n'  # 属性追加
+        buff += self.value_object.title_css + '\n'  # タイトルCSSセレクタ追加
+        buff += self.value_object.title + '\n'  # タイトル追加
+        for absolute_path in self.value_object.image_list:
             buff += absolute_path + '\n'  # 画像URL追加
         return buff
 
@@ -239,7 +253,7 @@ class Scraping:
 
         :return: bool 成功/失敗=True/False
         """
-        if self.crawling_value is None:
+        if self.value_object is None:
             return False
         buff = self.create_save_text()
         pyperclip.copy(buff)  # クリップボードへのコピー
@@ -257,7 +271,7 @@ class Scraping:
         :param save_path: str セーブする独自フォーマットなファイルのパス
         :return: bool 成功/失敗=True/False
         """
-        if self.crawling_value is None:
+        if self.value_object is None:
             return False
         with open(save_path, 'w', encoding='utf-8') as work_file:
             buff = self.create_save_text()
@@ -279,17 +293,19 @@ class Scraping:
             del buff[0]
             self.attrs = json.loads(buff[0].rstrip('\n'))
             del buff[0]
+            self.title_css = buff[0].rstrip('\n')
+            del buff[0]
             title = buff[0].rstrip('\n')
             del buff[0]
             image_list: list = []
             for line in buff:
                 image_list.append(line.rstrip('\n'))
-            self.crawling_value = ScrapingValue(self.urls,
-                                                self.css_selectors,
-                                                self.attrs,
-                                                title,
-                                                image_list,
-                                                )
+            self.value_object = ScrapingValue(self.urls,
+                                              self.css_selectors,
+                                              self.attrs,
+                                              title,
+                                              image_list,
+                                              )
             return True
 
     def save_pickle(self, save_path):
@@ -302,7 +318,7 @@ class Scraping:
         if save_path is None:
             return False
         with open(save_path, 'wb') as work_file:
-            pickle.dump(self.crawling_value, work_file)
+            pickle.dump(self.value_object, work_file)
             return True
 
     def load_pickle(self, load_path):
@@ -315,7 +331,7 @@ class Scraping:
         if load_path is None:
             return False
         with open(load_path, 'rb') as work_file:
-            self.crawling_value = pickle.load(work_file)
+            self.value_object = pickle.load(work_file)
             return True
 
 
@@ -351,24 +367,26 @@ if __name__ == '__main__':  # インポート時には動かない
                      ]
     attrs = ['src',
              ]
-    crawling = Scraping(urls,
+    title_css = 'html > head > title'
+    scraping = Scraping(urls,
                         css_selectors,
                         attrs,
+                        title_css,
                         )
-    crawling.save_text(RESULT_FILE_PATH)
+    scraping.save_text(RESULT_FILE_PATH)
     # 値オブジェクトを生成
-    value_objects = crawling.get_value_objects()
+    value_objects = scraping.get_value_objects()
     # 保存や読込を繰り返す
-    crawling.save_pickle(RESULT_FILE_PATH + '1.pkl')
-    crawling.load_pickle(RESULT_FILE_PATH + '1.pkl')
-    crawling.save_text(RESULT_FILE_PATH + '1.txt')
+    scraping.save_pickle(RESULT_FILE_PATH + '1.pkl')
+    scraping.load_pickle(RESULT_FILE_PATH + '1.pkl')
+    scraping.save_text(RESULT_FILE_PATH + '1.txt')
     # 値オブジェクトでインスタンス作成
-    crawling2 = Scraping(value_objects)
+    scraping2 = Scraping(value_objects)
     # 保存や読込を繰り返す
-    crawling2.save_pickle(RESULT_FILE_PATH + '2.pkl')
-    crawling2.load_pickle(RESULT_FILE_PATH + '2.pkl')
-    crawling2.save_text(RESULT_FILE_PATH + '2.txt')
-    crawling2.load_text(RESULT_FILE_PATH + '2.txt')
-    crawling2.save_pickle(RESULT_FILE_PATH + '3.pkl')
-    crawling2.load_pickle(RESULT_FILE_PATH + '3.pkl')
-    crawling2.save_text(RESULT_FILE_PATH + '3.txt')
+    scraping2.save_pickle(RESULT_FILE_PATH + '2.pkl')
+    scraping2.load_pickle(RESULT_FILE_PATH + '2.pkl')
+    scraping2.save_text(RESULT_FILE_PATH + '2.txt')
+    scraping2.load_text(RESULT_FILE_PATH + '2.txt')
+    scraping2.save_pickle(RESULT_FILE_PATH + '3.pkl')
+    scraping2.load_pickle(RESULT_FILE_PATH + '3.pkl')
+    scraping2.save_text(RESULT_FILE_PATH + '3.txt')

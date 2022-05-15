@@ -50,7 +50,7 @@ class Spreadsheet:
         * SpreadsheetValueを生成する
         * SpreadsheetValueをファイルに保存したり読み込んだりする
     """
-    spreadsheet_value: SpreadsheetValue = None
+    value_object: SpreadsheetValue = None
     json_keyfile_name: str = None
     workbook_name: str = None
     worksheet_name: str = None
@@ -69,16 +69,16 @@ class Spreadsheet:
         """
         if target_value is not None:
             if isinstance(target_value, SpreadsheetValue):
-                spreadsheet_value = target_value
-                self.spreadsheet_value = spreadsheet_value
-                if spreadsheet_value.json_keyfile_name is not None:
-                    self.json_keyfile_name = spreadsheet_value.json_keyfile_name
-                    if spreadsheet_value.workbook_name is not None:
-                        self.workbook_name = spreadsheet_value.workbook_name
-                        if spreadsheet_value.worksheet_name is not None:
-                            self.worksheet_name = spreadsheet_value.worksheet_name
-                            if spreadsheet_value.data is not None:
-                                self.data = spreadsheet_value.data
+                value_object = target_value
+                self.value_object = value_object
+                if value_object.json_keyfile_name is not None:
+                    self.json_keyfile_name = value_object.json_keyfile_name
+                    if value_object.workbook_name is not None:
+                        self.workbook_name = value_object.workbook_name
+                        if value_object.worksheet_name is not None:
+                            self.worksheet_name = value_object.worksheet_name
+                            if value_object.data is not None:
+                                self.data = value_object.data
                             self.open()
             else:
                 if isinstance(target_value, str):
@@ -89,11 +89,11 @@ class Spreadsheet:
                             self.worksheet_name = worksheet_name
                             self.open()
                             self.data = self.worksheet.get_all_values()
-                            self.spreadsheet_value = SpreadsheetValue(self.json_keyfile_name,
-                                                                      self.workbook_name,
-                                                                      self.worksheet_name,
-                                                                      self.data,
-                                                                      )
+                            self.value_object = SpreadsheetValue(self.json_keyfile_name,
+                                                                 self.workbook_name,
+                                                                 self.worksheet_name,
+                                                                 self.data,
+                                                                 )
 
     def open(self):
         """
@@ -125,7 +125,7 @@ class Spreadsheet:
 
         :return: crawling_value 値オブジェクト
         """
-        return copy.deepcopy(self.spreadsheet_value)
+        return copy.deepcopy(self.value_object)
 
     def get_result_data(self):
         """
@@ -133,7 +133,7 @@ class Spreadsheet:
 
         :return: spreadsheet_value.data スプレッドシートの値リスト
         """
-        return copy.deepcopy(self.spreadsheet_value.data)
+        return copy.deepcopy(self.value_object.data)
 
     def create_save_text(self):
         """
@@ -153,7 +153,7 @@ class Spreadsheet:
 
         :return: bool 成功/失敗=True/False
         """
-        if self.spreadsheet_value is None:
+        if self.value_object is None:
             return False
         buff = self.create_save_text()
         pyperclip.copy(buff)  # クリップボードへのコピー
@@ -170,7 +170,7 @@ class Spreadsheet:
         :param save_path: str セーブする独自フォーマットなファイルのパス
         :return: bool 成功/失敗=True/False
         """
-        if self.spreadsheet_value is None:
+        if self.value_object is None:
             return False
         with open(save_path, 'w', encoding='utf-8') as work_file:
             buff = self.create_save_text()
@@ -193,11 +193,11 @@ class Spreadsheet:
             self.worksheet_name = buff[0].rstrip('\n')
             del buff[0]
             self.data: list = json.loads(buff[0].rstrip('\n'))
-            self.spreadsheet_value = SpreadsheetValue(self.json_keyfile_name,
-                                                      self.workbook_name,
-                                                      self.worksheet_name,
-                                                      self.data,
-                                                      )
+            self.value_object = SpreadsheetValue(self.json_keyfile_name,
+                                                 self.workbook_name,
+                                                 self.worksheet_name,
+                                                 self.data,
+                                                 )
             self.open()
             return True
 

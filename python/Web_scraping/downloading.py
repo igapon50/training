@@ -63,7 +63,7 @@ class Downloading:
         * 指定のフォルダを圧縮する
         * 指定のフォルダ内のファイルを削除する
     """
-    downloading_value: DownloadingValue = None
+    value_object: DownloadingValue = None
     image_list: list = None
     save_path: str = None
     src_file_list: list = []
@@ -82,10 +82,10 @@ class Downloading:
             sys.exit(1)
         if isinstance(target_value, DownloadingValue):
             if 0 < len(target_value.image_list):
-                self.downloading_value = target_value
-                self.image_list = self.downloading_value.image_list
-                if self.downloading_value.save_path is not None:
-                    self.save_path = self.downloading_value.save_path
+                self.value_object = target_value
+                self.image_list = self.value_object.image_list
+                if self.value_object.save_path is not None:
+                    self.save_path = self.value_object.save_path
                     self.initialize()
         else:
             if isinstance(target_value, list):
@@ -101,7 +101,7 @@ class Downloading:
 
         :return: ScrapingValue 値オブジェクト
         """
-        return copy.deepcopy(self.downloading_value)
+        return copy.deepcopy(self.value_object)
 
     def get_image_list(self):
         """
@@ -109,7 +109,7 @@ class Downloading:
 
         :return: list 画像URLリスト
         """
-        return copy.deepcopy(self.downloading_value.image_list)
+        return copy.deepcopy(self.value_object.image_list)
 
     def get_src_file_list(self):
         """
