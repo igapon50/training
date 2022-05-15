@@ -29,13 +29,13 @@ if __name__ == '__main__':  # インポート時には動かない
     print(imglist_filepath)
 
     # ファイルのURLリストを作成
-    crawling = Scraping()
-    if not crawling:
+    scraping = Scraping()
+    if not scraping:
         print(msg_error_exit)
-        sys.exit(crawling)
-    crawling.load_text(RESULT_FILE_PATH + '1.txt')
-    file_url_list = crawling.get_image_list()
-    title = crawling.get_title()
+        sys.exit(scraping)
+    scraping.load_text(RESULT_FILE_PATH + '1.txt')
+    file_url_list = scraping.get_image_list()
+    title = scraping.get_title()
     # ダウンロードを開始する
     downloading = Downloading(file_url_list, folder_path)
 

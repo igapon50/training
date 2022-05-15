@@ -33,7 +33,7 @@ if __name__ == '__main__':  # インポート時には動かない
     print(target_url)
 
     # ファイルのURLリストを作成
-    scraping = Scraping(target_url, img_css_select, img_attr)
+    scraping = Scraping(target_url, img_css_select, img_attr, img_title_css)
     if not scraping:
         print(msg_error_exit)
         sys.exit(scraping)
