@@ -2,9 +2,17 @@
 # -*- coding: utf-8 -*-
 """
 OpenGLを使った3Dの立体アニメーションのお勉強
+Gimp前景抽出選択ツールの使い方
+https://gazocustomize.com/gimp-foreground-extraction-tool/
+ブログ
+http://www.mit.edu/~brignole/3dem.html
+https://aidiary.hatenablog.com/entry/20080915/1281750879
+https://aidiary.hatenablog.com/entry/20081018/1281751729
+http://gunload.web.fc2.com/opengl/tutorial/skinning/pygame/
 documents
 http://westplain.sakuraweb.com/translate/pygame/Examples.cgi#pygame.examples.glcube.main
 https://docs.microsoft.com/ja-jp/windows/win32/opengl/opengl
+https://docs.microsoft.com/en-us/dotnet/api/android.opengl.gles20.glgetuniformlocation?view=xamarin-android-sdk-12
 git
 https://github.com/pygame/pygame/blob/main/examples/glcube.py
 """
