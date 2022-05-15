@@ -35,7 +35,7 @@ if __name__ == '__main__':  # インポート時には動かない
 
     urls = [target_url]
     # スクレイピングを開始する
-    scraping = Scraping(urls, img_css_select, img_attr)
+    scraping = Scraping(urls, img_css_select, img_attr, img_title_css)
     if not scraping:
         print(msg_error_exit)
         sys.exit()

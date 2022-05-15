@@ -110,7 +110,7 @@ class Scraping:
                 if value_object.attrs is not None:
                     self.attrs = value_object.attrs
                 if value_object.title_css is not None:
-                    self.attrs = value_object.title_css
+                    self.title_css = value_object.title_css
             else:
                 if isinstance(target_value, list):
                     self.urls = target_value
@@ -191,6 +191,7 @@ class Scraping:
         # スクレイピング
         # title = response.html.find("html > head > title", first=True).text
         title = response.html.find(self.title_css, first=True).text
+        print(title)
         target_url = self.urls
         for css_selector, attr in zip(self.css_selectors, self.attrs):
             target_url = self.get_url_list(target_url, css_selector, attr)

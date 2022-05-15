@@ -42,6 +42,7 @@ OUTPUT_FOLDER_PATH = '.\\folder01'  # ダウンロードしたファイルの保
 # img_css_select = 'html body div.kijibox p a'
 # img_attr = 'href'
 
+img_title_css = 'h2.title'
 img_css_select = ['div.thumb-container > a', '#image-container > a > img']
 img_attr = ['href', 'src']
 
