@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""
+クローリング
+    * downloadlist.txtから、URLを読み込んでスクレイピング＆ダウンロードする。
+    * downloadlist.txtファイルに処理対象サイトURLを、一行に一URL記載しておく。
+"""
 import subprocess
 
 
