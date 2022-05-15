@@ -1,7 +1,6 @@
 @echo off
 REM ファイル名の先頭に連番3桁を挿入する
 pushd folder01
-
 setlocal enabledelayedexpansion
 set prefix=
 set pad=3
@@ -15,6 +14,5 @@ for %%F in (*) do (
  )
 )
 endlocal
-
 popd
-goto :EOF
+REM goto :EOF

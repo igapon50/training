@@ -2,30 +2,27 @@
 # -*- coding: utf-8 -*-
 """
 スクレイピングユーティリティ
-    * URLリストと、保存フォルダを指定して、スクレイピングする
-        * URLリストのファイルをダウンロードする
-        * ダウンロードしたファイルの名前を、ナンバリングした名前に付けなおす
-        * 保存フォルダを圧縮する
-        * 保存フォルダ内のファイルを削除する
+    * 処理対象サイトURLと、CSSセレクタと、処理対象属性を指定して、スクレイピングする
+    * スクレイピング結果を以下のファイルに保存したり、読み込んだりできる
+        * pickle: ライブラリpickleを参照のこと
+        * 独自フォーマット: ダウンロードする画像ファイルのURLが展開されているので、ダウンローダーにコピペしやすい
 """
+
 # standard library
-import sys  # 終了時のエラー有無
-import re  # 正規表現モジュール
-import zipfile  # zipファイル
-import os  # ファイルパス分解
-import shutil  # 高水準のファイル操作
 from urllib.parse import urlparse  # URLパーサー
 from urllib.parse import urljoin  # URL結合
 
 # 3rd party packages
-import requests  # HTTP通信
 import urllib3
 import pickle
+import sys
 import copy
 import bs4  # Beautiful Soup
 import pyperclip  # クリップボード
 from dataclasses import dataclass
 from urllib3.util.retry import Retry
+from requests_html import HTMLSession
+import json
 
 # local source
 from const import *
@@ -39,229 +36,304 @@ class ScrapingValue:
     """
     スクレイピング値オブジェクト
     """
-    image_list: list = None
-    save_path: str = None
+    urls: list
+    css_selectors: list
+    attrs: list
+    title_css: str
+    title: str
+    image_list: list
 
-    def __init__(self, image_list, save_path):
+    def __init__(self, urls, css_selectors, attrs, title_css, title, image_list):
         """
         完全コンストラクタパターン
 
-        :param image_list: list ダウンロードするURLのリスト
-        :param save_path: str ダウンロード後に保存するフォルダパス
+        :param urls: list 処理対象サイトURLリスト
+        :param css_selectors: list スクレイピングする際のCSSセレクタリスト
+        :param attrs: list スクレイピングする際の属性リスト
+        :param title_css: str 対象サイトタイトルのCSSセレクタ
+        :param title: str 対象サイトタイトル
+        :param image_list: list スクレイピングして得た属性のリスト
         """
+        if urls is not None:
+            object.__setattr__(self, "urls", urls)
+        if css_selectors is not None:
+            object.__setattr__(self, "css_selectors", css_selectors)
+        if attrs is not None:
+            object.__setattr__(self, "attrs", attrs)
+        if title_css is not None:
+            object.__setattr__(self, "title_css", title_css)
+        if title is not None:
+            object.__setattr__(self, "title", title)
         if 0 < len(image_list):
             object.__setattr__(self, "image_list", image_list)
-        if save_path is not None:
-            object.__setattr__(self, "save_path", save_path)
 
 
 class Scraping:
     """
     スクレイピングのユーティリティ
-        * 指定のフォルダにダウンロードする
-        * ダウンロードしたファイル群の名前を付け直す
-        * 指定のフォルダを圧縮する
-        * 指定のフォルダ内のファイルを削除する
+        * 指定のサイトを読み込む
+        * 指定のCSSセレクタ(css_image_select)と属性でスクレイピングする
+        * スクレイピング結果でCrawlingValueを生成する
+        * CrawlingValueをファイルに保存したり読み込んだりできる
     """
-    files_downloader_value: ScrapingValue = None
-    image_list: list = None
-    save_path: str = None
-    src_file_list: list = []
-    dst_file_list: list = []
-    rename_file_dic: dict = None
+    value_object: ScrapingValue = None
+    urls: list = None
+    css_selectors: list = None
+    attrs: list = None
+    script = """
+        () => {
+            return {
+                width: document.documentElement.clientWidth,
+                height: document.documentElement.clientHeight,
+                deviceScaleFactor: window.devicePixelRatio,
+            }
+        }
+    """
 
-    def __init__(self, target_value, save_path=None):
+    def __init__(self, target_value=None, css_selectors=None, attrs=None, title_css=None):
         """
         コンストラクタ
 
-        :param target_value: list ダウンロードするURLのリスト、または、ScrapingValue 値オブジェクト
-        :param save_path: str ダウンロード後に保存するフォルダパス
+        :param target_value: list 対象となるサイトURLリスト、または、ScrapingValue 値オブジェクト
+        :param css_selectors: list スクレイピングする際のCSSセレクタリスト
+        :param attrs: list スクレイピングする際の属性リスト
+        :param title_css: str タイトルのCSSセレクタ
         """
-        if target_value is None:
-            print('target_valueがNoneです')
-            sys.exit(1)
-        if isinstance(target_value, ScrapingValue):
-            if 0 < len(target_value.image_list):
-                self.files_downloader_value = target_value
-                self.image_list = self.files_downloader_value.image_list
-                if self.files_downloader_value.save_path is not None:
-                    self.save_path = self.files_downloader_value.save_path
-                    self.initialize()
-        else:
-            if isinstance(target_value, list):
-                if 0 < len(target_value):
-                    self.image_list = target_value
-                    if save_path is not None:
-                        self.save_path = save_path
-                        self.initialize()
+        if target_value is not None:
+            if isinstance(target_value, ScrapingValue):
+                value_object = target_value
+                self.value_object = value_object
+                if value_object.urls is not None:
+                    self.urls = value_object.urls
+                if value_object.css_selectors is not None:
+                    self.css_selectors = value_object.css_selectors
+                if value_object.attrs is not None:
+                    self.attrs = value_object.attrs
+                if value_object.title_css is not None:
+                    self.title_css = value_object.title_css
+            else:
+                if isinstance(target_value, list):
+                    self.urls = target_value
+                    if css_selectors is not None:
+                        self.css_selectors = css_selectors
+                        if attrs is not None:
+                            self.attrs = attrs
+                            if title_css is not None:
+                                self.title_css = title_css
+                                # self.request()
+                                self.request_html()
 
     def get_value_objects(self):
         """
         値オブジェクトを取得する
 
-        :return: ScrapingValue 値オブジェクト
+        :return: crawling_value 値オブジェクト
         """
-        return copy.deepcopy(self.files_downloader_value)
+        return copy.deepcopy(self.value_object)
 
     def get_image_list(self):
         """
         画像URLリストを取得する
 
-        :return: list 画像URLリスト
+        :return: crawling_value.image_list 画像URLリスト
         """
-        return copy.deepcopy(self.files_downloader_value.image_list)
+        return copy.deepcopy(self.value_object.image_list)
 
-    def get_src_file_list(self):
+    def get_title(self):
         """
-        リネーム前の、保存ファイルパスリストを取得する
+        対象サイトタイトルを取得する
 
-        :return: list ダウンロードファイルパスリスト
+        :return: crawling_value.title 対象サイトタイトル
         """
-        return copy.deepcopy(self.src_file_list)
+        return self.value_object.title
 
-    def get_dst_file_list(self):
+    def request(self):
         """
-        リネーム後の、保存ファイルパスリストを取得する
-
-        :return: list リネームファイルパスリスト
-        """
-        return copy.deepcopy(self.dst_file_list)
-
-    def get_dic_file_list(self):
-        """
-        リネームファイルパス辞書を取得する
-
-        :return: dict リネームファイルパス辞書
-        """
-        return copy.deepcopy(self.rename_file_dic)
-
-    def initialize(self):
-        """
-        初期化
-            * 画像URLリストと保存ファイルパスから、保存ファイルパスリストを作る
-            * 辞書も作る
-            * フォルダがなければフォルダも作る
-
-        :return: None
-        """
-        dst_file_namelist = []
-        for image_url in self.image_list:
-            temp_img_filename = image_url.rsplit('/', 1)[1].replace('?', '_')  # 禁則文字の変換
-            print(temp_img_filename)
-            dst_file_namelist.append(temp_img_filename)
-        if self.save_path[len(self.save_path) - 1] == '\\':
-            for file_name in dst_file_namelist:
-                self.src_file_list.append(self.save_path + file_name)
-        else:
-            for file_name in dst_file_namelist:
-                self.src_file_list.append(self.save_path + '\\' + file_name)
-        # 2つの配列から辞書型に変換
-        self.rename_file_dic = {key: val for key, val in zip(self.image_list, self.src_file_list)}
-        return
-
-    def download(self):
-        """
-        target_urlに接続して、image_attrでスクレイピングして、titleとimage_listを更新する
+        ページをたどって画像のurlを集める。値オブジェクトを生成する。
 
         :return: bool 成功/失敗=True/False
         """
-        # フォルダーがなければ作成する
-        if not os.path.isdir(self.save_path):
-            os.makedirs(self.save_path)
-        # ファイルのダウンロード
-        for image_url in self.image_list:
-            try:
-                if not os.path.isfile(self.rename_file_dic[image_url]):  # ファイルの存在チェック
-                    images = self.download_image(image_url)
-                    if not os.path.isfile(self.rename_file_dic[image_url]):  # ファイルの存在チェック
-                        with open(self.rename_file_dic[image_url], "wb") as img_file:
-                            img_file.write(images)
-                else:
-                    print('Skip ' + self.rename_file_dic[image_url])
-            except KeyboardInterrupt:
-                break
-            except Exception as err:
-                print(image_url + ' ', end='')  # 改行なし
-                print(err)
-                return False
+        image_list: list = []
+        title: str = ""
+        retries = Retry(connect=5, read=2, redirect=5)
+        http = urllib3.PoolManager(retries=retries)
+        for url in self.urls:
+            res = http.request('GET', url, timeout=10, headers=HEADERS_DIC)
+            soup = bs4.BeautifulSoup(res.data, 'html.parser')
+            # title = str(soup.title.string)
+            title = str(soup.select(self.title_css))
+            for css_selector, attr in zip(self.css_selectors, self.attrs):
+                for img in soup.select(css_selector):
+                    absolute_path = str(img[attr])
+                    parse_path = urlparse(absolute_path)
+                    if 0 == len(parse_path.scheme):  # 絶対パスかチェックする
+                        absolute_path = urljoin(url, absolute_path)
+                    image_list.append(absolute_path)
+        self.value_object = ScrapingValue(self.urls,
+                                          self.css_selectors,
+                                          self.attrs,
+                                          self.title_css,
+                                          title,
+                                          image_list,
+                                          )
         return True
 
-    def download_image(self, image_url=None, timeout=30):
+    def request_html(self):
         """
-        指定したURLのimageをgetして返す。サーバー落ちているとリダイレクトでエラー画像になることがあるのでリダイレクトFalse
-
-        :param image_url: str ダウンロードするURL
-        :param timeout: int タイムアウト時間[s]
-        :return: bytes 読み込んだimageのバイナリデータ
-        """
-        response = requests.get(image_url, allow_redirects=False, timeout=timeout)
-        if response.status_code != requests.codes.ok:
-            e = Exception("HTTP status: " + str(response.status_code))  # + " " + file_url + " " + response.url)
-            raise e
-        content_type = response.headers["content-type"]
-        if 'image' not in content_type:
-            e = Exception("Content-Type: " + content_type)  # + " " + file_url + " " + response.url)
-            raise e
-        return response.content
-
-    def rename_images(self):
-        """
-        指定したファイルパスリストから、ファイル名部分をナンバリングし直したファイルパスリストを作る
+        ページを再帰的にたどって画像のurlを集める。値オブジェクトを生成する。
 
         :return: bool 成功/失敗=True/False
         """
-        # ファイルの存在確認
-        for src_file_path in self.src_file_list:
-            if not os.path.isfile(src_file_path):
-                print('ファイル[' + src_file_path + ']が存在しません。')
-                print(msg_error_exit)
-                return False
-        count = 0
-        for src_file_path in self.src_file_list:
-            print(src_file_path)
-            count += 1
-            root, ext = os.path.splitext(src_file_path)
-            path, file = os.path.split(src_file_path)
-            dst_img_path = path + '\\' + '{:03d}'.format(count) + ext
-            print(dst_img_path)
-            self.dst_file_list.append(dst_img_path)
-            os.rename(src_file_path, dst_img_path)
+        session = HTMLSession()
+        response = session.get(self.urls[0])
+        # ブラウザエンジンでHTMLを生成させる
+        response.html.render(script=self.script, reload=False, timeout=0, sleep=10)
+        # スクレイピング
+        # title = response.html.find("html > head > title", first=True).text
+        title = response.html.find(self.title_css, first=True).text
+        print(title)
+        target_url = self.urls
+        for css_selector, attr in zip(self.css_selectors, self.attrs):
+            target_url = self.get_url_list(target_url, css_selector, attr)
+        image_list = target_url
+        self.value_object = ScrapingValue(self.urls,
+                                          self.css_selectors,
+                                          self.attrs,
+                                          self.title_css,
+                                          title,
+                                          image_list,
+                                          )
         return True
 
-    def make_zip_file(self):
-        """
-        リネーム後のダウンロードファイルを、一つの圧縮ファイルにする
+    def get_url_list(self,
+                     urls,
+                     css_selector,
+                     attr,
+                     ):
+        session = HTMLSession()
+        url_list: list = []
+        for url in urls:
+            response = session.get(url)
+            # ブラウザエンジンでHTMLを生成させる
+            response.html.render(script=self.script, reload=False, timeout=0, sleep=10)
+            target_rows = response.html.find(css_selector)
+            count = len(target_rows)
+            print(count)
+            if target_rows:
+                for row in target_rows:
+                    if not attr == "":
+                        absolute_path = row.attrs[attr]
+                    else:
+                        absolute_path = row.text
+                    parse_path = urlparse(absolute_path)
+                    if 0 == len(parse_path.scheme):  # 絶対パスかチェックする
+                        absolute_path = urljoin(url, absolute_path)
+                    url_list.append(absolute_path)
+                    print(str(count) + " " + absolute_path)
+                    count -= 1
+        return url_list
 
-        :return: None
+    def create_save_text(self):
         """
-        with zipfile.ZipFile(self.save_path + '.zip', 'w', zipfile.ZIP_DEFLATED) as zip_file:
-            for img_path in self.dst_file_list:
-                zip_file.write(img_path)
+        保存用文字列の作成
 
-    def download_file_clear(self):
+        :return: str 保存用文字列の作成
         """
-        保存フォルダからダウンロードファイルを削除する
+        buff = json.dumps(self.value_object.urls, ensure_ascii=False) + '\n'  # サイトURL追加
+        buff += json.dumps(self.value_object.css_selectors, ensure_ascii=False) + '\n'  # cssセレクタ追加
+        buff += json.dumps(self.value_object.attrs, ensure_ascii=False) + '\n'  # 属性追加
+        buff += self.value_object.title_css + '\n'  # タイトルCSSセレクタ追加
+        buff += self.value_object.title + '\n'  # タイトル追加
+        for absolute_path in self.value_object.image_list:
+            buff += absolute_path + '\n'  # 画像URL追加
+        return buff
 
-        :return: None
+    def clip_copy(self):
         """
-        print('ファイル削除します(フォルダごと削除して、フォルダを作り直します)')
-        shutil.rmtree(self.save_path)
-        if self.save_path[len(self.save_path) - 1] == '\\':
-            os.mkdir(self.save_path)
-        else:
-            os.mkdir(self.save_path + '\\')
+        クローリング結果をクリップボードにコピーする
 
-    def rename_zip_file(self, title):
+        :return: bool 成功/失敗=True/False
         """
-        圧縮ファイルの名前を付けなおす
+        if self.value_object is None:
+            return False
+        buff = self.create_save_text()
+        pyperclip.copy(buff)  # クリップボードへのコピー
+        return True
 
-        :param title: str 付け直すファイル名(禁則文字は削除される)
-        :return: None
+    def save_text(self, save_path):
         """
-        # 禁則文字を削除する
-        zip_file_new_name = '.\\' + re.sub(r'[\\/:*?"<>|]+', '', title)
-        print(f'圧縮ファイル名を付け直します:{zip_file_new_name}.zip')
-        os.rename(self.save_path + '.zip', zip_file_new_name + '.zip')
+        データをファイルに、以下の独自フォーマットで保存する
+            * 処理対象サイトURL
+            * CSSセレクタ
+            * 属性
+            * タイトル
+            * 複数の画像URL
+
+        :param save_path: str セーブする独自フォーマットなファイルのパス
+        :return: bool 成功/失敗=True/False
+        """
+        if self.value_object is None:
+            return False
+        with open(save_path, 'w', encoding='utf-8') as work_file:
+            buff = self.create_save_text()
+            work_file.write(buff)  # ファイルへの保存
+            return True
+
+    def load_text(self, load_path):
+        """
+        独自フォーマットなファイルからデータを読み込む
+
+        :param load_path: str ロードする独自フォーマットなファイルのパス
+        :return: bool 成功/失敗=True/False
+        """
+        with open(load_path, 'r', encoding='utf-8') as work_file:
+            buff = work_file.readlines()
+            self.urls = json.loads(buff[0].rstrip('\n'))
+            del buff[0]
+            self.css_selectors = json.loads(buff[0].rstrip('\n'))
+            del buff[0]
+            self.attrs = json.loads(buff[0].rstrip('\n'))
+            del buff[0]
+            self.title_css = buff[0].rstrip('\n')
+            del buff[0]
+            title = buff[0].rstrip('\n')
+            del buff[0]
+            image_list: list = []
+            for line in buff:
+                image_list.append(line.rstrip('\n'))
+            self.value_object = ScrapingValue(self.urls,
+                                              self.css_selectors,
+                                              self.attrs,
+                                              title,
+                                              image_list,
+                                              )
+            return True
+
+    def save_pickle(self, save_path):
+        """
+        シリアライズしてpickleファイルに保存する
+
+        :param save_path: str セーブするpickleファイルのパス
+        :return: bool 成功/失敗=True/False
+        """
+        if save_path is None:
+            return False
+        with open(save_path, 'wb') as work_file:
+            pickle.dump(self.value_object, work_file)
+            return True
+
+    def load_pickle(self, load_path):
+        """
+        pickleファイルを読み込み、デシリアライズする
+
+        :param load_path: str ロードするpickleファイルのパス
+        :return: bool 成功/失敗=True/False
+        """
+        if load_path is None:
+            return False
+        with open(load_path, 'rb') as work_file:
+            self.value_object = pickle.load(work_file)
+            return True
 
 
 # 検証コード
@@ -286,13 +358,36 @@ if __name__ == '__main__':  # インポート時には動かない
     else:
         print('引数が不正です。')
         print(msg_error_exit)
-        sys.exit()
+        sys.exit(1)
     print(target_url)
 
-    image_url_list = [
-        'https://1.bp.blogspot.com/-tzoOQwlaRac/X1LskKZtKEI/AAAAAAABa_M/89phuGIVDkYGY_uNKvFB6ZiNHxR7bQYcgCNcBGAsYHQ/s180-c/fashion_dekora.png',
-        'https://1.bp.blogspot.com/-gTf4sWnRdDw/X0B4RSQQLrI/AAAAAAABarI/MJ9DW90dSVwtMjuUoErxemnN4nPXBnXUwCNcBGAsYHQ/s180-c/otaku_girl_fashion.png',
-    ]
-    fileDownloader = Scraping(image_url_list, folder_path)
-    fileDownloader.download()
-    fileDownloader.rename_images()
+    # テスト　女の子の顔のアイコン | かわいいフリー素材集 いらすとや
+    urls = ['https://www.irasutoya.com/2013/10/blog-post_3974.html',
+            ]
+    css_selectors = ['div.entry > p:nth-child(1) > a > img',
+                     ]
+    attrs = ['src',
+             ]
+    title_css = 'html > head > title'
+    scraping = Scraping(urls,
+                        css_selectors,
+                        attrs,
+                        title_css,
+                        )
+    scraping.save_text(RESULT_FILE_PATH)
+    # 値オブジェクトを生成
+    value_objects = scraping.get_value_objects()
+    # 保存や読込を繰り返す
+    scraping.save_pickle(RESULT_FILE_PATH + '1.pkl')
+    scraping.load_pickle(RESULT_FILE_PATH + '1.pkl')
+    scraping.save_text(RESULT_FILE_PATH + '1.txt')
+    # 値オブジェクトでインスタンス作成
+    scraping2 = Scraping(value_objects)
+    # 保存や読込を繰り返す
+    scraping2.save_pickle(RESULT_FILE_PATH + '2.pkl')
+    scraping2.load_pickle(RESULT_FILE_PATH + '2.pkl')
+    scraping2.save_text(RESULT_FILE_PATH + '2.txt')
+    scraping2.load_text(RESULT_FILE_PATH + '2.txt')
+    scraping2.save_pickle(RESULT_FILE_PATH + '3.pkl')
+    scraping2.load_pickle(RESULT_FILE_PATH + '3.pkl')
+    scraping2.save_text(RESULT_FILE_PATH + '3.txt')

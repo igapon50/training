@@ -6,8 +6,8 @@ imglistファイルからファイル名リストを作り、ダウンロード�
 # local source
 from const import *
 from func import *
-from crawling import *
 from scraping import *
+from downloading import *
 
 if __name__ == '__main__':  # インポート時には動かない
     imglist_filepath = RESULT_FILE_PATH
@@ -28,16 +28,16 @@ if __name__ == '__main__':  # インポート時には動かない
         sys.exit()
     print(imglist_filepath)
 
-    # クローリングを開始する
-    crawling = Crawling()
-    if not crawling:
-        print(msg_error_exit)
-        sys.exit(crawling)
-    # クローリング情報をロードする
-    crawling.load_text(RESULT_FILE_PATH + '1.txt')
-    file_url_list = crawling.get_image_list()
-
     # スクレイピングを開始する
-    scraping = Scraping(file_url_list, folder_path)
+    scraping = Scraping()
+    if not scraping:
+        print(msg_error_exit)
+        sys.exit(scraping)
+    # クローリング情報をロードする
+    scraping.load_text(RESULT_FILE_PATH + '1.txt')
+    file_url_list = scraping.get_image_list()
+
+    # ダウンロードを開始する
+    downloading = Downloading(file_url_list, folder_path)
     # 画像ファイルのダウンロード
-    scraping.download()
+    downloading.download()
