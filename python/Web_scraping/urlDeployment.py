@@ -72,7 +72,11 @@ if __name__ == '__main__':  # インポート時には動かない
     for line in proc.stdout:
         if "irvine.exe" in str(line):
             running = True
-    fileDownloader.rename_images()
-    fileDownloader.make_zip_file()
+    ret = fileDownloader.rename_images()
+    if not ret:
+        sys.exit()
+    ret = fileDownloader.make_zip_file()
+    if not ret:
+        sys.exit()
     # fileDownloader.rename_zip_file('ファイル名')
     fileDownloader.download_file_clear()

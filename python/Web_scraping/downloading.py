@@ -232,11 +232,17 @@ class Downloading:
         """
         リネーム後のダウンロードファイルを、一つの圧縮ファイルにする
 
-        :return: None
+        :return: bool 成功/失敗=True/False
         """
+        for img_path in self.dst_file_list:
+            if not os.path.isfile(img_path):
+                print('ファイル[' + img_path + ']が存在しません。')
+                print(msg_error_exit)
+                return False
         with zipfile.ZipFile(self.save_path + '.zip', 'w', zipfile.ZIP_DEFLATED) as zip_file:
             for img_path in self.dst_file_list:
                 zip_file.write(img_path)
+        return True
 
     def download_file_clear(self):
         """
@@ -295,8 +301,14 @@ if __name__ == '__main__':  # インポート時には動かない
         'https://1.bp.blogspot.com/-gTf4sWnRdDw/X0B4RSQQLrI/AAAAAAABarI/MJ9DW90dSVwtMjuUoErxemnN4nPXBnXUwCNcBGAsYHQ/s180-c/otaku_girl_fashion.png',
     ]
     fileDownloader = Downloading(image_url_list, folder_path)
-    fileDownloader.download()
-    fileDownloader.rename_images()
-    fileDownloader.make_zip_file()
+    ret = fileDownloader.download()
+    if not ret:
+        sys.exit()
+    ret = fileDownloader.rename_images()
+    if not ret:
+        sys.exit()
+    ret = fileDownloader.make_zip_file()
+    if not ret:
+        sys.exit()
     fileDownloader.rename_zip_file('若者 | かわいいフリー素材集 いらすとや')
     fileDownloader.download_file_clear()
