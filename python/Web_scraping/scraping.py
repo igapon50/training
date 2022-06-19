@@ -188,9 +188,13 @@ class Scraping:
         response = session.get(self.urls[0])
         # ブラウザエンジンでHTMLを生成させる
         response.html.render(script=self.script, reload=False, timeout=0, sleep=10)
+        if not response.status_code == 200:
+            print("WEBスクレイピングに失敗")
+            print(response)
+            exit()
         # スクレイピング
         # title = response.html.find("html > head > title", first=True).text
-        title = response.html.find(self.title_css, first=True).text
+        title = response.html.find(self.title_css).text
         print(title)
         target_url = self.urls
         for css_selector, attr in zip(self.css_selectors, self.attrs):
