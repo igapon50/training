@@ -138,9 +138,12 @@ class Downloading:
     def initialize(self):
         """
         初期化
-            * 画像URLリストと保存ファイルパスから、保存ファイルパスリストを作る
-            * 辞書も作る
-            * フォルダがなければフォルダも作る
+            * Input：
+            *   画像URLリスト(image_list)
+            *   保存ファイルパス(save_path)
+            * Output：
+            *   保存ファイルパスリスト(src_file_list)
+            *   辞書(rename_file_dic)
 
         :return: None
         """
@@ -204,6 +207,18 @@ class Downloading:
             raise e
         return response.content
 
+    def is_exist(self):
+        """
+        ローカルにファイルが全て存在するか調べる
+        :return: bool 存在する/存在しない=True/False
+        """
+        for img_path in self.dst_file_list:
+            if not os.path.isfile(img_path):
+                print('ファイル[' + img_path + ']が存在しません。')
+                print(msg_error_exit)
+                return False
+        return True
+
     def rename_images(self):
         """
         指定したファイルパスリストから、ファイル名部分をナンバリングし直したファイルパスリストを作る
@@ -211,11 +226,8 @@ class Downloading:
         :return: bool 成功/失敗=True/False
         """
         # ファイルの存在確認
-        for src_file_path in self.src_file_list:
-            if not os.path.isfile(src_file_path):
-                print('ファイル[' + src_file_path + ']が存在しません。')
-                print(msg_error_exit)
-                return False
+        if not self.is_exist():
+            return False
         count = 0
         for src_file_path in self.src_file_list:
             print(src_file_path)
@@ -225,8 +237,25 @@ class Downloading:
             dst_img_path = path + '\\' + '{:03d}'.format(count) + ext
             print(dst_img_path)
             self.dst_file_list.append(dst_img_path)
+            if os.path.isfile(dst_img_path):
+                print(f'リネームファイル{dst_img_path}が存在しています')
+                return False
             os.rename(src_file_path, dst_img_path)
         return True
+
+    def rename_ext(self, ext='.png'):
+        """
+        ダウンロードできていないファイルの拡張子を変更する
+        :param ext: str 変更する拡張子 
+        :return:
+        """
+        for i, image_url in enumerate(self.image_list):
+            if not os.path.isfile(self.rename_file_dic[image_url]):
+                parse_path = urlparse(image_url)
+                image_url = urljoin(parse_path.scheme, image_url)
+                root, _ext = os.path.splitext(self.rename_file_dic[image_url])
+                self.image_list[i] = urljoin(image_url, root + ext)
+        self.initialize()
 
     def make_zip_file(self):
         """
@@ -234,11 +263,11 @@ class Downloading:
 
         :return: bool 成功/失敗=True/False
         """
-        for img_path in self.dst_file_list:
-            if not os.path.isfile(img_path):
-                print('ファイル[' + img_path + ']が存在しません。')
-                print(msg_error_exit)
-                return False
+        if not self.is_exist():
+            return False
+        if os.path.isfile(self.save_path + '.zip'):
+            print(f'圧縮ファイル{self.save_path}.zipが既に存在しています')
+            return False
         with zipfile.ZipFile(self.save_path + '.zip', 'w', zipfile.ZIP_DEFLATED) as zip_file:
             for img_path in self.dst_file_list:
                 zip_file.write(img_path)
@@ -262,12 +291,16 @@ class Downloading:
         圧縮ファイルの名前を付けなおす
 
         :param title: str 付け直すファイル名(禁則文字は削除される)
-        :return: None
+        :return: bool 成功/失敗=True/False
         """
         # 禁則文字を削除する
         zip_file_new_name = '.\\' + re.sub(r'[\\/:*?"<>|]+', '', title)
         print(f'圧縮ファイル名を付け直します:{zip_file_new_name}.zip')
+        if os.path.isfile(zip_file_new_name + '.zip'):
+            print(f'圧縮リネームファイル{zip_file_new_name}.zipが既に存在しています')
+            return False
         os.rename(self.save_path + '.zip', zip_file_new_name + '.zip')
+        return True
 
 
 # 検証コード
@@ -312,3 +345,6 @@ if __name__ == '__main__':  # インポート時には動かない
         sys.exit()
     fileDownloader.rename_zip_file('若者 | かわいいフリー素材集 いらすとや')
     fileDownloader.download_file_clear()
+    # 拡張子をjpgに変更する
+    fileDownloader.rename_ext('jpg')
+    print(fileDownloader.image_list)
