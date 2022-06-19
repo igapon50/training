@@ -5,6 +5,7 @@ OpenGLを使った3Dの立体アニメーションのお勉強
 Gimp前景抽出選択ツールの使い方
 https://gazocustomize.com/gimp-foreground-extraction-tool/
 ブログ
+https://qiita.com/i-tanaka730/items/ad56461a4f223fdbb4e5
 http://www.mit.edu/~brignole/3dem.html
 https://aidiary.hatenablog.com/entry/20080915/1281750879
 https://aidiary.hatenablog.com/entry/20081018/1281751729
