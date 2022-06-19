@@ -222,6 +222,7 @@ class Downloading:
     def rename_images(self):
         """
         指定したファイルパスリストから、ファイル名部分をナンバリングし直したファイルパスリストを作る
+        9999ファイルまで対応
 
         :return: bool 成功/失敗=True/False
         """
@@ -234,13 +235,14 @@ class Downloading:
             count += 1
             root, ext = os.path.splitext(src_file_path)
             path, file = os.path.split(src_file_path)
-            dst_img_path = path + '\\' + '{:03d}'.format(count) + ext
+            dst_img_path = path + '\\' + '{:04d}'.format(count) + ext
             print(dst_img_path)
             self.dst_file_list.append(dst_img_path)
-            if os.path.isfile(dst_img_path):
-                print(f'リネームファイル{dst_img_path}が存在しています')
-                return False
-            os.rename(src_file_path, dst_img_path)
+            if dst_img_path != src_file_path:
+                if os.path.isfile(dst_img_path):
+                    print(f'リネームファイル{dst_img_path}が存在しています')
+                    return False
+                os.rename(src_file_path, dst_img_path)
         return True
 
     def rename_ext(self, ext='.png'):
