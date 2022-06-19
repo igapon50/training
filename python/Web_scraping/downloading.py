@@ -253,8 +253,8 @@ class Downloading:
             if not os.path.isfile(self.rename_file_dic[image_url]):
                 parse_path = urlparse(image_url)
                 image_url = urljoin(parse_path.scheme, image_url)
-                root, _ext = os.path.splitext(self.rename_file_dic[image_url])
-                self.image_list[i] = urljoin(image_url, root + ext)
+                basename_without_ext = os.path.splitext(os.path.basename(self.rename_file_dic[image_url]))[0]
+                self.image_list[i] = urljoin(image_url, basename_without_ext + ext)
         self.initialize()
 
     def make_zip_file(self):
@@ -346,5 +346,5 @@ if __name__ == '__main__':  # インポート時には動かない
     fileDownloader.rename_zip_file('若者 | かわいいフリー素材集 いらすとや')
     fileDownloader.download_file_clear()
     # 拡張子をjpgに変更する
-    fileDownloader.rename_ext('jpg')
+    fileDownloader.rename_ext('.jpg')
     print(fileDownloader.image_list)
