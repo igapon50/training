@@ -72,11 +72,28 @@ if __name__ == '__main__':  # インポート時には動かない
     for line in proc.stdout:
         if "irvine.exe" in str(line):
             running = True
-    ret = fileDownloader.rename_images()
-    if not ret:
+    if not fileDownloader.is_src_exist():
+        # ダウンロードに失敗しているときは、拡張子を変えてダウンロードしなおす
+        if extend_name == '.jpg':
+            fileDownloader.rename_ext()
+        elif extend_name == '.png':
+            fileDownloader.rename_ext('.jpg')
+        # result_list.txtを作り直す
+        with open('./result_list.txt', 'w', encoding='utf-8') as work_file:
+            buff = ''
+            for absolute_path in fileDownloader.image_list:
+                buff += absolute_path + '\n'  # 画像URL追加
+            work_file.write(buff)  # ファイルへの保存
+        fileDownloader = Downloading(fileDownloader.image_list, folder_path)
+        # ダウンロードしなおす
+        proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+        running = False
+        for line in proc.stdout:
+            if "irvine.exe" in str(line):
+                running = True
+    if not fileDownloader.rename_images():
         sys.exit()
-    ret = fileDownloader.make_zip_file()
-    if not ret:
+    if not fileDownloader.make_zip_file():
         sys.exit()
     # fileDownloader.rename_zip_file('ファイル名')
     fileDownloader.download_file_clear()

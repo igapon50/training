@@ -147,6 +147,8 @@ class Downloading:
 
         :return: None
         """
+        self.src_file_list = []
+        self.rename_file_dic = {}
         dst_file_namelist = []
         for image_url in self.image_list:
             temp_img_filename = image_url.rsplit('/', 1)[1].replace('?', '_')  # 禁則文字の変換
@@ -207,7 +209,19 @@ class Downloading:
             raise e
         return response.content
 
-    def is_exist(self):
+    def is_src_exist(self):
+        """
+        ローカルにファイルが全て存在するか調べる
+        :return: bool 存在する/存在しない=True/False
+        """
+        for img_path in self.src_file_list:
+            if not os.path.isfile(img_path):
+                print('ファイル[' + img_path + ']が存在しません。')
+                print(msg_error_exit)
+                return False
+        return True
+
+    def is_dst_exist(self):
         """
         ローカルにファイルが全て存在するか調べる
         :return: bool 存在する/存在しない=True/False
@@ -227,7 +241,7 @@ class Downloading:
         :return: bool 成功/失敗=True/False
         """
         # ファイルの存在確認
-        if not self.is_exist():
+        if not self.is_src_exist():
             return False
         count = 0
         for src_file_path in self.src_file_list:
@@ -265,7 +279,7 @@ class Downloading:
 
         :return: bool 成功/失敗=True/False
         """
-        if not self.is_exist():
+        if not self.is_dst_exist():
             return False
         if os.path.isfile(self.save_path + '.zip'):
             print(f'圧縮ファイル{self.save_path}.zipが既に存在しています')
