@@ -8,6 +8,11 @@ requestsでスクレイピングできないページのスクレイピング
 https://gammasoft.jp/blog/how-to-download-web-page-created-javascript/
 https://docs.python-requests.org/projects/requests-html/en/latest/
 https://commte.net/7628
+https://qiita.com/uitspitss/items/f131ea79dffd58bc01ae
+https://computer.masas-record-storage-container.com/2021/03/01/requestshtml/
+
+Documents
+https://requests.readthedocs.io/projects/requests-html/en/latest/
 
 requests-htmlのGitHub
 https://github.com/kennethreitz/requests-html
@@ -334,8 +339,13 @@ class Tenki:
         counters = {}
         session = HTMLSession()
         response = session.get(self.target_url)
-        # ブラウザエンジンでHTMLを生成させる
-        response.html.render(script=script, reload=False, timeout=0, sleep=10)
+        # Chromiumで応答を再読み込みし、JavaScriptを実行して、HTMLコンテンツを更新されたバージョンに置き換える
+        response.html.render(script=script,  # ページ読み込み時に実行するJavaScript
+                             reload=False,  # Falseの場合、コンテンツはブラウザからロードされず、メモリから提供される
+                             timeout=0,  # 0は無制限
+                             wait=5,  # ページレンダリング前のスリープ秒数
+                             sleep=15,  # ページレンダリング後のスリープ秒数
+                             )
         # スクレイピング
         title = response.html.find("html > head > title", first=True).text
 
