@@ -1,10 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-数値URLを展開して、リストにして、ファイルに保存する。irvineを起動して、終了したらリネームしてzipする。
+数値URLを展開して、ファイルに保存して、irvineに渡す。
     http:/hoge/10.jpg
     ↓
     http:/hoge/1.jpg ～ http:/hoge/10.jpg
+irvineが起動してダウンロードが開始されるので、ダウンロードが終わったらirvineを手動で終了する。
+irvineが終了したらダウンロードファイルをチェックする。
+失敗している時は、拡張子を変えて、ファイルに保存して、irvineに渡す。
+成功している時は、リネームしてzipして削除する。
 """
 import urllib.parse
 import subprocess
@@ -16,7 +20,7 @@ if __name__ == '__main__':  # インポート時には動かない
     target_url = None
     folder_path = OUTPUT_FOLDER_PATH
     parse = None
-    url_list = []
+    url_list: list = []
     # 引数チェック
     if 2 == len(sys.argv):
         # Pythonに以下の2つ引数を渡す想定
@@ -56,6 +60,12 @@ if __name__ == '__main__':  # インポート時には動かない
             else:
                 print('引数が不正です。数値ではない？')
                 sys.exit(1)
+        else:
+            print('引数が不正です。URLではない？')
+            sys.exit(1)
+    else:
+        print('引数が不正です。空です。')
+        sys.exit(1)
     print(target_url)
     print(url_list)
 

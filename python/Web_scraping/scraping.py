@@ -196,10 +196,10 @@ class Scraping:
         # title = response.html.find("html > head > title", first=True).text
         title = response.html.find(self.title_css).text
         print(title)
-        target_url = self.urls
+        urls = self.urls
         for css_selector, attr in zip(self.css_selectors, self.attrs):
-            target_url = self.get_url_list(target_url, css_selector, attr)
-        image_list = target_url
+            urls = self.get_url_list(target_url, css_selector, attr)
+        image_list = urls
         self.value_object = ScrapingValue(self.urls,
                                           self.css_selectors,
                                           self.attrs,
@@ -308,6 +308,7 @@ class Scraping:
             self.value_object = ScrapingValue(self.urls,
                                               self.css_selectors,
                                               self.attrs,
+                                              self.title_css,
                                               title,
                                               image_list,
                                               )
@@ -366,17 +367,17 @@ if __name__ == '__main__':  # インポート時には動かない
     print(target_url)
 
     # テスト　女の子の顔のアイコン | かわいいフリー素材集 いらすとや
-    urls = ['https://www.irasutoya.com/2013/10/blog-post_3974.html',
-            ]
-    css_selectors = ['div.entry > p:nth-child(1) > a > img',
-                     ]
-    attrs = ['src',
-             ]
-    title_css = 'html > head > title'
-    scraping = Scraping(urls,
-                        css_selectors,
-                        attrs,
-                        title_css,
+    main_urls = ['https://www.irasutoya.com/2013/10/blog-post_3974.html',
+                 ]
+    main_css_selectors = ['div.entry > p:nth-child(1) > a > img',
+                          ]
+    main_attrs = ['src',
+                  ]
+    main_title_css = 'html > head > title'
+    scraping = Scraping(main_urls,
+                        main_css_selectors,
+                        main_attrs,
+                        main_title_css,
                         )
     scraping.save_text(RESULT_FILE_PATH)
     # 値オブジェクトを生成
