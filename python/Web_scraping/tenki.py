@@ -457,50 +457,30 @@ class Tenki:
 
 if __name__ == '__main__':  # インポート時には動かない
     RESULT_FILE_PATH = './result.txt'
-    target_url = "https://tenki.jp/forecast/4/20/5620/17202/10days.html"
-    # 引数チェック
-    if 2 == len(sys.argv):
-        # Pythonに以下の2つ引数を渡す想定
-        # 0は固定でスクリプト名
-        # 1.対象のURL
-        target_url = sys.argv[1]
-    elif 1 == len(sys.argv):
-        # 引数がなければ、クリップボードからURLを得る
-        paste_str = pyperclip.paste()
-        if 0 < len(paste_str):
-            parse = urlparse(paste_str)
-            if 0 < len(parse.scheme):
-                target_url = paste_str
-    # クリップボードが空なら、デフォルトURLを用いる
-    else:
-        print('引数が不正です。')
-        sys.exit()
-    print(target_url)
-
-    url = "https://tenki.jp/forecast/4/20/5620/17202/10days.html"
-    css_root = "dd.forecast10days-actab"
-    css_selectors = {"days_item": "div.days",
-                     "time_item": "dd.time-item > span",
-                     "forecast_item": "dd.forecast-item > p > img",
-                     "prob_precip_item": "dd.prob-precip-item > span > span",
-                     "precip_item": "dd.precip-item > span > span",
-                     "temp_item": "dd.temp-item > script",
-                     "wind_item_blow": "dd.wind-item > p > img",
-                     "wind_item_speed": "dd.wind-item > p > span",
-                     }
-    attrs = {"days_item": "",
-             "time_item": "",
-             "forecast_item": "alt",
-             "prob_precip_item": "",
-             "precip_item": "",
-             "temp_item": "",
-             "wind_item_blow": "alt",
-             "wind_item_speed": "",
-             }
-    tenki = Tenki(url,
-                  css_root,
-                  css_selectors,
-                  attrs,
+    main_url = "https://tenki.jp/forecast/4/20/5620/17202/10days.html"
+    main_css_root = "dd.forecast10days-actab"
+    main_css_selectors = {"days_item": "div.days",
+                          "time_item": "dd.time-item > span",
+                          "forecast_item": "dd.forecast-item > p > img",
+                          "prob_precip_item": "dd.prob-precip-item > span > span",
+                          "precip_item": "dd.precip-item > span > span",
+                          "temp_item": "dd.temp-item > script",
+                          "wind_item_blow": "dd.wind-item > p > img",
+                          "wind_item_speed": "dd.wind-item > p > span",
+                          }
+    main_attrs = {"days_item": "",
+                  "time_item": "",
+                  "forecast_item": "alt",
+                  "prob_precip_item": "",
+                  "precip_item": "",
+                  "temp_item": "",
+                  "wind_item_blow": "alt",
+                  "wind_item_speed": "",
+                  }
+    tenki = Tenki(main_url,
+                  main_css_root,
+                  main_css_selectors,
+                  main_attrs,
                   )
     tenki.save_text(RESULT_FILE_PATH + 'tenki1.txt')
 
@@ -514,8 +494,8 @@ if __name__ == '__main__':  # インポート時には動かない
     spreadsheet.save_text(RESULT_FILE_PATH + 'spreadsheet1.txt')
     spreadsheet.clear_worksheet()
     spreadsheet.write_dict_columns(tenki.get_result_forecasts(), (1, 1))
-    num = len(tenki.get_result_forecasts())
-    spreadsheet.write_dict_columns(tenki.get_result_counters(), (1, 1 + num))
+    main_num = len(tenki.get_result_forecasts())
+    spreadsheet.write_dict_columns(tenki.get_result_counters(), (1, 1 + main_num))
     worksheet_name = '七尾市和倉町conv'
     spreadsheet = Spreadsheet(json_keyfile_name,
                               workbook_name,
@@ -525,8 +505,8 @@ if __name__ == '__main__':  # インポート時には動かない
     tenki.special_func_temp()
     spreadsheet.clear_worksheet()
     spreadsheet.write_dict_columns(tenki.get_result_forecasts(), (1, 1))
-    num = len(tenki.get_result_forecasts())
-    spreadsheet.write_dict_columns(tenki.get_result_counters(), (1, 1 + num))
+    main_num = len(tenki.get_result_forecasts())
+    spreadsheet.write_dict_columns(tenki.get_result_counters(), (1, 1 + main_num))
     worksheet_name = '七尾市和倉町'
     spreadsheet = Spreadsheet(json_keyfile_name,
                               workbook_name,
