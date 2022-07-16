@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-サイトURLより、サイト内のサイトURLリストを取得する
 サイトURLより、タイトルを取得する
 サイトURLより、サイト末尾のimageURLを取得する
 
@@ -13,88 +12,134 @@ https://www.selenium.dev/ja/documentation/webdriver/getting_started/
 
 """
 import time
+import subprocess
+import copy
+import sys
+import pyperclip  # クリップボード
+from urllib.parse import urlparse  # URLパーサー
+
 from selenium import webdriver
 from selenium.webdriver import Chrome
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
-
-xpath_actions = {"website": "//div/a/img",
-                 "title": "//div/div/div/h2",
-                 "last-image": "(//a/img)[last()]",
-                 }
-exec_path = r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
-driver_path = r'C:\Git\igapon50\traning\python\selenium\driver\chromedriver.exe'
-profile_path = r''
-url = "https://www.yahoo.co.jp/"
+from selenium.webdriver.common.by import By
+from dataclasses import dataclass
 
 
-def func1():
-    """通常版、対策されたサイトだと表示できない
+@dataclass(frozen=True)
+class SeleniumDriverValue:
+    """Chromeドライバ値オブジェクト
     """
-    options = Options()
-    service = Service(driver_path)
-    with Chrome(service=service, options=options) as driver:
-        driver.get(url)
-        time.sleep(10)
-        print(driver.current_url)
-        print(driver.title)
-        print("====== source =======================")
-        print(driver.page_source)
-        driver.quit()
+    url: list
+    selectors: list
+    title: str
+    image_url: str
+
+    def __init__(self, url, selectors, title, image_url):
+        """完全コンストラクタパターン
+        :param url: str 処理対象サイトURL
+        :param selectors: list スクレイピングする際のセレクタリスト
+        :param title: str 取得したサイトタイトル
+        :param image_url: str 取得した最終画像のURL
+        """
+        if url is not None:
+            object.__setattr__(self, "url", url)
+        if selectors is not None:
+            object.__setattr__(self, "selectors", selectors)
+        if title is not None:
+            object.__setattr__(self, "title", title)
+        if image_url is not None:
+            object.__setattr__(self, "image_url", image_url)
 
 
-def func2():
+class SeleniumDriver:
+    """指定のサイトを読み込み、スクレイピングする
     """
-    https://stackoverflow.com/questions/57122151/exclude-switches-in-firefox-webdriver-options
-    set_preferenceが機能していないらしい
-    https://stackoverflow.com/questions/69571950/deprecationwarning-firefox-profile-has-been-deprecated-please-pass-in-an-optio
-    """
-    options = Options()
-    # options.add_experimental_option('profile', profile_path)
-    # フリープロキシサーバー検索
-    # https://www.freeproxylists.net/ja/?c=US&pt=&pr=HTTP&a%5B%5D=0&a%5B%5D=1&a%5B%5D=2&u=0
-    # PROXY_HOST = "103.152.112.172"
-    # PROXY_PORT = "80"
-    # options.add_experimental_option("network.proxy.type", 1)
-    # options.add_experimental_option("network.proxy.http", PROXY_HOST)
-    # options.add_experimental_option("network.proxy.http_port", int(PROXY_PORT))
-    # options.add_experimental_option("dom.webdriver.enabled", False)
-    # options.add_experimental_option('devtools.jsonview.enabled', False)
-    PROXY = "<103.152.112.172:80>"
-    webdriver.DesiredCapabilities.CHROME['proxy'] = {
-        "httpProxy": PROXY,
-        "ftpProxy": PROXY,
-        "sslProxy": PROXY,
-        "proxyType": "MANUAL",
+    value_object: SeleniumDriverValue = None
+    driver = None
+
+    def __init__(self, value_object=None, selectors=None):
+        """コンストラクタ
+        :param value_object: list 対象となるサイトURL、または、値オブジェクト
+        :param selectors: list スクレイピングする際のセレクタリスト
+        """
+        if value_object is not None:
+            if isinstance(value_object, SeleniumDriverValue):
+                self.value_object = value_object
+            else:
+                if isinstance(value_object, str):
+                    url = value_object
+                    if selectors is not None:
+                        title, image_url = self.driver_open(url, selectors)
+                        self.value_object = SeleniumDriverValue(url,
+                                                                selectors,
+                                                                title,
+                                                                image_url,
+                                                                )
+
+    def driver_open(self, url, selectors):
+        subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        options = Options()
+        options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
+        self.driver = Chrome(executable_path=driver_path, options=options)
+        self.driver.get(url)
+        # time.sleep(2)
+        element = self.driver.find_element(by=By.XPATH, value=selectors['title'])
+        title = element.text
+        element = self.driver.find_element(by=By.XPATH, value=selectors['last_image_href'])
+        image_url = element.get_attribute('href')
+        self.driver.get(image_url)
+        # time.sleep(2)
+        element = self.driver.find_element(by=By.XPATH, value=selectors['image_url'])
+        image_url = element.get_attribute('src')
+        return title, image_url
+
+    def __del__(self):
+        if self.driver is not None:
+            self.driver.close()
+
+    def get_title(self):
+        return copy.deepcopy(self.value_object.title)
+
+    def get_image_url(self):
+        return copy.deepcopy(self.value_object.image_url)
+
+
+if __name__ == '__main__':  # インポート時には動かない
+    # exec_path = r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
+    driver_path = r'C:\Git\igapon50\traning\python\selenium\driver\chromedriver.exe'
+    cmd = r'"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"' \
+          r' -remote-debugging-port=9222' \
+          r' --user-data-dir="C:\Users\igapon\temp"'
+    main_url = None
+    main_selectors = {
+        # //*[@id="info"]/h2
+        'title': '//div/div/div/h2',
+        # //*[@id="thumbnail-container"]/div/div[32]/a
+        'last_image_href': '(//*[@id="thumbnail-container"]/div/div/a)[last()]',
+        'image_url': '//*[@id="image-container"]/a/img',
     }
-    options.add_experimental_option('useAutomationExtension', False)
-    service = Service(driver_path)
-    with Chrome(service=service, options=options) as driver:
-        driver.get(url)
-        time.sleep(10)
-        print(driver.current_url)
-        print(driver.title)
-        print("====== source =======================")
-        print(driver.page_source)
-        driver.quit()
 
+    # 引数チェック
+    if 2 == len(sys.argv):
+        # Pythonに以下の2つ引数を渡す想定
+        # 0は固定でスクリプト名
+        # 1.対象のURL
+        main_url = sys.argv[1]
+    elif 1 == len(sys.argv):
+        # 引数がなければ、クリップボードからURLを得る
+        paste_str = pyperclip.paste()
+        if 0 < len(paste_str):
+            parse = urlparse(paste_str)
+            if 0 < len(parse.scheme):
+                main_url = paste_str
+        # クリップボードが空なら、デフォルトURLを用いる
+    else:
+        print('引数が不正です。')
+        sys.exit()
 
-def func3():
-    """既に開いているchromeを操作する
-    https://qiita.com/mimuro_syunya/items/2464cd2404b67ea5da56
-    """
-    options = Options()
-    options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
-    with Chrome(executable_path=driver_path, options=options) as driver:
-        driver.get(url)
-        time.sleep(10)
-        print(driver.current_url)
-        print(driver.title)
-        print("====== source =======================")
-        print(driver.page_source)
-        driver.quit()
-
-
-func1()
-# func2()
-# func3()
+    driver = SeleniumDriver(main_url, main_selectors)
+    main_title = driver.get_title()
+    print(main_title)
+    main_image_url = driver.get_image_url()
+    print(main_image_url)
