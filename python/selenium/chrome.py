@@ -60,6 +60,7 @@ class SeleniumDriver:
 
     def __init__(self, value_object=None, selectors=None):
         """コンストラクタ
+        値オブジェクトからの復元、もしくは、urlとselectorsより、値オブジェクトを作成する
         :param value_object: list 対象となるサイトURL、または、値オブジェクト
         :param selectors: list スクレイピングする際のセレクタリスト
         """
@@ -70,14 +71,20 @@ class SeleniumDriver:
                 if isinstance(value_object, str):
                     url = value_object
                     if selectors is not None:
-                        title, image_url = self.driver_open(url, selectors)
+                        title, image_url = self.get_title_and_image_url(url, selectors)
                         self.value_object = SeleniumDriverValue(url,
                                                                 selectors,
                                                                 title,
                                                                 image_url,
                                                                 )
 
-    def driver_open(self, url, selectors):
+    def get_title_and_image_url(self, url, selectors):
+        """chromeを起動して、urlからselectorsを辿り、画像リストの最終画像アドレスと、タイトルを取得する
+        todo selectorsの構造を見直したい。text、attribute、nextをデータに持たせれば、それぞれ動き分けるようにしたい。
+        :param url:
+        :param selectors:
+        :return:
+        """
         subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         options = Options()
         options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
@@ -95,13 +102,23 @@ class SeleniumDriver:
         return title, image_url
 
     def __del__(self):
+        """デストラクタ
+        chromeが開いていれば閉じる
+        :return: なし
+        """
         if self.driver is not None:
             self.driver.close()
 
     def get_title(self):
+        """タイトル取得
+        :return: str タイトル
+        """
         return copy.deepcopy(self.value_object.title)
 
     def get_image_url(self):
+        """最終画像アドレス取得
+        :return: str 最終画像アドレス
+        """
         return copy.deepcopy(self.value_object.image_url)
 
 
