@@ -58,7 +58,7 @@ class SeleniumDriver:
     value_object: SeleniumDriverValue = None
     driver = None
 
-    def __init__(self, value_object=None, selectors=None):
+    def __init__(self, value_object, selectors=None):
         """コンストラクタ
         値オブジェクトからの復元、もしくは、urlとselectorsより、値オブジェクトを作成する
         :param value_object: list 対象となるサイトURL、または、値オブジェクト
@@ -80,26 +80,29 @@ class SeleniumDriver:
 
     def get_title_and_image_url(self, url, selectors):
         """chromeを起動して、urlからselectorsを辿り、画像リストの最終画像アドレスと、タイトルを取得する
-        todo selectorsの構造を見直したい。text、attribute、nextをデータに持たせれば、それぞれ動き分けるようにしたい。
+        todo メソッド名を付け直したい。selectorsの構造により、返す値が可変になったので。
         :param url:
         :param selectors:
         :return:
         """
+        ret_list = []
         subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         options = Options()
         options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
         self.driver = Chrome(executable_path=driver_path, options=options)
         self.driver.get(url)
-        # time.sleep(2)
-        element = self.driver.find_element(by=By.XPATH, value=selectors['title'])
-        title = element.text
-        element = self.driver.find_element(by=By.XPATH, value=selectors['last_image_href'])
-        image_url = element.get_attribute('href')
-        self.driver.get(image_url)
-        # time.sleep(2)
-        element = self.driver.find_element(by=By.XPATH, value=selectors['image_url'])
-        image_url = element.get_attribute('src')
-        return title, image_url
+        for key, list_value in selectors.items():
+            while list_value:
+                tuple_value = list_value.pop(0)
+                by, selector, action = tuple_value
+                elem = self.driver.find_element(by=by, value=selector)
+                ret = action(elem)
+                if list_value:
+                    # listの末尾以外の時はurlを更新する
+                    self.driver.get(ret)
+                else:
+                    ret_list.append(ret)
+        return tuple(ret_list)
 
     def __del__(self):
         """デストラクタ
@@ -131,10 +134,18 @@ if __name__ == '__main__':  # インポート時には動かない
     main_url = None
     main_selectors = {
         # //*[@id="info"]/h2
-        'title': '//div/div/div/h2',
+        'title': [(By.XPATH,
+                   '//div/div/div/h2',
+                   lambda el: el.text),
+                  ],
         # //*[@id="thumbnail-container"]/div/div[32]/a
-        'last_image_href': '(//*[@id="thumbnail-container"]/div/div/a)[last()]',
-        'image_url': '//*[@id="image-container"]/a/img',
+        'image_url': [(By.XPATH,
+                       '(//*[@id="thumbnail-container"]/div/div/a)[last()]',
+                       lambda el: el.get_attribute("href")),
+                      (By.XPATH,
+                       '//*[@id="image-container"]/a/img',
+                       lambda el: el.get_attribute("src")),
+                      ],
     }
 
     # 引数チェック
