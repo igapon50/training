@@ -5,7 +5,8 @@
 サイトURLより、サイト末尾のimageURLを取得する
 
 参考ブログ
-https://yaspage.com/python-memo-selenium/
+https://note.nkmk.me/python/
+https://maku77.github.io/python/
 参考リファレンス
 https://www.seleniumqref.com/api/webdriver_gyaku.html
 https://www.selenium.dev/ja/documentation/webdriver/getting_started/
@@ -24,6 +25,12 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from dataclasses import dataclass
+
+# exec_path = r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
+driver_path = r'C:\Git\igapon50\traning\python\selenium\driver\chromedriver.exe'
+cmd = r'"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"' \
+      r' -remote-debugging-port=9222' \
+      r' --user-data-dir="C:\Users\igapon\temp"'
 
 
 @dataclass(frozen=True)
@@ -71,26 +78,25 @@ class SeleniumDriver:
                 if isinstance(value_object, str):
                     url = value_object
                     if selectors is not None:
-                        title, image_url = self.get_title_and_image_url(url, selectors)
+                        title, image_url = self.gen_scraping(url, selectors)
                         self.value_object = SeleniumDriverValue(url,
                                                                 selectors,
                                                                 title,
                                                                 image_url,
                                                                 )
 
-    def get_title_and_image_url(self, url, selectors):
-        """chromeを起動して、urlからselectorsを辿り、画像リストの最終画像アドレスと、タイトルを取得する
-        todo メソッド名を付け直したい。selectorsの構造により、返す値が可変になったので。
-        :param url:
-        :param selectors:
-        :return:
+    def gen_scraping(self, url, selectors):
+        """スクレイピング結果を返すジェネレータ
+        chromeを起動して、urlからselectorsを辿り、画像リストの最終画像アドレスと、タイトルを取得する
+        :param url: str スクレイピングの開始ページ
+        :param selectors: list dict list tuple(by, selector, action) スクレイピングの規則
         """
-        ret_list = []
         subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         options = Options()
         options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
         self.driver = Chrome(executable_path=driver_path, options=options)
         self.driver.get(url)
+        # todo 表示されるまで待つ
         for key, list_value in selectors.items():
             while list_value:
                 tuple_value = list_value.pop(0)
@@ -98,11 +104,12 @@ class SeleniumDriver:
                 elem = self.driver.find_element(by=by, value=selector)
                 ret = action(elem)
                 if list_value:
-                    # listの末尾以外の時はurlを更新する
-                    self.driver.get(ret)
+                    ret_parse = urlparse(ret)
+                    if 0 < len(ret_parse.scheme):
+                        # listの末尾以外で、URLの時は、表示を更新する
+                        self.driver.get(ret)
                 else:
-                    ret_list.append(ret)
-        return tuple(ret_list)
+                    yield ret
 
     def __del__(self):
         """デストラクタ
@@ -126,28 +133,7 @@ class SeleniumDriver:
 
 
 if __name__ == '__main__':  # インポート時には動かない
-    # exec_path = r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
-    driver_path = r'C:\Git\igapon50\traning\python\selenium\driver\chromedriver.exe'
-    cmd = r'"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"' \
-          r' -remote-debugging-port=9222' \
-          r' --user-data-dir="C:\Users\igapon\temp"'
     main_url = None
-    main_selectors = {
-        # //*[@id="info"]/h2
-        'title': [(By.XPATH,
-                   '//div/div/div/h2',
-                   lambda el: el.text),
-                  ],
-        # //*[@id="thumbnail-container"]/div/div[32]/a
-        'image_url': [(By.XPATH,
-                       '(//*[@id="thumbnail-container"]/div/div/a)[last()]',
-                       lambda el: el.get_attribute("href")),
-                      (By.XPATH,
-                       '//*[@id="image-container"]/a/img',
-                       lambda el: el.get_attribute("src")),
-                      ],
-    }
-
     # 引数チェック
     if 2 == len(sys.argv):
         # Pythonに以下の2つ引数を渡す想定
@@ -166,6 +152,19 @@ if __name__ == '__main__':  # インポート時には動かない
         print('引数が不正です。')
         sys.exit()
 
+    main_selectors = {
+        'title': [(By.XPATH,
+                   '//div/div/div/h2',  # //*[@id="info"]/h2
+                   lambda el: el.text),
+                  ],
+        'image_url': [(By.XPATH,
+                       '(//*[@id="thumbnail-container"]/div/div/a)[last()]',
+                       lambda el: el.get_attribute("href")),
+                      (By.XPATH,
+                       '//*[@id="image-container"]/a/img',
+                       lambda el: el.get_attribute("src")),
+                      ],
+    }
     driver = SeleniumDriver(main_url, main_selectors)
     main_title = driver.get_title()
     print(main_title)
