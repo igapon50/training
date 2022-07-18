@@ -95,6 +95,7 @@ class SeleniumDriver:
         options = Options()
         options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
         self.driver = Chrome(executable_path=driver_path, options=options)
+        time.sleep(3)
         self.driver.get(url)
         # todo 表示されるまで待つ
         for key, list_value in selectors.items():

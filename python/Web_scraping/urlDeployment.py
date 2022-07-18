@@ -13,13 +13,12 @@ irvineが終了したらダウンロードファイルをチェックする。
 import urllib.parse
 import subprocess
 from downloading import *
-
+import sys
+from chrome import *
 
 # 検証コード
 if __name__ == '__main__':  # インポート時には動かない
-    target_url = None
     folder_path = OUTPUT_FOLDER_PATH
-    parse = None
     url_list: list = []
     # 引数チェック
     if 2 == len(sys.argv):
@@ -34,39 +33,61 @@ if __name__ == '__main__':  # インポート時には動かない
         print('引数が不正です。')
         sys.exit(1)
     # URLかチェックする
-    if 0 < len(paste_str):
-        parse = urllib.parse.urlparse(paste_str)
-        if 0 < len(parse.scheme):
-            target_url = paste_str
-            # pathを/前後で分ける
-            path_before_name = parse.path[:parse.path.rfind('/') + 1]
-            path_after_name = parse.path[parse.path.rfind('/') + 1:]
-            print(path_before_name)
-            print(path_after_name)
-            # path_after_nameを.前後で分ける
-            base_name = path_after_name[:path_after_name.rfind('.')]
-            extend_name = path_after_name[path_after_name.rfind('.'):]
-            print(base_name)
-            print(extend_name)
-            if base_name.isdecimal():
-                count = int(base_name)
-                for i in range(count):
-                    url_list.append(urllib.parse.urlunparse((parse.scheme,
-                                                             parse.netloc,
-                                                             path_before_name + str(i + 1) + extend_name,
-                                                             parse.params,
-                                                             parse.query,
-                                                             parse.fragment)))
-            else:
-                print('引数が不正です。数値ではない？')
-                sys.exit(1)
-        else:
-            print('引数が不正です。URLではない？')
-            sys.exit(1)
-    else:
+    if 0 == len(paste_str):
         print('引数が不正です。空です。')
         sys.exit(1)
-    print(target_url)
+    parse = urlparse(paste_str)
+    if 0 == len(parse.scheme):
+        print('引数が不正です。URLではない？')
+        sys.exit(1)
+    main_url = paste_str
+    main_selectors = {
+        'title': [(By.XPATH,
+                   '//div/div/div/h2',  # //*[@id="info"]/h2
+                   lambda elem: elem.text),
+                  ],
+        'image_url': [(By.XPATH,
+                       '(//*[@id="thumbnail-container"]/div/div/a)[last()]',
+                       lambda elem: elem.get_attribute("href")),
+                      (By.XPATH,
+                       '//*[@id="image-container"]/a/img',
+                       lambda elem: elem.get_attribute("src")),
+                      ],
+    }
+    driver = SeleniumDriver(main_url, main_selectors)
+    main_title = driver.get_title()
+    print(main_title)
+    main_image_url = driver.get_image_url()
+    print(main_image_url)
+
+    if 0 == len(main_image_url):
+        print('引数が不正です。空です。')
+        sys.exit(1)
+    parse = urllib.parse.urlparse(main_image_url)
+    if 0 == len(parse.scheme):
+        print('引数が不正です。URLではない？')
+        sys.exit(1)
+    # pathを/前後で分ける
+    path_before_name = parse.path[:parse.path.rfind('/') + 1]
+    path_after_name = parse.path[parse.path.rfind('/') + 1:]
+    print(path_before_name)
+    print(path_after_name)
+    # path_after_nameを.前後で分ける
+    base_name = path_after_name[:path_after_name.rfind('.')]
+    extend_name = path_after_name[path_after_name.rfind('.'):]
+    print(base_name)
+    print(extend_name)
+    if not base_name.isdecimal():
+        print('引数が不正です。数値ではない？')
+        sys.exit(1)
+    count = int(base_name)
+    for i in range(count):
+        url_list.append(urllib.parse.urlunparse((parse.scheme,
+                                                 parse.netloc,
+                                                 path_before_name + str(i + 1) + extend_name,
+                                                 parse.params,
+                                                 parse.query,
+                                                 parse.fragment)))
     print(url_list)
 
     with open('./result_list.txt', 'w', encoding='utf-8') as work_file:
@@ -76,14 +97,15 @@ if __name__ == '__main__':  # インポート時には動かない
         work_file.write(buff)  # ファイルへの保存
     fileDownloader = Downloading(url_list, folder_path)
     # irvineを起動して、終了されるのを待つ
-    cmd = 'c:\\Program1\\irvine1_3_0\\irvine.exe ./result_list.txt'
+    cmd = r'c:\Program1\irvine1_3_0\irvine.exe ./result_list.txt'
     proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
     running = False
     for line in proc.stdout:
         if "irvine.exe" in str(line):
             running = True
+
     if not fileDownloader.is_src_exist():
-        # ダウンロードに失敗しているときは、拡張子を変えてダウンロードしなおす
+        # ダウンロードに失敗しているときは、失敗しているファイルの拡張子を変えてダウンロードしなおす
         if extend_name == '.jpg':
             fileDownloader.rename_ext()
         elif extend_name == '.png':
@@ -105,5 +127,5 @@ if __name__ == '__main__':  # インポート時には動かない
         sys.exit()
     if not fileDownloader.make_zip_file():
         sys.exit()
-    # fileDownloader.rename_zip_file('ファイル名')
+    fileDownloader.rename_zip_file(main_title)
     fileDownloader.download_file_clear()
