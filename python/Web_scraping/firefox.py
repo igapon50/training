@@ -19,7 +19,7 @@ xpath_actions = {"website": "//div/a/img",
                  "last-image": "(//a/img)[last()]",
                  }
 exec_path = r"C:\Program Files\Mozilla Firefox\firefox.exe"
-driver_path = r'C:\Git\igapon50\traning\python\selenium\driver\geckodriver.exe'
+driver_path = r'C:\Git\igapon50\traning\python\Web_scraping\driver\geckodriver.exe'
 # profile_path = r'C:\Users\igapon\AppData\Roaming\Mozilla\Firefox\Profiles\rw01hmar.default'
 profile_path = r'C:\Users\igapon\AppData\Roaming\Mozilla\Firefox\Profiles\h0rtj9e9.default-release'
 url = "https://www.yahoo.co.jp/"

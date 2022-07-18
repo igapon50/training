@@ -27,7 +27,7 @@ from selenium.webdriver.common.by import By
 from dataclasses import dataclass
 
 # exec_path = r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
-driver_path = r'C:\Git\igapon50\traning\python\selenium\driver\chromedriver.exe'
+driver_path = r'C:\Git\igapon50\traning\python\Web_scraping\driver\chromedriver.exe'
 cmd = r'"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"' \
       r' -remote-debugging-port=9222' \
       r' --user-data-dir="C:\Users\igapon\temp"'
