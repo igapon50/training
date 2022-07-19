@@ -97,7 +97,6 @@ class SeleniumDriver:
         self.driver = Chrome(executable_path=driver_path, options=options)
         time.sleep(3)
         self.driver.get(url)
-        # todo 表示されるまで待つ
         for key, list_value in selectors.items():
             while list_value:
                 tuple_value = list_value.pop(0)

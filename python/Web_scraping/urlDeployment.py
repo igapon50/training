@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-数値URLを展開して、ファイルに保存して、irvineに渡す。
+引数URLのサイトにアクセスして、タイトルと最終画像URLをスクレイピングする。
+最終画像URLの数字を展開した、URLリストをファイルに保存して、irvineに渡す。
     http:/hoge/10.jpg
     ↓
     http:/hoge/1.jpg ～ http:/hoge/10.jpg
