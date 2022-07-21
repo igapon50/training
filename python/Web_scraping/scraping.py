@@ -148,9 +148,8 @@ class Scraping:
         return self.value_object.title
 
     def request(self):
-        """
+        """request と BeautifulSoup
         ページをたどって画像のurlを集める。値オブジェクトを生成する。
-
         :return: bool 成功/失敗=True/False
         """
         image_list: list = []
@@ -179,9 +178,8 @@ class Scraping:
         return True
 
     def request_html(self):
-        """
+        """request-html
         ページを再帰的にたどって画像のurlを集める。値オブジェクトを生成する。
-
         :return: bool 成功/失敗=True/False
         """
         session = HTMLSession()
