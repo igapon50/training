@@ -18,12 +18,14 @@ import copy
 import sys
 import pyperclip  # クリップボード
 from urllib.parse import urlparse  # URLパーサー
+import datetime
 
 from selenium import webdriver
 from selenium.webdriver import Chrome
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
+from selenium.common.exceptions import NoSuchElementException
 from dataclasses import dataclass
 
 # exec_path = r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
@@ -101,8 +103,13 @@ class SeleniumDriver:
             while list_value:
                 tuple_value = list_value.pop(0)
                 by, selector, action = tuple_value
-                elem = self.driver.find_element(by=by, value=selector)
-                ret = action(elem)
+                try:
+                    elem = self.driver.find_element(by=by, value=selector)
+                    ret = action(elem)
+                except NoSuchElementException:
+                    # find_elementでelementが見つからなかったとき
+                    now = datetime.datetime.now()
+                    ret = f'{now:%Y%m%d_%H%M%S}'
                 if list_value:
                     ret_parse = urlparse(ret)
                     if 0 < len(ret_parse.scheme):
