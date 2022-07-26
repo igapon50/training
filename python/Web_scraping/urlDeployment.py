@@ -41,24 +41,28 @@ if __name__ == '__main__':  # インポート時には動かない
     if 0 == len(parse.scheme):
         print('引数が不正です。URLではない？')
         sys.exit(1)
-    main_url = paste_str
-    main_selectors = {
-        'title': [(By.XPATH,
-                   '//div/div/div/h2',  # //*[@id="info"]/h2
-                   lambda elem: elem.text),
-                  ],
-        'image_url': [(By.XPATH,
-                       '(//*[@id="thumbnail-container"]/div/div/a)[last()]',
-                       lambda elem: elem.get_attribute("href")),
-                      (By.XPATH,
-                       '//*[@id="image-container"]/a/img',
-                       lambda elem: elem.get_attribute("src")),
+    if parse.path[-4:] == '.jpg' or parse.path[-4:] == '.png':
+        main_title = '[] a'
+        main_image_url = paste_str
+    else:
+        main_url = paste_str
+        main_selectors = {
+            'title': [(By.XPATH,
+                       '//div/div/div/h2',  # //*[@id="info"]/h2
+                       lambda elem: elem.text),
                       ],
-    }
-    driver = SeleniumDriver(main_url, main_selectors)
-    main_title = driver.get_title()
+            'image_url': [(By.XPATH,
+                           '(//*[@id="thumbnail-container"]/div/div/a)[last()]',
+                           lambda elem: elem.get_attribute("href")),
+                          (By.XPATH,
+                           '//*[@id="image-container"]/a/img',
+                           lambda elem: elem.get_attribute("src")),
+                          ],
+        }
+        driver = SeleniumDriver(main_url, main_selectors)
+        main_title = driver.get_title()
+        main_image_url = driver.get_image_url()
     print(main_title)
-    main_image_url = driver.get_image_url()
     print(main_image_url)
 
     if 0 == len(main_image_url):
