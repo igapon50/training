@@ -21,8 +21,16 @@ from chrome import *
 if __name__ == '__main__':  # インポート時には動かない
     folder_path = OUTPUT_FOLDER_PATH
     url_list: list = []
+    main_title = '[] a'
     # 引数チェック
-    if 2 == len(sys.argv):
+    if 3 == len(sys.argv):
+        # Pythonに以下の3つ引数を渡す想定
+        # 0は固定でスクリプト名
+        # 1.対象のURL
+        # 2.対象のタイトル(後にファイル名にする)
+        paste_str = sys.argv[1]
+        main_title = sys.argv[2]
+    elif 2 == len(sys.argv):
         # Pythonに以下の2つ引数を渡す想定
         # 0は固定でスクリプト名
         # 1.対象のURL
@@ -42,7 +50,6 @@ if __name__ == '__main__':  # インポート時には動かない
         print('引数が不正です。URLではない？')
         sys.exit(1)
     if parse.path[-4:] == '.jpg' or parse.path[-4:] == '.png':
-        main_title = '[] a'
         main_image_url = paste_str
     else:
         main_url = paste_str

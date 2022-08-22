@@ -331,9 +331,10 @@ if __name__ == '__main__':  # インポート時には動かない
         # 1.対象のURL
         target_url = sys.argv[1]
     elif 1 == len(sys.argv):
-        # 引数がなければ、クリップボードからURLを得る
+        # 引数がなければ、クリップボードを見る
         paste_str = pyperclip.paste()
         if 0 < len(paste_str):
+            # URLかチェックする
             parse = urlparse(paste_str)
             if 0 < len(parse.scheme):
                 target_url = paste_str
