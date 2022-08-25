@@ -22,19 +22,19 @@ class IrvineHelperValue:
     """
     Irvineのヘルパーオブジェクト
     """
-    exe_path: str = r'c:\Program1\irvine1_3_0\irvine.exe'
     list_path: str = r'./irvine_download_list.txt'
+    exe_path: str = r'c:\Program1\irvine1_3_0\irvine.exe'
 
-    def __init__(self, exe_path=exe_path, list_path=list_path):
+    def __init__(self, list_path=list_path, exe_path=exe_path):
         """
         完全コンストラクタパターン
-        :param exe_path: str Irvine.exeのパス
         :param list_path: str Irvineでダウンロードするファイルリストのファイルパス
+        :param exe_path: str Irvine.exeのパス
         """
-        if exe_path:
-            object.__setattr__(self, "exe_path", exe_path)
         if list_path:
             object.__setattr__(self, "list_path", list_path)
+        if exe_path:
+            object.__setattr__(self, "exe_path", exe_path)
 
 
 class IrvineHelper:
@@ -44,17 +44,17 @@ class IrvineHelper:
     value_object: IrvineHelperValue = None
     running: bool = False
 
-    def __init__(self, target_value=None, list_path=None):
+    def __init__(self, target_value=None, exe_path=None):
         """
         コンストラクタ
-        :param target_value: list Irvine.exeのパス、または、IrvineHelperValue 値オブジェクト
-        :param list_path: str Irvineでダウンロードするファイルリストのファイルパス
+        :param target_value: str Irvineでダウンロードするファイルリストのファイルパス、または、IrvineHelperValue 値オブジェクト
+        :param exe_path: str Irvine.exeのパス
         """
         if isinstance(target_value, IrvineHelperValue):
             self.value_object = target_value
         elif isinstance(target_value, str):
-            if list_path:
-                self.value_object = IrvineHelperValue(target_value, list_path)
+            if exe_path:
+                self.value_object = IrvineHelperValue(target_value, exe_path)
             else:
                 self.value_object = IrvineHelperValue(target_value)
         else:

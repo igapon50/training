@@ -23,6 +23,7 @@ if __name__ == '__main__':  # インポート時には動かない
     folder_path = OUTPUT_FOLDER_PATH
     url_list: list = []
     main_title = '[] a'
+    list_file_path = './irvine_download_list.txt'
     # 引数チェック
     if 3 == len(sys.argv):
         # Pythonに以下の3つ引数を渡す想定
@@ -103,14 +104,14 @@ if __name__ == '__main__':  # インポート時には動かない
                                                  parse.fragment)))
     print(url_list)
 
-    with open('./irvine_download_list.txt', 'w', encoding='utf-8') as work_file:
+    with open(list_file_path, 'w', encoding='utf-8') as work_file:
         buff = ''
         for absolute_path in url_list:
             buff += absolute_path + '\n'  # 画像URL追加
         work_file.write(buff)  # ファイルへの保存
     fileDownloader = Downloading(url_list, folder_path)
     # irvineを起動して、終了されるのを待つ
-    irvine = IrvineHelper()
+    irvine = IrvineHelper(list_file_path)
     irvine.download()
 
     if not fileDownloader.is_src_exist():
@@ -120,14 +121,14 @@ if __name__ == '__main__':  # インポート時には動かない
         elif extend_name == '.png':
             fileDownloader.rename_ext('.jpg')
         # ダウンロードリストを作り直す
-        with open('./irvine_download_list.txt', 'w', encoding='utf-8') as work_file:
+        with open(list_file_path, 'w', encoding='utf-8') as work_file:
             buff = ''
             for absolute_path in fileDownloader.image_list:
                 buff += absolute_path + '\n'  # 画像URL追加
             work_file.write(buff)  # ファイルへの保存
         fileDownloader = Downloading(fileDownloader.image_list, folder_path)
         # ダウンロードしなおす
-        irvine = IrvineHelper()
+        irvine = IrvineHelper(list_file_path)
         irvine.download()
     if not fileDownloader.rename_images():
         sys.exit()
