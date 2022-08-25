@@ -16,6 +16,7 @@ import os  # ファイルパス分解
 import shutil  # 高水準のファイル操作
 from urllib.parse import urlparse  # URLパーサー
 from urllib.parse import urljoin  # URL結合
+import datetime
 
 # 3rd party packages
 import requests  # HTTP通信
@@ -297,14 +298,15 @@ class Downloading:
     def make_zip_file(self):
         """
         リネーム後のダウンロードファイルを、一つの圧縮ファイルにする
-
+        圧縮ファイルが既に存在する場合は変名してから圧縮する
         :return: bool 成功/失敗=True/False
         """
         if not self.is_dst_exist():
             return False
         if os.path.isfile(self.save_path + '.zip'):
-            print(f'圧縮ファイル{self.save_path}.zipが既に存在しています')
-            return False
+            now_str = datetime.datetime.now().strftime('_%Y%m%d_%H%M%S')
+            os.rename(self.save_path + '.zip', self.save_path + f'{now_str}.zip')
+            print(f'圧縮ファイル{self.save_path}.zipが既に存在したので{self.save_path}{now_str}.zipに変名しました')
         with zipfile.ZipFile(self.save_path + '.zip', 'w', zipfile.ZIP_DEFLATED) as zip_file:
             for img_path in self.dst_file_list:
                 zip_file.write(img_path)

@@ -127,6 +127,7 @@ if __name__ == '__main__':  # インポート時には動かない
         # ダウンロードしなおす
         irvine = IrvineHelper(list_file_path)
         irvine.download()
+
     if not fileDownloader.rename_images():
         sys.exit()
     if not fileDownloader.make_zip_file():
