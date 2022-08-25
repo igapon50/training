@@ -43,6 +43,7 @@ if __name__ == '__main__':  # インポート時には動かない
     else:
         print('引数が不正です。')
         sys.exit(1)
+
     # URLかチェックする
     if 0 == len(paste_str):
         print('引数が不正です。空です。')
@@ -74,6 +75,7 @@ if __name__ == '__main__':  # インポート時には動かない
     print(main_title)
     print(main_image_url)
 
+    # 末尾画像URL=main_image_urlを展開して、URLリスト=url_listを作る
     if 0 == len(main_image_url):
         print('引数が不正です。空です。')
         sys.exit(1)
@@ -104,29 +106,17 @@ if __name__ == '__main__':  # インポート時には動かない
                                                  parse.fragment)))
     print(url_list)
 
-    with open(list_file_path, 'w', encoding='utf-8') as work_file:
-        buff = ''
-        for absolute_path in url_list:
-            buff += absolute_path + '\n'  # 画像URL追加
-        work_file.write(buff)  # ファイルへの保存
-    fileDownloader = Downloading(url_list, folder_path)
     # irvineを起動して、ダウンロードする
-    irvine = IrvineHelper(list_file_path)
+    irvine = IrvineHelper(url_list)
     irvine.download()
+    fileDownloader = Downloading(url_list, folder_path)
 
     if not fileDownloader.is_src_exist():
         # ダウンロードに失敗しているときは、失敗しているファイルの拡張子を変えてダウンロードしなおす
         fileDownloader.rename_ext_shift()
-        # ダウンロードリストを作り直す
-        with open(list_file_path, 'w', encoding='utf-8') as work_file:
-            buff = ''
-            for absolute_path in fileDownloader.image_list:
-                buff += absolute_path + '\n'  # 画像URL追加
-            work_file.write(buff)  # ファイルへの保存
-        fileDownloader = Downloading(fileDownloader.image_list, folder_path)
-        # ダウンロードしなおす
-        irvine = IrvineHelper(list_file_path)
+        irvine = IrvineHelper(fileDownloader.image_list)
         irvine.download()
+        fileDownloader = Downloading(fileDownloader.image_list, folder_path)
 
     if not fileDownloader.rename_images():
         sys.exit()

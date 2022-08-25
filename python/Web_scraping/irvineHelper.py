@@ -25,7 +25,7 @@ class IrvineHelperValue:
     list_path: str = r'./irvine_download_list.txt'
     exe_path: str = r'c:\Program1\irvine1_3_0\irvine.exe'
 
-    def __init__(self, list_path=list_path, exe_path=exe_path):
+    def __init__(self, list_path, exe_path=exe_path):
         """
         完全コンストラクタパターン
         :param list_path: str Irvineでダウンロードするファイルリストのファイルパス
@@ -43,11 +43,15 @@ class IrvineHelper:
     """
     value_object: IrvineHelperValue = None
     running: bool = False
+    list_path: str = r'./irvine_download_list.txt'
 
-    def __init__(self, target_value=None, exe_path=None):
+    def __init__(self, target_value=list_path, exe_path=None):
         """
         コンストラクタ
-        :param target_value: str Irvineでダウンロードするファイルリストのファイルパス、または、IrvineHelperValue 値オブジェクト
+        :param target_value:
+            list IrvineでダウンロードするURLリスト
+            または、str IrvineでダウンロードするURLリストが列挙されたファイルへのパス
+            または、IrvineHelperValue 値オブジェクト
         :param exe_path: str Irvine.exeのパス
         """
         if isinstance(target_value, IrvineHelperValue):
@@ -57,8 +61,19 @@ class IrvineHelper:
                 self.value_object = IrvineHelperValue(target_value, exe_path)
             else:
                 self.value_object = IrvineHelperValue(target_value)
+        elif isinstance(target_value, list):
+            with open(self.list_path, 'w', encoding='utf-8') as work_file:
+                buff = ''
+                for absolute_path in target_value:
+                    buff += absolute_path + '\n'
+                work_file.write(buff)
+            if exe_path:
+                self.value_object = IrvineHelperValue(self.list_path, exe_path)
+            else:
+                self.value_object = IrvineHelperValue(self.list_path)
         else:
-            self.value_object = IrvineHelperValue()
+            print('IrvineHelperで想定外の引数が指定された')
+            exit()
         if not os.path.isfile(self.value_object.exe_path):
             print(f'Irvine.exeが見つかりません:{self.value_object.exe_path}')
             exit()
