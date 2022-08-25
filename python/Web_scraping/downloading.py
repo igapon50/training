@@ -261,7 +261,7 @@ class Downloading:
 
     def rename_ext(self, ext='.png'):
         """
-        ダウンロードできていないファイルの拡張子を変更する
+        ダウンロードできていないファイルの拡張子をまとめて変更する
         :param ext: str 変更する拡張子 
         :return:
         """
@@ -269,8 +269,29 @@ class Downloading:
             if not os.path.isfile(self.rename_file_dic[image_url]):
                 parse_path = urlparse(image_url)
                 image_url = urljoin(parse_path.scheme, image_url)
-                basename_without_ext = os.path.splitext(os.path.basename(self.rename_file_dic[image_url]))[0]
-                self.image_list[i] = urljoin(image_url, basename_without_ext + ext)
+                root, _ = os.path.splitext(os.path.basename(self.rename_file_dic[image_url]))
+                self.image_list[i] = urljoin(image_url, root + ext)
+        self.initialize()
+
+    def rename_ext_shift(self):
+        """
+        ダウンロードできていないファイルの拡張子を変更する
+        :return:
+        """
+        for i, image_url in enumerate(self.image_list):
+            if not os.path.isfile(self.rename_file_dic[image_url]):
+                _, ext = os.path.splitext(self.rename_file_dic[image_url])
+                if ext == '.jpg':
+                    ext = '.png'
+                elif ext == '.png':
+                    ext = '.jpg'
+                else:
+                    print(f'対象外の拡張子です:{ext}')
+                    exit()
+                parse_path = urlparse(image_url)
+                image_url = urljoin(parse_path.scheme, image_url)
+                root, _ = os.path.splitext(os.path.basename(self.rename_file_dic[image_url]))
+                self.image_list[i] = urljoin(image_url, root + ext)
         self.initialize()
 
     def make_zip_file(self):

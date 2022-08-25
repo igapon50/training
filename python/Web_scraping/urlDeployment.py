@@ -110,16 +110,13 @@ if __name__ == '__main__':  # インポート時には動かない
             buff += absolute_path + '\n'  # 画像URL追加
         work_file.write(buff)  # ファイルへの保存
     fileDownloader = Downloading(url_list, folder_path)
-    # irvineを起動して、終了されるのを待つ
+    # irvineを起動して、ダウンロードする
     irvine = IrvineHelper(list_file_path)
     irvine.download()
 
     if not fileDownloader.is_src_exist():
         # ダウンロードに失敗しているときは、失敗しているファイルの拡張子を変えてダウンロードしなおす
-        if extend_name == '.jpg':
-            fileDownloader.rename_ext()
-        elif extend_name == '.png':
-            fileDownloader.rename_ext('.jpg')
+        fileDownloader.rename_ext_shift()
         # ダウンロードリストを作り直す
         with open(list_file_path, 'w', encoding='utf-8') as work_file:
             buff = ''
