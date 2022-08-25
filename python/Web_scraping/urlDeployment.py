@@ -16,6 +16,7 @@ import subprocess
 from downloading import *
 import sys
 from chrome import *
+from irvineHelper import *
 
 # 検証コード
 if __name__ == '__main__':  # インポート時には動かない
@@ -102,19 +103,15 @@ if __name__ == '__main__':  # インポート時には動かない
                                                  parse.fragment)))
     print(url_list)
 
-    with open('./result_list.txt', 'w', encoding='utf-8') as work_file:
+    with open('./irvine_download_list.txt', 'w', encoding='utf-8') as work_file:
         buff = ''
         for absolute_path in url_list:
             buff += absolute_path + '\n'  # 画像URL追加
         work_file.write(buff)  # ファイルへの保存
     fileDownloader = Downloading(url_list, folder_path)
     # irvineを起動して、終了されるのを待つ
-    cmd = r'c:\Program1\irvine1_3_0\irvine.exe ./result_list.txt'
-    proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-    running = False
-    for line in proc.stdout:
-        if "irvine.exe" in str(line):
-            running = True
+    irvine = IrvineHelper()
+    irvine.download()
 
     if not fileDownloader.is_src_exist():
         # ダウンロードに失敗しているときは、失敗しているファイルの拡張子を変えてダウンロードしなおす
@@ -122,19 +119,16 @@ if __name__ == '__main__':  # インポート時には動かない
             fileDownloader.rename_ext()
         elif extend_name == '.png':
             fileDownloader.rename_ext('.jpg')
-        # result_list.txtを作り直す
-        with open('./result_list.txt', 'w', encoding='utf-8') as work_file:
+        # ダウンロードリストを作り直す
+        with open('./irvine_download_list.txt', 'w', encoding='utf-8') as work_file:
             buff = ''
             for absolute_path in fileDownloader.image_list:
                 buff += absolute_path + '\n'  # 画像URL追加
             work_file.write(buff)  # ファイルへの保存
         fileDownloader = Downloading(fileDownloader.image_list, folder_path)
         # ダウンロードしなおす
-        proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-        running = False
-        for line in proc.stdout:
-            if "irvine.exe" in str(line):
-                running = True
+        irvine = IrvineHelper()
+        irvine.download()
     if not fileDownloader.rename_images():
         sys.exit()
     if not fileDownloader.make_zip_file():

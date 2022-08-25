@@ -1,1 +1,1 @@
-from . import func, downloading, scraping, crawling
+from . import func, downloading, scraping, crawling, irvineHelper
