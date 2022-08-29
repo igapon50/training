@@ -62,7 +62,7 @@ class IrvineHelperValue:
     Irvineのヘルパーオブジェクト
     """
     list_path: str = r'./irvine_download_list.txt'
-    exe_path: str = r'c:\Program1\irvine1_3_0\irvine.exe'
+    exe_path: str = r'c:\Program1\irvine1_3_0\irvine.exe'.replace(os.sep, '/')
 
     def __init__(self, list_path, exe_path=exe_path):
         """
@@ -73,7 +73,7 @@ class IrvineHelperValue:
         if list_path:
             object.__setattr__(self, "list_path", list_path)
         if exe_path:
-            object.__setattr__(self, "exe_path", exe_path)
+            object.__setattr__(self, "exe_path", exe_path.replace(os.sep, '/'))
 
 
 class IrvineHelper:
@@ -97,7 +97,7 @@ class IrvineHelper:
             self.value_object = target_value
         elif isinstance(target_value, str):
             if exe_path:
-                self.value_object = IrvineHelperValue(target_value, exe_path)
+                self.value_object = IrvineHelperValue(target_value, exe_path.replace(os.sep, '/'))
             else:
                 self.value_object = IrvineHelperValue(target_value)
         elif isinstance(target_value, list):
@@ -107,7 +107,7 @@ class IrvineHelper:
                     buff += absolute_path + '\n'
                 work_file.write(buff)
             if exe_path:
-                self.value_object = IrvineHelperValue(self.list_path, exe_path)
+                self.value_object = IrvineHelperValue(self.list_path, exe_path.replace(os.sep, '/'))
             else:
                 self.value_object = IrvineHelperValue(self.list_path)
         else:
