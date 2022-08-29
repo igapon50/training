@@ -1,7 +1,46 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Irvineのヘルパー
+# Irvineのヘルパー
+
+## Irvineの設定
+- ダウンロードが終わったらIrvineを終了する
+    - [オプション設定]-[イベント]-[OnDeactivateQueue]に新規作成で以下のスクリプトを書き込む
+    - [全て終了時にIrvineを終了]をチェックする
+
+doneclose.dms:
+```
+/*
+スクリプト初期化データ
+guid={3FD7CA4D-BB58-4E4E-B1EF-E66AA72E9685}
+caption=全て終了時にIrvineを終了
+version=0
+hint=
+event=OnDeactivateQueue
+match=
+author=
+synchronize=0
+*/
+
+function OnDeactivateQueue(irvine){
+//すべてのダウンロード終了イベント
+irvine.ExecuteAction('actFileClose');
+}
+```
+
+## 参考
+- Irvine公式
+    - http://hp.vector.co.jp/authors/VA024591/
+- Irvineマニュアル
+    - http://hp.vector.co.jp/authors/VA024591/doc/manual.html
+- IrvineまとめWiki
+    - https://w.atwiki.jp/irvinewiki/
+- Irvineの設定
+    - https://w.atwiki.jp/irvinewiki/pages/32.html
+- Irvine Uploader
+    - https://u1.getuploader.com/irvn/
+- Irvine Part36スレ
+    - https://mevius.5ch.net/test/read.cgi/win/1545612410
 """
 # standard library
 import sys  # 終了時のエラー有無
