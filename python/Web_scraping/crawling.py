@@ -15,7 +15,6 @@ if __name__ == '__main__':  # インポート時には動かない
         buff = work_file.readlines()
         for line in buff:
             target_url = line.rstrip('\n')
-            # requests-html
             # subprocess.run(['python', 'imgdl.py', target_url])
 
             # 画像が連番の場合、selenium

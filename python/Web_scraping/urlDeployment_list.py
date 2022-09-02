@@ -15,7 +15,6 @@ if __name__ == '__main__':  # インポート時には動かない
         buff = work_file.readlines()
         for count, line in enumerate(buff):
             target_url, target_title = line.rstrip('\n').split(',')
-            # requests-html
             # subprocess.run(['python', 'imgdl.py', target_url])
             if not target_title:
                 target_title = f'[] {count}'
