@@ -2,8 +2,15 @@
 # -*- coding: utf-8 -*-
 """
 # Irvineのヘルパー
+## 説明
+- Irvineを使ってurlリストのファイルをダウンロードする
+    - urlリストを渡してIrvineHelperインスタンスを作る。urlリストはIrvineHelperのlist_pathのファイルに保存される
+        - 既にurlリストがファイルになっていれば、そのファイルパスを渡してIrvineHelperインスタンスを作る
+    - downloadメソッドを呼ぶ。list_pathのファイルを引数に、irvineを起動する
+        - あらかじめIrvineの設定を行っておくこと
 
 ## Irvineの設定
+- キューフォルダにフォーカスを当ててIrvineを終了しておく。Irvine起動時にフォーカスの当たっているキューフォルダにurlリストが追加される
 - ダウンロードが終わったらIrvineを終了する
     - [オプション設定]-[イベント]-[OnDeactivateQueue]に新規作成で以下のスクリプトを書き込む
     - [全て終了時にIrvineを終了]をチェックする
@@ -61,8 +68,8 @@ class IrvineHelperValue:
     """
     Irvineのヘルパーオブジェクト
     """
-    list_path: str = r'./irvine_download_list.txt'
     exe_path: str = r'c:\Program1\irvine1_3_0\irvine.exe'.replace(os.sep, '/')
+    list_path: str = r''
 
     def __init__(self, list_path, exe_path=exe_path):
         """
@@ -80,9 +87,9 @@ class IrvineHelper:
     """
     Irvineのヘルパー
     """
+    list_path: str = r'./irvine_download_list.txt'
     value_object: IrvineHelperValue = None
     running: bool = False
-    list_path: str = r'./irvine_download_list.txt'
 
     def __init__(self, target_value=list_path, exe_path=None):
         """
@@ -129,4 +136,22 @@ class IrvineHelper:
         cmd += ' '
         cmd += self.value_object.list_path
         proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+        self.running = True
         proc.wait()
+        self.running = False
+
+
+if __name__ == '__main__':  # インポート時には動かない
+    # テスト　若者 | かわいいフリー素材集 いらすとや
+    image_url_list = [
+        'https://1.bp.blogspot.com/-tzoOQwlaRac/X1LskKZtKEI/AAAAAAABa_M/89phuGIVDkYGY_uNKvFB6ZiNHxR7bQYcgCNcBGAsYHQ/'
+        's180-c/fashion_dekora.png',
+        'https://1.bp.blogspot.com/-gTf4sWnRdDw/X0B4RSQQLrI/AAAAAAABarI/MJ9DW90dSVwtMjuUoErxemnN4nPXBnXUwCNcBGAsYHQ/'
+        's180-c/otaku_girl_fashion.png',
+    ]
+    irvine = IrvineHelper(image_url_list)
+    irvine.download()
+    print(irvine.list_path)
+    print(irvine.running)
+    print(irvine.value_object.list_path)
+    print(irvine.value_object.exe_path)
