@@ -57,10 +57,14 @@ if __name__ == '__main__':  # インポート時には動かない
     else:
         main_url = paste_str
         main_selectors = {
-            'title': [(By.XPATH,
-                       '//div/div/div/h2',  # //*[@id="info"]/h2
-                       lambda elem: elem.text),
-                      ],
+            'title_en': [(By.XPATH,
+                          '//div/div/div/h1',  # //*[@id="info"]/h1
+                          lambda elem: elem.text),
+                         ],
+            'title_jp': [(By.XPATH,
+                          '//div/div/div/h2',  # //*[@id="info"]/h2
+                          lambda elem: elem.text),
+                         ],
             'image_url': [(By.XPATH,
                            '(//*[@id="thumbnail-container"]/div/div/a)[last()]',
                            lambda elem: elem.get_attribute("href")),
@@ -71,7 +75,7 @@ if __name__ == '__main__':  # インポート時には動かない
         }
         driver = SeleniumDriver(main_url, main_selectors)
         main_title = driver.get_title()
-        main_image_url = driver.get_image_url()
+        main_image_url = driver.get_last_image_url()
     print(main_title)
     print(main_image_url)
 

@@ -1,17 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
+Chrome.batを実行して、スクレイピングしたいurlをクリップボードにコピーして、実行する。
 サイトURLより、タイトルを取得する
 サイトURLより、サイト末尾のimageURLを取得する
 
 参考ブログ
 https://note.nkmk.me/python/
 https://maku77.github.io/python/
+https://nikkie-ftnext.hatenablog.com/entry/value-object-python-dataclass
 参考リファレンス
+https://selenium-python.readthedocs.io/
 https://www.seleniumqref.com/api/webdriver_gyaku.html
 https://www.selenium.dev/ja/documentation/webdriver/getting_started/
 
 """
+import os
 import time
 import subprocess
 import copy
@@ -22,43 +26,51 @@ import datetime
 
 from selenium import webdriver
 from selenium.webdriver import Chrome
+from selenium.webdriver import ChromeOptions
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
+from webdriver_manager.chrome import ChromeDriverManager
 from dataclasses import dataclass
-
-# exec_path = r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
-driver_path = r'C:\Git\igapon50\traning\python\Web_scraping\driver\chromedriver.exe'
-cmd = r'"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"' \
-      r' -remote-debugging-port=9222' \
-      r' --user-data-dir="C:\Users\igapon\temp"'
 
 
 @dataclass(frozen=True)
 class SeleniumDriverValue:
     """Chromeドライバ値オブジェクト
     """
-    url: list
+    url: str
     selectors: list
     title: str
-    image_url: str
+    last_image_url: str
+    profile_path = r'C:\Users\igapon\temp'
+    cmd = r'"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"' \
+          r' -remote-debugging-port=9222' \
+          f' --user-data-dir="{profile_path}"'
 
-    def __init__(self, url, selectors, title, image_url):
+    def __init__(self, url, selectors, title, last_image_url):
         """完全コンストラクタパターン
         :param url: str 処理対象サイトURL
         :param selectors: list スクレイピングする際のセレクタリスト
         :param title: str 取得したサイトタイトル
-        :param image_url: str 取得した最終画像のURL
+        :param last_image_url: str 取得した最終画像のURL
         """
         if url is not None:
+            if not self.is_url_only(url):
+                raise ValueError(f"不正:引数urlがURLではない[{url}]")
             object.__setattr__(self, "url", url)
         if selectors is not None:
             object.__setattr__(self, "selectors", selectors)
         if title is not None:
             object.__setattr__(self, "title", title)
-        if image_url is not None:
-            object.__setattr__(self, "image_url", image_url)
+        if last_image_url is not None:
+            if not self.is_url_only(last_image_url):
+                raise ValueError(f"不正:引数last_image_urlがurlではない[{last_image_url}]")
+            object.__setattr__(self, "last_image_url", last_image_url)
+
+    @staticmethod
+    def is_url_only(string: str) -> bool:
+        return len(urlparse(string).scheme) > 0
 
 
 class SeleniumDriver:
@@ -66,10 +78,13 @@ class SeleniumDriver:
     """
     value_object: SeleniumDriverValue = None
     driver = None
+    root = os.path.dirname(os.path.abspath(__file__))
+    driver_path = os.path.join(root, r'driver\chromedriver.exe')
 
     def __init__(self, value_object, selectors=None):
         """コンストラクタ
-        値オブジェクトからの復元、もしくは、urlとselectorsより、値オブジェクトを作成する
+        値オブジェクトからの復元、
+        または、urlとselectorsより、値オブジェクトを作成する
         :param value_object: list 対象となるサイトURL、または、値オブジェクト
         :param selectors: list スクレイピングする際のセレクタリスト
         """
@@ -80,11 +95,13 @@ class SeleniumDriver:
                 if isinstance(value_object, str):
                     url = value_object
                     if selectors is not None:
-                        title, image_url = self.gen_scraping(url, selectors)
+                        title_en, title, last_image_url = self.gen_scraping(url, selectors)
+                        if not title:
+                            title = title_en
                         self.value_object = SeleniumDriverValue(url,
                                                                 selectors,
                                                                 title,
-                                                                image_url,
+                                                                last_image_url,
                                                                 )
 
     def gen_scraping(self, url, selectors):
@@ -93,12 +110,18 @@ class SeleniumDriver:
         :param url: str スクレイピングの開始ページ
         :param selectors: list dict list tuple(by, selector, action) スクレイピングの規則
         """
-        subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        options = Options()
-        options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
-        self.driver = Chrome(executable_path=driver_path, options=options)
-        time.sleep(3)
-        self.driver.get(url)
+        # chromeの起動
+        # subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        try:
+            options = ChromeOptions()
+            # 起動しているchromeに接続
+            options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
+            self.driver = Chrome(executable_path=self.driver_path, options=options)
+            time.sleep(3)
+            self.driver.get(url)
+        except Exception as e:
+            print(e)
+            exit()
         for key, list_value in selectors.items():
             while list_value:
                 tuple_value = list_value.pop(0)
@@ -118,9 +141,8 @@ class SeleniumDriver:
                 else:
                     yield ret
 
-    def __del__(self):
-        """デストラクタ
-        chromeが開いていれば閉じる
+    def close(self):
+        """chromeが開いていれば閉じる
         :return: なし
         """
         if self.driver is not None:
@@ -132,11 +154,11 @@ class SeleniumDriver:
         """
         return copy.deepcopy(self.value_object.title)
 
-    def get_image_url(self):
+    def get_last_image_url(self):
         """最終画像アドレス取得
         :return: str 最終画像アドレス
         """
-        return copy.deepcopy(self.value_object.image_url)
+        return copy.deepcopy(self.value_object.last_image_url)
 
 
 if __name__ == '__main__':  # インポート時には動かない
@@ -160,10 +182,14 @@ if __name__ == '__main__':  # インポート時には動かない
         sys.exit()
 
     main_selectors = {
-        'title': [(By.XPATH,
-                   '//div/div/div/h2',  # //*[@id="info"]/h2
-                   lambda el: el.text),
-                  ],
+        'title_en': [(By.XPATH,
+                      '//div/div/div/h1',  # //*[@id="info"]/h1
+                      lambda el: el.text),
+                     ],
+        'title_jp': [(By.XPATH,
+                      '//div/div/div/h2',  # //*[@id="info"]/h2
+                      lambda el: el.text),
+                     ],
         'image_url': [(By.XPATH,
                        '(//*[@id="thumbnail-container"]/div/div/a)[last()]',
                        lambda el: el.get_attribute("href")),
@@ -174,6 +200,6 @@ if __name__ == '__main__':  # インポート時には動かない
     }
     driver = SeleniumDriver(main_url, main_selectors)
     main_title = driver.get_title()
-    print(main_title)
-    main_image_url = driver.get_image_url()
-    print(main_image_url)
+    main_image_url = driver.get_last_image_url()
+    print(main_image_url + "," + main_title)
+    pyperclip.copy(main_image_url + "," + main_title)
