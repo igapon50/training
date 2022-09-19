@@ -1,13 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-Chrome.batを実行して、スクレイピングしたいurlをクリップボードにコピーして、実行する。
-    起動しているChromeに接続する、起動していなければ起動して接続する
-    Chromeに接続する
-    Chromeを起動する
-    ChromeでURLを開く
-    Chromeで開いているサイトのsourceを取得する
-    Chromeを閉じる
+"""Chromeドライバのヘルパー
+Chrome.batを実行して、Chromeを起動すること。
+スクレイピングしたいurlをクリップボードにコピーして、実行する。
+    起動しているChromeに接続する、起動していなければ起動して接続する、ChromeでURLを開きスクレイピングする __init__
+    Chromeに接続する connection
+    Chromeを起動する create
+    Chromeを閉じる destroy
+    ChromeでURLを開く open_url
+    Chromeで開いているページをスクレイピングする gen_scraping
+    Chromeで開いているページのsourceを取得する get_source
+    タイトルを取得する get_title
+    最終画像アドレスを取得する get_last_image_url
 
 参考ブログ
 https://note.nkmk.me/python/
@@ -80,6 +84,7 @@ class ChromeDriver:
     """
     value_object: ChromeDriverValue = None
     driver = None
+    source = None
     root = os.path.dirname(os.path.abspath(__file__))
     driver_path = os.path.join(root, r'driver\chromedriver.exe')
     profile_path = r'C:\Users\igapon\temp'
@@ -111,9 +116,15 @@ class ChromeDriver:
                 if isinstance(value_object, str):
                     url = value_object
                     if selectors is not None:
-                        title_en, title, last_image_url = self.gen_scraping(url, selectors)
+                        self.open_url(url)
+                        title_en, title, last_image_url = self.gen_scraping(selectors)
                         if not title:
-                            title = title_en
+                            if not title_en:
+                                # タイトルが得られない時は、タイトルを日時文字列にする
+                                now = datetime.datetime.now()
+                                title = f'{now:%Y%m%d_%H%M%S}'
+                            else:
+                                title = title_en
                         self.value_object = ChromeDriverValue(url,
                                                               selectors,
                                                               title,
@@ -126,21 +137,40 @@ class ChromeDriver:
     # @timeout_decorator.timeout(5)
     # @timeout(5)
     def connection(self, options):
-        # 起動しているchromeに接続
+        """起動しているchromeに接続
+        :param options:
+        :return:
+        """
         self.driver = Chrome(executable_path=self.driver_path, options=options)
 
     def create(self, options):
-        # chromeを起動して接続
+        """chromeを起動して接続
+        :param options:
+        :return:
+        """
         subprocess.Popen(self.cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         self.driver = Chrome(executable_path=self.driver_path, options=options)
 
-    def gen_scraping(self, url, selectors):
-        """スクレイピング結果を返すジェネレータ
-        chromeで開いているサイトから、selectorsを辿り、タイトルと、画像リストの最終画像アドレスを取得する
-        :param url: str スクレイピングの開始ページ
-        :param selectors: list dict list tuple(by, selector, action) スクレイピングの規則
+    def destroy(self):
+        """chromeが開いていれば閉じる
+        :return: なし
+        """
+        if self.driver is not None:
+            self.driver.close()
+
+    def open_url(self, url):
+        """chromeにurlを開く
+        :param url: str chromeで開くURL
+        :return: なし
         """
         self.driver.get(url)
+
+    def gen_scraping(self, selectors):
+        """スクレイピング結果を返すジェネレータ
+        chromeで開いているサイトに対してスクレイピングする
+        chromeで開いているサイトから、selectorsを辿り、タイトルと、画像リストの最終画像アドレスを取得する
+        :param selectors: list dict list tuple(by, selector, action) スクレイピングの規則
+        """
         for key, list_value in selectors.items():
             while list_value:
                 tuple_value = list_value.pop(0)
@@ -150,9 +180,8 @@ class ChromeDriver:
                     ret = action(elem)
                 except NoSuchElementException:
                     # find_elementでelementが見つからなかったとき
-                    now = datetime.datetime.now()
-                    ret = f'{now:%Y%m%d_%H%M%S}'
-                if list_value:
+                    ret = ""
+                if ret and list_value:
                     ret_parse = urlparse(ret)
                     if 0 < len(ret_parse.scheme):
                         # listの末尾以外で、URLの時は、表示を更新する
@@ -160,12 +189,12 @@ class ChromeDriver:
                 else:
                     yield ret
 
-    def close(self):
-        """chromeが開いていれば閉じる
-        :return: なし
+    def get_source(self):
+        """chromeで現在表示しているページのソースコードを取得する
+        :return: str ソースコード
         """
-        if self.driver is not None:
-            self.driver.close()
+        self.source = self.driver.page_source
+        return copy.deepcopy(self.source)
 
     def get_title(self):
         """タイトル取得
