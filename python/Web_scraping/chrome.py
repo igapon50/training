@@ -2,8 +2,12 @@
 # -*- coding: utf-8 -*-
 """
 Chrome.batを実行して、スクレイピングしたいurlをクリップボードにコピーして、実行する。
-サイトURLより、タイトルを取得する
-サイトURLより、サイト末尾のimageURLを取得する
+    起動しているChromeに接続する、起動していなければ起動して接続する
+    Chromeに接続する
+    Chromeを起動する
+    ChromeでURLを開く
+    Chromeで開いているサイトのsourceを取得する
+    Chromeを閉じる
 
 参考ブログ
 https://note.nkmk.me/python/
@@ -17,6 +21,8 @@ https://www.selenium.dev/ja/documentation/webdriver/getting_started/
 """
 import os
 import time
+import timeout_decorator
+from timeout_timer import timeout
 import subprocess
 import copy
 import sys
@@ -36,17 +42,13 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class SeleniumDriverValue:
+class ChromeDriverValue:
     """Chromeドライバ値オブジェクト
     """
     url: str
     selectors: list
     title: str
     last_image_url: str
-    profile_path = r'C:\Users\igapon\temp'
-    cmd = r'"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"' \
-          r' -remote-debugging-port=9222' \
-          f' --user-data-dir="{profile_path}"'
 
     def __init__(self, url, selectors, title, last_image_url):
         """完全コンストラクタパターン
@@ -73,13 +75,17 @@ class SeleniumDriverValue:
         return len(urlparse(string).scheme) > 0
 
 
-class SeleniumDriver:
+class ChromeDriver:
     """指定のサイトを読み込み、スクレイピングする
     """
-    value_object: SeleniumDriverValue = None
+    value_object: ChromeDriverValue = None
     driver = None
     root = os.path.dirname(os.path.abspath(__file__))
     driver_path = os.path.join(root, r'driver\chromedriver.exe')
+    profile_path = r'C:\Users\igapon\temp'
+    cmd = r'"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"' \
+          r' -remote-debugging-port=9222' \
+          f' --user-data-dir="{profile_path}"'
 
     def __init__(self, value_object, selectors=None):
         """コンストラクタ
@@ -88,8 +94,18 @@ class SeleniumDriver:
         :param value_object: list 対象となるサイトURL、または、値オブジェクト
         :param selectors: list スクレイピングする際のセレクタリスト
         """
+        options = ChromeOptions()
+        options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
+        try:
+            self.connection(options)
+        except StopIteration as e:
+            print(e, "Chromeが起動していなかったので、起動する。タイムアウト")
+            self.create(options)
+        except Exception as e:
+            print(e, "Chromeが起動していなかったので、起動する。その他")
+            self.create(options)
         if value_object is not None:
-            if isinstance(value_object, SeleniumDriverValue):
+            if isinstance(value_object, ChromeDriverValue):
                 self.value_object = value_object
             else:
                 if isinstance(value_object, str):
@@ -98,30 +114,33 @@ class SeleniumDriver:
                         title_en, title, last_image_url = self.gen_scraping(url, selectors)
                         if not title:
                             title = title_en
-                        self.value_object = SeleniumDriverValue(url,
-                                                                selectors,
-                                                                title,
-                                                                last_image_url,
-                                                                )
+                        self.value_object = ChromeDriverValue(url,
+                                                              selectors,
+                                                              title,
+                                                              last_image_url,
+                                                              )
+
+    # 以下のタイムアウト上手く動かせなかった
+    # @timeout_decorator.timeout(5, use_signals=False, timeout_exception=StopIteration)
+    # @timeout_decorator.timeout(5, timeout_exception=StopIteration)
+    # @timeout_decorator.timeout(5)
+    # @timeout(5)
+    def connection(self, options):
+        # 起動しているchromeに接続
+        self.driver = Chrome(executable_path=self.driver_path, options=options)
+
+    def create(self, options):
+        # chromeを起動して接続
+        subprocess.Popen(self.cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        self.driver = Chrome(executable_path=self.driver_path, options=options)
 
     def gen_scraping(self, url, selectors):
         """スクレイピング結果を返すジェネレータ
-        chromeを起動して、urlからselectorsを辿り、画像リストの最終画像アドレスと、タイトルを取得する
+        chromeで開いているサイトから、selectorsを辿り、タイトルと、画像リストの最終画像アドレスを取得する
         :param url: str スクレイピングの開始ページ
         :param selectors: list dict list tuple(by, selector, action) スクレイピングの規則
         """
-        # chromeの起動
-        # subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        try:
-            options = ChromeOptions()
-            # 起動しているchromeに接続
-            options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
-            self.driver = Chrome(executable_path=self.driver_path, options=options)
-            time.sleep(3)
-            self.driver.get(url)
-        except Exception as e:
-            print(e)
-            exit()
+        self.driver.get(url)
         for key, list_value in selectors.items():
             while list_value:
                 tuple_value = list_value.pop(0)
@@ -198,8 +217,9 @@ if __name__ == '__main__':  # インポート時には動かない
                        lambda el: el.get_attribute("src")),
                       ],
     }
-    driver = SeleniumDriver(main_url, main_selectors)
+    driver = ChromeDriver(main_url, main_selectors)
     main_title = driver.get_title()
     main_image_url = driver.get_last_image_url()
     print(main_image_url + "," + main_title)
     pyperclip.copy(main_image_url + "," + main_title)
+    # driver.close()

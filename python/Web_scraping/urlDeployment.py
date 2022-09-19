@@ -73,7 +73,7 @@ if __name__ == '__main__':  # インポート時には動かない
                            lambda elem: elem.get_attribute("src")),
                           ],
         }
-        driver = SeleniumDriver(main_url, main_selectors)
+        driver = ChromeDriver(main_url, main_selectors)
         main_title = driver.get_title()
         main_image_url = driver.get_last_image_url()
     print(main_title)
