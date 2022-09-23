@@ -46,6 +46,8 @@ from selenium.common.exceptions import NoSuchElementException
 from webdriver_manager.chrome import ChromeDriverManager
 from dataclasses import dataclass
 
+from const import *
+
 
 @dataclass(frozen=True)
 class ChromeDriverHelperValue:
@@ -122,6 +124,10 @@ class ChromeDriverHelper:
                                 title = f'{now:%Y%m%d_%H%M%S}'
                             else:
                                 title = title_sub
+                        self.back()
+                        # NOTE: zipに入れてないので消えてまう
+                        self.save_source(os.path.join(OUTPUT_FOLDER_PATH, f'{title}.html'))
+                        self.forward()
                         self.value_object = ChromeDriverHelperValue(url,
                                                                     selectors,
                                                                     title,
@@ -141,17 +147,13 @@ class ChromeDriverHelper:
         """
         self.__add_options(*self.__chrome_opt)
         try:
+            # タイムアウト長いので、なるべくChrome起動してから呼び出したい
             self.__connection()
         except Exception as e:
             print(e, "Chromeが起動していなかったので、起動して接続する。")
             self.__create()
             self.__connection()
 
-    # NOTE: 以下のタイムアウト上手く動かせなかった
-    # @timeout_decorator.timeout(5, use_signals=False, timeout_exception=StopIteration)
-    # @timeout_decorator.timeout(5, timeout_exception=StopIteration)
-    # @timeout_decorator.timeout(5)
-    # @timeout(5)
     def __connection(self):
         """起動しているchromeに接続
         :return:
@@ -209,6 +211,15 @@ class ChromeDriverHelper:
         self.__source = self.__driver.page_source
         return copy.deepcopy(self.__source)
 
+    def save_source(self, path='./title.html'):
+        """ソースコードをファイルに保存する
+        :param path: str 保存するファイルパス(URLかタイトルを指定するとよさそう)
+        :return:
+        """
+        html = self.get_source()
+        with open(path, 'w', encoding='utf-8') as f:
+            f.write(html)
+
     def get_title(self):
         """タイトル取得
         :return: str タイトル
@@ -254,24 +265,7 @@ if __name__ == '__main__':  # インポート時には動かない
         print('引数が不正です。')
         sys.exit()
 
-    main_selectors = {
-        'title_jp': [(By.XPATH,
-                      '//div/div/div/h2',  # //*[@id="info"]/h2
-                      lambda el: el.text),
-                     ],
-        'title_en': [(By.XPATH,
-                      '//div/div/div/h1',  # //*[@id="info"]/h1
-                      lambda el: el.text),
-                     ],
-        'image_url': [(By.XPATH,
-                       '(//*[@id="thumbnail-container"]/div/div/a)[last()]',
-                       lambda el: el.get_attribute("href")),
-                      (By.XPATH,
-                       '//*[@id="image-container"]/a/img',
-                       lambda el: el.get_attribute("src")),
-                      ],
-    }
-    driver = ChromeDriverHelper(main_url, main_selectors)
+    driver = ChromeDriverHelper(main_url, SELECTORS)
     main_title = driver.get_title()
     main_image_url = driver.get_last_image_url()
     print(main_image_url + "," + main_title)

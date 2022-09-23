@@ -176,24 +176,7 @@ if __name__ == '__main__':  # インポート時には動かない
         main_image_url = paste_str
     else:
         main_url = paste_str
-        main_selectors = {
-            'title_jp': [(By.XPATH,
-                          '//div/div/div/h2',  # //*[@id="info"]/h2
-                          lambda elem: elem.text),
-                         ],
-            'title_en': [(By.XPATH,
-                          '//div/div/div/h1',  # //*[@id="info"]/h1
-                          lambda elem: elem.text),
-                         ],
-            'image_url': [(By.XPATH,
-                           '(//*[@id="thumbnail-container"]/div/div/a)[last()]',
-                           lambda elem: elem.get_attribute("href")),
-                          (By.XPATH,
-                           '//*[@id="image-container"]/a/img',
-                           lambda elem: elem.get_attribute("src")),
-                          ],
-        }
-        driver = ChromeDriverHelper(main_url, main_selectors)
+        driver = ChromeDriverHelper(main_url, SELECTORS)
         main_title = driver.get_title()
         main_image_url = driver.get_last_image_url()
     print(main_title)

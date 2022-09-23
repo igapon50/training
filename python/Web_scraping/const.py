@@ -12,6 +12,8 @@ __maintainer__ = "igapon"
 __email__ = "igapon@gmail.com"
 __status__ = "Development"  # "Prototype" or "Development" or "Production"
 
+from selenium.webdriver.common.by import By
+
 msg_error_exit = 'エラー終了します。'
 # chromeなら、拡張機能のコンソールに「navigator.userAgent;」と入力して確認する
 HEADERS_DIC = {
@@ -22,7 +24,7 @@ HEADERS_DIC = {
 DEFAULT_TARGET_URL = 'https://www.hot-ishikawa.jp/photo/'
 
 RESULT_FILE_PATH = './result.txt'  # タイトルと、ダウンロードするファイルのURLの列挙を書き込むファイル
-OUTPUT_FOLDER_PATH = '.\\folder01'  # ダウンロードしたファイルの保存パス
+OUTPUT_FOLDER_PATH = './folder01'  # ダウンロードしたファイルの保存パス
 
 # img_css_select = 'html body section.entry-content img'
 # img_attr = 'src'
@@ -57,3 +59,21 @@ img_attr = ['href', 'src']
 
 # img_css_select = 'html body article noscript img'
 # img_attr = 'src'
+
+SELECTORS = {
+    'title_jp': [(By.XPATH,
+                  '//div/div/div/h2',  # //*[@id="info"]/h2
+                  lambda el: el.text),
+                 ],
+    'title_en': [(By.XPATH,
+                  '//div/div/div/h1',  # //*[@id="info"]/h1
+                  lambda el: el.text),
+                 ],
+    'image_url': [(By.XPATH,
+                   '(//*[@id="thumbnail-container"]/div/div/a)[last()]',
+                   lambda el: el.get_attribute("href")),
+                  (By.XPATH,
+                   '//*[@id="image-container"]/a/img',
+                   lambda el: el.get_attribute("src")),
+                  ],
+}
