@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Chromeドライバのヘルパー
+"""Selenium Chromeドライバのヘルパー
 Chrome.batを実行して、Chromeを起動すること。
 スクレイピングしたいurlをクリップボードにコピーして、実行する。
     起動しているChromeに接続する、起動していなければ起動して接続する、ChromeでURLを開きスクレイピングする __init__
-    Chromeに接続する connection
-    Chromeを起動する create
+    Chromeに接続する __connection
+    Chromeを起動する __create
     Chromeを閉じる destroy
-    ChromeでURLを開く open_url
-    Chromeで開いているページをスクレイピングする gen_scraping
+    ChromeでURLを開く __open_url
+    Chromeで開いているページをスクレイピングする __gen_scraping
     Chromeで開いているページのsourceを取得する get_source
     タイトルを取得する get_title
     最終画像アドレスを取得する get_last_image_url
@@ -82,15 +82,19 @@ class ChromeDriverValue:
 class ChromeDriver:
     """指定のサイトを読み込み、スクレイピングする
     """
-    value_object: ChromeDriverValue = None
-    driver = None
-    source = None
-    root = os.path.dirname(os.path.abspath(__file__))
-    driver_path = os.path.join(root, r'driver\chromedriver.exe')
+    # value_object: ChromeDriverValue = None
+    __driver = None
+    __source = None
+    root_path = os.path.dirname(os.path.abspath(__file__))
+    driver_path = os.path.join(root_path, r'driver\chromedriver.exe')
+    chrome_path = r'"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"'
+    __options = ChromeOptions()
+    __port = "9222"
+    __chrome_opt = ('debuggerAddress', f'127.0.0.1:{__port}')
     profile_path = r'C:\Users\igapon\temp'
-    cmd = r'"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"' \
-          r' -remote-debugging-port=9222' \
-          f' --user-data-dir="{profile_path}"'
+    __cmd = f'{chrome_path}' \
+            f' -remote-debugging-port={__port}' \
+            f' --user-data-dir="{profile_path}"'
 
     def __init__(self, value_object, selectors=None):
         """コンストラクタ
@@ -99,16 +103,7 @@ class ChromeDriver:
         :param value_object: list 対象となるサイトURL、または、値オブジェクト
         :param selectors: list スクレイピングする際のセレクタリスト
         """
-        options = ChromeOptions()
-        options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
-        try:
-            self.connection(options)
-        except StopIteration as e:
-            print(e, "Chromeが起動していなかったので、起動する。タイムアウト")
-            self.create(options)
-        except Exception as e:
-            print(e, "Chromeが起動していなかったので、起動する。その他")
-            self.create(options)
+        self.__start()
         if value_object is not None:
             if isinstance(value_object, ChromeDriverValue):
                 self.value_object = value_object
@@ -116,56 +111,72 @@ class ChromeDriver:
                 if isinstance(value_object, str):
                     url = value_object
                     if selectors is not None:
-                        self.open_url(url)
-                        title_en, title, last_image_url = self.gen_scraping(selectors)
+                        self.__open_url(url)
+                        title, title_sub, last_image_url = self.__gen_scraping(selectors)
                         if not title:
-                            if not title_en:
+                            if not title_sub:
                                 # タイトルが得られない時は、タイトルを日時文字列にする
                                 now = datetime.datetime.now()
                                 title = f'{now:%Y%m%d_%H%M%S}'
                             else:
-                                title = title_en
+                                title = title_sub
                         self.value_object = ChromeDriverValue(url,
                                                               selectors,
                                                               title,
                                                               last_image_url,
                                                               )
 
-    # 以下のタイムアウト上手く動かせなかった
+    def __add_options(self, *args):
+        """オプション追加
+        :param args: tuple(str, str) 追加するキーと値
+        :return:
+        """
+        self.__options.add_experimental_option(*args)
+
+    def __start(self):
+        """Chromeへの接続を完了する。起動していなければ起動する。
+        :return:
+        """
+        self.__add_options(*self.__chrome_opt)
+        try:
+            self.__connection()
+        except Exception as e:
+            print(e, "Chromeが起動していなかったので、起動して接続する。")
+            self.__create()
+            self.__connection()
+
+    # NOTE: 以下のタイムアウト上手く動かせなかった
     # @timeout_decorator.timeout(5, use_signals=False, timeout_exception=StopIteration)
     # @timeout_decorator.timeout(5, timeout_exception=StopIteration)
     # @timeout_decorator.timeout(5)
     # @timeout(5)
-    def connection(self, options):
+    def __connection(self):
         """起動しているchromeに接続
-        :param options:
         :return:
         """
-        self.driver = Chrome(executable_path=self.driver_path, options=options)
+        self.__driver = Chrome(executable_path=self.driver_path, options=self.__options)
 
-    def create(self, options):
-        """chromeを起動して接続
-        :param options:
+    def __create(self):
+        """chromeを起動する
         :return:
         """
-        subprocess.Popen(self.cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        self.driver = Chrome(executable_path=self.driver_path, options=options)
+        subprocess.Popen(self.__cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
     def destroy(self):
         """chromeが開いていれば閉じる
         :return: なし
         """
-        if self.driver is not None:
-            self.driver.close()
+        if self.__driver is not None:
+            self.__driver.close()
 
-    def open_url(self, url):
+    def __open_url(self, url):
         """chromeにurlを開く
         :param url: str chromeで開くURL
         :return: なし
         """
-        self.driver.get(url)
+        self.__driver.get(url)
 
-    def gen_scraping(self, selectors):
+    def __gen_scraping(self, selectors):
         """スクレイピング結果を返すジェネレータ
         chromeで開いているサイトに対してスクレイピングする
         chromeで開いているサイトから、selectorsを辿り、タイトルと、画像リストの最終画像アドレスを取得する
@@ -176,7 +187,7 @@ class ChromeDriver:
                 tuple_value = list_value.pop(0)
                 by, selector, action = tuple_value
                 try:
-                    elem = self.driver.find_element(by=by, value=selector)
+                    elem = self.__driver.find_element(by=by, value=selector)
                     ret = action(elem)
                 except NoSuchElementException:
                     # find_elementでelementが見つからなかったとき
@@ -185,7 +196,7 @@ class ChromeDriver:
                     ret_parse = urlparse(ret)
                     if 0 < len(ret_parse.scheme):
                         # listの末尾以外で、URLの時は、表示を更新する
-                        self.driver.get(ret)
+                        self.__driver.get(ret)
                 else:
                     yield ret
 
@@ -193,8 +204,8 @@ class ChromeDriver:
         """chromeで現在表示しているページのソースコードを取得する
         :return: str ソースコード
         """
-        self.source = self.driver.page_source
-        return copy.deepcopy(self.source)
+        self.__source = self.__driver.page_source
+        return copy.deepcopy(self.__source)
 
     def get_title(self):
         """タイトル取得
@@ -230,12 +241,12 @@ if __name__ == '__main__':  # インポート時には動かない
         sys.exit()
 
     main_selectors = {
-        'title_en': [(By.XPATH,
-                      '//div/div/div/h1',  # //*[@id="info"]/h1
-                      lambda el: el.text),
-                     ],
         'title_jp': [(By.XPATH,
                       '//div/div/div/h2',  # //*[@id="info"]/h2
+                      lambda el: el.text),
+                     ],
+        'title_en': [(By.XPATH,
+                      '//div/div/div/h1',  # //*[@id="info"]/h1
                       lambda el: el.text),
                      ],
         'image_url': [(By.XPATH,
