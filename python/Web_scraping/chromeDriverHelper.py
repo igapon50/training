@@ -27,8 +27,8 @@ https://www.selenium.dev/ja/documentation/webdriver/getting_started/
 """
 import os
 import time
-import timeout_decorator
-from timeout_timer import timeout
+# import timeout_decorator
+# from timeout_timer import timeout
 import subprocess
 import copy
 import sys
