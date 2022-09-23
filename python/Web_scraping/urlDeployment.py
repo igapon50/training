@@ -15,7 +15,7 @@ import urllib.parse
 import subprocess
 from downloading import *
 import sys
-from chrome import *
+from chromeDriverHelper import *
 from irvineHelper import *
 
 # 検証コード
@@ -73,7 +73,7 @@ if __name__ == '__main__':  # インポート時には動かない
                            lambda elem: elem.get_attribute("src")),
                           ],
         }
-        driver = ChromeDriver(main_url, main_selectors)
+        driver = ChromeDriverHelper(main_url, main_selectors)
         main_title = driver.get_title()
         main_image_url = driver.get_last_image_url()
     print(main_title)

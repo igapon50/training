@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Selenium Chromeドライバのヘルパー
-Chrome.batを実行して、Chromeを起動すること。
+Chrome.batを実行して、Chromeを起動しておくと、その続きから操作できる。
 スクレイピングしたいurlをクリップボードにコピーして、実行する。
     起動しているChromeに接続する、起動していなければ起動して接続する、ChromeでURLを開きスクレイピングする __init__
     Chromeに接続する __connection
@@ -12,6 +12,8 @@ Chrome.batを実行して、Chromeを起動すること。
     Chromeで開いているページのsourceを取得する get_source
     タイトルを取得する get_title
     最終画像アドレスを取得する get_last_image_url
+    履歴を一つ戻る back
+    履歴を一つ進む forward
 
 参考ブログ
 https://note.nkmk.me/python/
@@ -46,7 +48,7 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class ChromeDriverValue:
+class ChromeDriverHelperValue:
     """Chromeドライバ値オブジェクト
     """
     url: str
@@ -79,10 +81,10 @@ class ChromeDriverValue:
         return len(urlparse(string).scheme) > 0
 
 
-class ChromeDriver:
+class ChromeDriverHelper:
     """指定のサイトを読み込み、スクレイピングする
     """
-    # value_object: ChromeDriverValue = None
+    # value_object: ChromeDriverHelperValue = None
     __driver = None
     __source = None
     root_path = os.path.dirname(os.path.abspath(__file__))
@@ -105,7 +107,7 @@ class ChromeDriver:
         """
         self.__start()
         if value_object is not None:
-            if isinstance(value_object, ChromeDriverValue):
+            if isinstance(value_object, ChromeDriverHelperValue):
                 self.value_object = value_object
             else:
                 if isinstance(value_object, str):
@@ -120,11 +122,11 @@ class ChromeDriver:
                                 title = f'{now:%Y%m%d_%H%M%S}'
                             else:
                                 title = title_sub
-                        self.value_object = ChromeDriverValue(url,
-                                                              selectors,
-                                                              title,
-                                                              last_image_url,
-                                                              )
+                        self.value_object = ChromeDriverHelperValue(url,
+                                                                    selectors,
+                                                                    title,
+                                                                    last_image_url,
+                                                                    )
 
     def __add_options(self, *args):
         """オプション追加
@@ -219,6 +221,18 @@ class ChromeDriver:
         """
         return copy.deepcopy(self.value_object.last_image_url)
 
+    def back(self):
+        """ブラウザの戻るボタン押下と同じ動作
+        :return:
+        """
+        self.__driver.back()
+
+    def forward(self):
+        """ブラウザの進むボタン押下と同じ動作
+        :return:
+        """
+        self.__driver.forward()
+
 
 if __name__ == '__main__':  # インポート時には動かない
     main_url = None
@@ -257,9 +271,8 @@ if __name__ == '__main__':  # インポート時には動かない
                        lambda el: el.get_attribute("src")),
                       ],
     }
-    driver = ChromeDriver(main_url, main_selectors)
+    driver = ChromeDriverHelper(main_url, main_selectors)
     main_title = driver.get_title()
     main_image_url = driver.get_last_image_url()
     print(main_image_url + "," + main_title)
     pyperclip.copy(main_image_url + "," + main_title)
-    # driver.close()
