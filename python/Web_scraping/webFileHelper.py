@@ -14,7 +14,7 @@ from const import *
 
 @dataclass(frozen=True)
 class WebFileHelperValue:
-    """Chromeドライバ値オブジェクト
+    """webファイルヘルパー値オブジェクト
     """
     url: str
     folder_path: str
@@ -39,13 +39,13 @@ class WebFileHelperValue:
 
 
 class WebFileHelper:
-    """指定のサイトを読み込み、スクレイピングする
+    """webファイルのヘルパー
     """
     # value_object: WebFileHelperValue = None
     __driver = None
     __source = None
-    root_path = os.path.dirname(os.path.abspath(__file__))
-    folder_path = os.path.join(root_path, OUTPUT_FOLDER_PATH).replace(os.sep, '/')
+    __root_path = os.path.dirname(os.path.abspath(__file__))
+    folder_path = os.path.join(__root_path, OUTPUT_FOLDER_PATH).replace(os.sep, '/')
 
     def __init__(self, value_object, folder_path=folder_path):
         """コンストラクタ
