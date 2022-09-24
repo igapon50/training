@@ -2,14 +2,6 @@
 # -*- coding: utf-8 -*-
 """webファイルリストのヘルパー
 """
-import os
-import copy
-import sys
-import pyperclip  # クリップボード
-from urllib.parse import urlparse  # URLパーサー
-from dataclasses import dataclass
-
-from const import *
 from webFileHelper import *
 
 
@@ -34,37 +26,51 @@ class WebFileListHelperValue:
 class WebFileListHelper:
     """webファイルのヘルパー
     """
-    # value_object: WebFileListHelperValue = None
-    __driver = None
+    value_object: WebFileListHelperValue = None
     __web_file_list: list = []
     __root_path = os.path.dirname(os.path.abspath(__file__))
-    folder_path = os.path.join(__root_path, OUTPUT_FOLDER_PATH).replace(os.sep, '/')
+    __folder_path = os.path.join(__root_path, OUTPUT_FOLDER_PATH).replace(os.sep, '/')
 
-    def __init__(self, value_object, folder_path=folder_path):
+    def __init__(self, value_object, folder_path=__folder_path):
         """コンストラクタ
         値オブジェクトからの復元、
         または、urlリストとfolder_pathより、値オブジェクトを作成する
         :param value_object: list 対象となるサイトURL、または、値オブジェクト
         :param folder_path: str フォルダのフルパス
         """
-        if value_object is not None:
+        if value_object:
             if isinstance(value_object, WebFileListHelperValue):
                 self.value_object = value_object
             else:
                 if isinstance(value_object, list):
-                    if folder_path is not None:
-                        urls = value_object
-                        for url in urls:
-                            self.__web_file_list.append(WebFileHelper(url,
+                    if folder_path:
+                        __urls = value_object
+                        for __url in __urls:
+                            self.__web_file_list.append(WebFileHelper(__url,
                                                                       folder_path,
                                                                       ))
                         self.value_object = WebFileListHelperValue(self.__web_file_list)
 
     def get_web_file_list_helper(self):
         return copy.deepcopy(self.__web_file_list)
+
+    def is_exist(self):
+        """ファイルリストの全ファイルがローカルに存在する
+        :return: bool 全てのファイルが存在すればTrueを返す
+        """
+        for __web_file in self.value_object.file_list:
+            if not os.path.isfile(__web_file.get_path()):
+                return False
+        return True
+
+    def rename_url_ext_shift(self):
+        """ファイルリストの各ファイルについて、ローカルに存在しないファイルの拡張子をシフトする
+        :return:
+        """
+        for __count, __web_file_helper in enumerate(self.value_object.file_list):
+            if not os.path.isfile(__web_file_helper.get_path()):
+                WebFileHelper(__web_file_helper).rename_url_ext_shift()
     # downloading.pyから以下を移植する
-    # ファイルリストのファイルが存在する is_src_exist/is_dst_exist
-    # ファイルリストのファイルが存在しないファイルの拡張子をシフトする rename_ext_shift
     # ファイルリストのファイル名を付け直す rename_images
     # 圧縮ファイルを作る make_zip_file
     # 圧縮ファイルのファイル名を付け直す rename_zip_file
@@ -82,9 +88,9 @@ if __name__ == '__main__':  # インポート時には動かない
     elif 1 == len(sys.argv):
         # 引数がなければ、クリップボードからURLを得る
         paste_str = pyperclip.paste()
-        if not paste_str:
+        if paste_str:
             parse = urlparse(paste_str)
-            if not parse.scheme:
+            if parse.scheme:
                 main_url = paste_str
         # クリップボードが空なら、デフォルトURLを用いる
     else:
@@ -93,14 +99,26 @@ if __name__ == '__main__':  # インポート時には動かない
 
     # テスト　若者 | かわいいフリー素材集 いらすとや
     image_url_list = [
-        'https://1.bp.blogspot.com/-tzoOQwlaRac/X1LskKZtKEI/AAAAAAABa_M/89phuGIVDkYGY_uNKvFB6ZiNHxR7bQYcgCNcBGAsYHQ/'
+        'https://1.bp.blogspot.com/-tzoOQwlaRac/X1LskKZtKEI/AAAAAAABa_M/'
+        '89phuGIVDkYGY_uNKvFB6ZiNHxR7bQYcgCNcBGAsYHQ/'
         's180-c/fashion_dekora.png',
-        'https://1.bp.blogspot.com/-gTf4sWnRdDw/X0B4RSQQLrI/AAAAAAABarI/MJ9DW90dSVwtMjuUoErxemnN4nPXBnXUwCNcBGAsYHQ/'
+        'https://1.bp.blogspot.com/-gTf4sWnRdDw/X0B4RSQQLrI/AAAAAAABarI/'
+        'MJ9DW90dSVwtMjuUoErxemnN4nPXBnXUwCNcBGAsYHQ/'
         's180-c/otaku_girl_fashion.png',
     ]
     web_file_list = WebFileListHelper(image_url_list)
-    for web_file in web_file_list.value_object.file_list:
-        path = web_file.get_path()
-        filename = web_file.get_filename()
-        ext = web_file.get_ext()
-        print(path + ", " + filename + ", " + ext)
+    for web_file_helper in web_file_list.value_object.file_list:
+        print(web_file_helper.is_image())
+        for __item in web_file_helper.ext_list:
+            main_url = web_file_helper.get_url()
+            main_folder_path = web_file_helper.get_folder_path()
+            main_path = web_file_helper.get_path()
+            main_filename = web_file_helper.get_filename()
+            main_ext = web_file_helper.get_ext()
+            print(main_url + ", " + main_folder_path)
+            print(main_path + ", " + main_filename + ", " + main_ext)
+            web_file_helper.rename_url_ext_shift()
+    if web_file_list.is_exist():
+        print('全てのファイルが存在する')
+    else:
+        print('ファイルが存在しない')

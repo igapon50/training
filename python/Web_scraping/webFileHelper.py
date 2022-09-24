@@ -41,27 +41,26 @@ class WebFileHelperValue:
 class WebFileHelper:
     """webファイルのヘルパー
     """
-    # value_object: WebFileHelperValue = None
-    __driver = None
-    __source = None
+    value_object: WebFileHelperValue = None
     __root_path = os.path.dirname(os.path.abspath(__file__))
-    folder_path = os.path.join(__root_path, OUTPUT_FOLDER_PATH).replace(os.sep, '/')
+    __folder_path = os.path.join(__root_path, OUTPUT_FOLDER_PATH).replace(os.sep, '/')
+    ext_list = ['.jpg', '.png', '.jpeg', '.webp', '.svg', '.svgz', '.gif', '.tif', '.tiff', '.psd', '.bmp']  # これを画像とする
 
-    def __init__(self, value_object, folder_path=folder_path):
+    def __init__(self, value_object, folder_path=__folder_path):
         """コンストラクタ
         値オブジェクトからの復元、
         または、urlとfolder_pathより、値オブジェクトを作成する
         :param value_object: list 対象となるサイトURL、または、値オブジェクト
         :param folder_path: str フォルダのフルパス
         """
-        if value_object is not None:
+        if value_object:
             if isinstance(value_object, WebFileHelperValue):
                 self.value_object = value_object
             else:
                 if isinstance(value_object, str):
-                    url = value_object
-                    if folder_path is not None:
-                        self.value_object = WebFileHelperValue(url,
+                    __url = value_object
+                    if folder_path:
+                        self.value_object = WebFileHelperValue(__url,
                                                                folder_path,
                                                                )
 
@@ -69,13 +68,24 @@ class WebFileHelper:
         """画像化判定
         :return: bool
         """
-        ext_list = ['.jpg', '.png']  # これを画像とする
         __parse = urlparse(self.value_object.url)
-        for __ext in ext_list:
+        for __ext in self.ext_list:
             offset = len(__ext)
             if __parse.path[-offset:].lower() == __ext:
                 return True
         return False
+
+    def get_url(self):
+        """URLを得る
+        :return: str URL
+        """
+        return copy.deepcopy(self.value_object.url)
+
+    def get_folder_path(self):
+        """フォルダーパスを得る
+        :return: str folder_path
+        """
+        return copy.deepcopy(self.value_object.folder_path)
 
     def get_filename(self):
         """ファイル名を得る
@@ -99,7 +109,24 @@ class WebFileHelper:
         """ファイルのフルパスを得る
         :return: str ファイルのフルパス(セパレータはスラッシュ)
         """
-        return copy.deepcopy(os.path.join(self.folder_path, self.get_filename() + self.get_ext()).replace(os.sep, '/'))
+        return copy.deepcopy(os.path.join(self.value_object.folder_path,
+                                          self.get_filename() + self.get_ext()).replace(os.sep, '/'))
+
+    def rename_url_ext_shift(self):
+        """ext_listの次の拡張子に、urlの拡張子をシフトする
+        現在の拡張子はext_listの何番目か調べて、次の拡張子にurlを変更して、値オブジェクトを作り直す
+        :return:
+        """
+        if not self.is_image():
+            print('画像じゃないので処理をスキップ')
+        else:
+            __index = self.ext_list.index(self.get_ext())
+            __index = (__index + 1) % len(self.ext_list)
+            __ext = self.ext_list[__index]
+            __url = self.value_object.url[::-1].replace(self.get_ext()[::-1], __ext[::-1])[::-1]
+            self.value_object = WebFileHelperValue(__url,
+                                                   self.value_object.folder_path
+                                                   )
 
 
 if __name__ == '__main__':  # インポート時には動かない
@@ -113,18 +140,28 @@ if __name__ == '__main__':  # インポート時には動かない
     elif 1 == len(sys.argv):
         # 引数がなければ、クリップボードからURLを得る
         paste_str = pyperclip.paste()
-        if not paste_str:
+        if paste_str:
             parse = urlparse(paste_str)
-            if not parse.scheme:
+            if parse.scheme:
                 main_url = paste_str
         # クリップボードが空なら、デフォルトURLを用いる
     else:
         print('引数が不正です。')
         sys.exit()
 
-    file = WebFileHelper(main_url)
-    path = file.get_path()
-    filename = file.get_filename()
-    ext = file.get_ext()
-    print(path + ", " + filename + ", " + ext)
-    pyperclip.copy(path + ", " + filename + ", " + ext)
+    # テスト　若者 | かわいいフリー素材集 いらすとや
+    image_url = 'https://1.bp.blogspot.com/-tzoOQwlaRac/X1LskKZtKEI/AAAAAAABa_M/'\
+                '89phuGIVDkYGY_uNKvFB6ZiNHxR7bQYcgCNcBGAsYHQ/'\
+                's180-c/fashion_dekora.png'
+    web_file_helper = WebFileHelper(image_url)
+    print(web_file_helper.is_image())
+    for __item in web_file_helper.ext_list:
+        main_url = web_file_helper.get_url()
+        main_folder_path = web_file_helper.get_folder_path()
+        main_path = web_file_helper.get_path()
+        main_filename = web_file_helper.get_filename()
+        main_ext = web_file_helper.get_ext()
+        print(main_url + ", " + main_folder_path)
+        print(main_path + ", " + main_filename + ", " + main_ext)
+        web_file_helper.rename_url_ext_shift()
+    # pyperclip.copy(path + ", " + filename + ", " + ext)
