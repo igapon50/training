@@ -176,6 +176,7 @@ if __name__ == '__main__':  # インポート時には動かない
         main_image_url = paste_str
     else:
         main_url = paste_str
+        print(main_url)
         driver = ChromeDriverHelper(main_url, SELECTORS)
         main_title = driver.get_title()
         main_image_url = driver.get_last_image_url()
