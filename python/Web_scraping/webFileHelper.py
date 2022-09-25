@@ -45,6 +45,7 @@ class WebFileHelper:
     __root_path = os.path.dirname(os.path.abspath(__file__))
     __folder_path = os.path.join(__root_path, OUTPUT_FOLDER_PATH).replace(os.sep, '/')
     ext_list = ['.jpg', '.png', '.jpeg', '.webp', '.svg', '.svgz', '.gif', '.tif', '.tiff', '.psd', '.bmp']  # これを画像とする
+    dst_filename: str = None
 
     def __init__(self, value_object, folder_path=__folder_path):
         """コンストラクタ
@@ -56,6 +57,7 @@ class WebFileHelper:
         if value_object:
             if isinstance(value_object, WebFileHelperValue):
                 self.value_object = value_object
+                self.dst_filename = self.get_filename()
             else:
                 if isinstance(value_object, str):
                     __url = value_object
@@ -63,6 +65,7 @@ class WebFileHelper:
                         self.value_object = WebFileHelperValue(__url,
                                                                folder_path,
                                                                )
+                        self.dst_filename = self.get_filename()
 
     def is_image(self):
         """画像化判定
@@ -94,7 +97,10 @@ class WebFileHelper:
         __parse = urlparse(self.value_object.url)
         __path_after_name = __parse.path[__parse.path.rfind('/') + 1:]
         __base_name = __path_after_name[:__path_after_name.rfind('.')]
-        return copy.deepcopy(__base_name)
+        if self.dst_filename:
+            return copy.deepcopy(self.dst_filename)
+        else:
+            return copy.deepcopy(__base_name)
 
     def get_ext(self):
         """拡張子を得る
@@ -127,6 +133,22 @@ class WebFileHelper:
             self.value_object = WebFileHelperValue(__url,
                                                    self.value_object.folder_path
                                                    )
+
+    def rename_filename(self, new_file_name):
+        """ローカルにあるファイルのファイル名を変更する
+        :param new_file_name: str 変更する新しいファイル名
+        :return: bool
+        """
+        if not os.path.isfile(self.get_path()):
+            print('ファイルがローカルにないので処理をスキップします')
+        else:
+            dst_path = os.path.join(self.get_folder_path(), new_file_name + self.get_ext())
+            if os.path.isfile(dst_path):
+                print(f'リネームファイル[{dst_path}]が存在しています')
+                return False
+            os.rename(self.get_path(), dst_path)
+            self.dst_filename = new_file_name
+        return True
 
 
 if __name__ == '__main__':  # インポート時には動かない

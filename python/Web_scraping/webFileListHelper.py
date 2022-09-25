@@ -2,6 +2,10 @@
 # -*- coding: utf-8 -*-
 """webファイルリストのヘルパー
 """
+
+import datetime
+import zipfile  # zipファイル
+import re  # 正規表現モジュール
 from webFileHelper import *
 
 
@@ -70,10 +74,49 @@ class WebFileListHelper:
         for __count, __web_file_helper in enumerate(self.value_object.file_list):
             if not os.path.isfile(__web_file_helper.get_path()):
                 WebFileHelper(__web_file_helper).rename_url_ext_shift()
+
+    def rename_filenames(self):
+        """ファイルリストの各ファイルについて、ローカルに存在するファイルのファイル名をナンバリングファイル名に変更する
+        :return:
+        """
+        for __count, __web_file_helper in enumerate(self.value_object.file_list):
+            if os.path.isfile(__web_file_helper.get_path()):
+                WebFileHelper(__web_file_helper).rename_filename('{:04d}'.format(__count))
+
+    def make_zip_file(self):
+        """ファイルリストのファイルについて、一つの圧縮ファイルにする
+        圧縮ファイルが既に存在する場合は変名してから圧縮する
+        :return: bool 成功/失敗=True/False
+        """
+        if not self.is_exist():
+            return False
+        __save_path = WebFileHelper(self.value_object.file_list[0]).get_folder_path()
+        if os.path.isfile(__save_path + '.zip'):
+            __now_str = datetime.datetime.now().strftime('_%Y%m%d_%H%M%S')
+            os.rename(__save_path + '.zip', __save_path + f'{__now_str}.zip')
+            print(f'圧縮ファイル{__save_path}.zipが既に存在したので{__save_path}{__now_str}.zipに変名しました')
+        with zipfile.ZipFile(__save_path + '.zip', 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            for __web_file_helper in self.value_object.file_list:
+                zip_file.write(WebFileHelper(__web_file_helper).get_path())
+        return True
+
+    def rename_zip_file(self, zip_filename):
+        """圧縮ファイルの名前を付けなおす
+        :param zip_filename: str 付け直すファイル名(禁則文字は削除される)
+        :return: bool 成功/失敗=True/False
+        """
+        __save_path = WebFileHelper(self.value_object.file_list[0]).get_folder_path()
+        new_zip_filename = re.sub(r'[\\/:*?"<>|]+', '', zip_filename)
+        # NOTE: パスの指定方法が微妙か？
+        if os.path.isfile(os.path.join(__save_path, '..', new_zip_filename + '.zip').replace(os.sep, '/')):
+            print(f'圧縮リネームファイル{new_zip_filename}.zipが既に存在しています')
+            return False
+        print(f'圧縮ファイル名を付け直します:{new_zip_filename}.zip')
+        os.rename(__save_path + '.zip', new_zip_filename + '.zip')
+        return True
+
+    # downloadingを使用して、ダウンロードする
     # downloading.pyから以下を移植する
-    # ファイルリストのファイル名を付け直す rename_images
-    # 圧縮ファイルを作る make_zip_file
-    # 圧縮ファイルのファイル名を付け直す rename_zip_file
     # ファイルリストのファイル削除(フォルダ削除) rename_file_clear
 
 
