@@ -71,7 +71,7 @@ class WebFileHelper:
         """画像化判定
         :return: bool
         """
-        __parse = urlparse(self.value_object.url)
+        __parse = urlparse(self.get_url())
         for __ext in self.ext_list:
             offset = len(__ext)
             if __parse.path[-offset:].lower() == __ext:
@@ -94,7 +94,7 @@ class WebFileHelper:
         """ファイル名を得る
         :return: str ファイル名(拡張子除く)
         """
-        __parse = urlparse(self.value_object.url)
+        __parse = urlparse(self.get_url())
         __path_after_name = __parse.path[__parse.path.rfind('/') + 1:]
         __base_name = __path_after_name[:__path_after_name.rfind('.')]
         if self.dst_filename:
@@ -106,7 +106,7 @@ class WebFileHelper:
         """拡張子を得る
         :return: str ファイルの拡張子(ドットを含む)
         """
-        __parse = urlparse(self.value_object.url)
+        __parse = urlparse(self.get_url())
         __path_after_name = __parse.path[__parse.path.rfind('/') + 1:]
         __extend_name = __path_after_name[__path_after_name.rfind('.'):]
         return copy.deepcopy(__extend_name)
@@ -115,8 +115,9 @@ class WebFileHelper:
         """ファイルのフルパスを得る
         :return: str ファイルのフルパス(セパレータはスラッシュ)
         """
-        return copy.deepcopy(os.path.join(self.value_object.folder_path,
-                                          self.get_filename() + self.get_ext()).replace(os.sep, '/'))
+        return copy.deepcopy(os.path.join(self.get_folder_path(),
+                                          self.get_filename() + self.get_ext(),
+                                          ).replace(os.sep, '/'))
 
     def rename_url_ext_shift(self):
         """ext_listの次の拡張子に、urlの拡張子をシフトする
@@ -129,9 +130,9 @@ class WebFileHelper:
             __index = self.ext_list.index(self.get_ext())
             __index = (__index + 1) % len(self.ext_list)
             __ext = self.ext_list[__index]
-            __url = self.value_object.url[::-1].replace(self.get_ext()[::-1], __ext[::-1])[::-1]
+            __url = self.get_url()[::-1].replace(self.get_ext()[::-1], __ext[::-1])[::-1]
             self.value_object = WebFileHelperValue(__url,
-                                                   self.value_object.folder_path
+                                                   self.get_folder_path(),
                                                    )
 
     def rename_filename(self, new_file_name):

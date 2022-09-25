@@ -4,9 +4,11 @@
 """
 
 import datetime
-import zipfile  # zipファイル
 import re  # 正規表現モジュール
+import zipfile  # zipファイル
+import shutil  # 高水準のファイル操作
 from webFileHelper import *
+from downloading import *
 
 
 @dataclass(frozen=True)
@@ -55,33 +57,42 @@ class WebFileListHelper:
                                                                       ))
                         self.value_object = WebFileListHelperValue(self.__web_file_list)
 
-    def get_web_file_list_helper(self):
-        return copy.deepcopy(self.__web_file_list)
+    def get_file_list(self):
+        """ファイルリストを得る
+        :return: list[WebFileHelper]
+        """
+        return copy.deepcopy(self.value_object.file_list)
+
+    def get_folder_path_from_1st_element(self):
+        """ファイルリストの一つ目に登録されているフォルダーパスを得る
+        :return: str
+        """
+        return copy.deepcopy(self.get_file_list()[0].get_folder_path())
 
     def is_exist(self):
         """ファイルリストの全ファイルがローカルに存在する
         :return: bool 全てのファイルが存在すればTrueを返す
         """
-        for __web_file in self.value_object.file_list:
+        for __web_file in self.get_file_list():
             if not os.path.isfile(__web_file.get_path()):
                 return False
         return True
 
     def rename_url_ext_shift(self):
-        """ファイルリストの各ファイルについて、ローカルに存在しないファイルの拡張子をシフトする
-        :return:
+        """ファイルリストの各ファイルについて、ローカルに存在しないファイルの拡張子をシフトし、ファイルリストを更新する
+        :return: None
         """
         for __count, __web_file_helper in enumerate(self.value_object.file_list):
             if not os.path.isfile(__web_file_helper.get_path()):
-                WebFileHelper(__web_file_helper).rename_url_ext_shift()
+                __web_file_helper.rename_url_ext_shift()
 
     def rename_filenames(self):
-        """ファイルリストの各ファイルについて、ローカルに存在するファイルのファイル名をナンバリングファイル名に変更する
-        :return:
+        """ファイルリストの各ファイルについて、ローカルに存在するファイルのファイル名をナンバリングファイル名に変更し、ファイルリストを更新する
+        :return: None
         """
         for __count, __web_file_helper in enumerate(self.value_object.file_list):
             if os.path.isfile(__web_file_helper.get_path()):
-                WebFileHelper(__web_file_helper).rename_filename('{:04d}'.format(__count))
+                __web_file_helper.rename_filename('{:04d}'.format(__count))
 
     def make_zip_file(self):
         """ファイルリストのファイルについて、一つの圧縮ファイルにする
@@ -90,14 +101,14 @@ class WebFileListHelper:
         """
         if not self.is_exist():
             return False
-        __save_path = WebFileHelper(self.value_object.file_list[0]).get_folder_path()
-        if os.path.isfile(__save_path + '.zip'):
+        __zip_folder = self.get_folder_path_from_1st_element()
+        if os.path.isfile(__zip_folder + '.zip'):
             __now_str = datetime.datetime.now().strftime('_%Y%m%d_%H%M%S')
-            os.rename(__save_path + '.zip', __save_path + f'{__now_str}.zip')
-            print(f'圧縮ファイル{__save_path}.zipが既に存在したので{__save_path}{__now_str}.zipに変名しました')
-        with zipfile.ZipFile(__save_path + '.zip', 'w', zipfile.ZIP_DEFLATED) as zip_file:
-            for __web_file_helper in self.value_object.file_list:
-                zip_file.write(WebFileHelper(__web_file_helper).get_path())
+            os.rename(__zip_folder + '.zip', __zip_folder + f'{__now_str}.zip')
+            print(f'圧縮ファイル{__zip_folder}.zipが既に存在したので{__zip_folder}{__now_str}.zipに変名しました')
+        with zipfile.ZipFile(__zip_folder + '.zip', 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            for __web_file_helper in self.get_file_list():
+                zip_file.write(__web_file_helper.get_path())
         return True
 
     def rename_zip_file(self, zip_filename):
@@ -105,19 +116,26 @@ class WebFileListHelper:
         :param zip_filename: str 付け直すファイル名(禁則文字は削除される)
         :return: bool 成功/失敗=True/False
         """
-        __save_path = WebFileHelper(self.value_object.file_list[0]).get_folder_path()
+        __zip_folder = self.get_folder_path_from_1st_element()
         new_zip_filename = re.sub(r'[\\/:*?"<>|]+', '', zip_filename)
-        # NOTE: パスの指定方法が微妙か？
-        if os.path.isfile(os.path.join(__save_path, '..', new_zip_filename + '.zip').replace(os.sep, '/')):
+        if os.path.isfile(os.path.join(__zip_folder, '..', new_zip_filename + '.zip').replace(os.sep, '/')):
             print(f'圧縮リネームファイル{new_zip_filename}.zipが既に存在しています')
             return False
         print(f'圧縮ファイル名を付け直します:{new_zip_filename}.zip')
-        os.rename(__save_path + '.zip', new_zip_filename + '.zip')
+        os.rename(__zip_folder + '.zip', new_zip_filename + '.zip')
         return True
 
-    # downloadingを使用して、ダウンロードする
-    # downloading.pyから以下を移植する
-    # ファイルリストのファイル削除(フォルダ削除) rename_file_clear
+    def delete_images(self):
+        """ファイルリストのファイルについて、ローカルから削除する
+        :return: None
+        """
+        __zip_folder = self.get_folder_path_from_1st_element()
+        print('ファイル削除します(フォルダごと削除して、フォルダを作り直します)')
+        shutil.rmtree(__zip_folder)
+        if __zip_folder[len(__zip_folder) - 1] == '\\':
+            os.mkdir(__zip_folder)
+        else:
+            os.mkdir(__zip_folder + '\\')
 
 
 if __name__ == '__main__':  # インポート時には動かない
@@ -149,7 +167,29 @@ if __name__ == '__main__':  # インポート時には動かない
         'MJ9DW90dSVwtMjuUoErxemnN4nPXBnXUwCNcBGAsYHQ/'
         's180-c/otaku_girl_fashion.png',
     ]
+    fileDownloader = Downloading(image_url_list, OUTPUT_FOLDER_PATH)
+    ret = fileDownloader.download()
+    if not ret:
+        print('ダウンロード失敗')
+        sys.exit()
     web_file_list = WebFileListHelper(image_url_list)
+    if not web_file_list.is_exist():
+        print('ダウンロードファイルが存在しない')
+        sys.exit()
+    web_file_list.rename_filenames()
+    if not web_file_list.is_exist():
+        print('リネームファイルが存在しない')
+        sys.exit()
+    ret = web_file_list.make_zip_file()
+    if not ret:
+        print('zipファイル作成失敗')
+        sys.exit()
+    ret = web_file_list.rename_zip_file('若者 | かわいいフリー素材集 いらすとや')
+    if not ret:
+        print('zipファイルリネーム失敗')
+        sys.exit()
+    web_file_list.delete_images()
+
     for web_file_helper in web_file_list.value_object.file_list:
         print(web_file_helper.is_image())
         for __item in web_file_helper.ext_list:
@@ -161,7 +201,7 @@ if __name__ == '__main__':  # インポート時には動かない
             print(main_url + ", " + main_folder_path)
             print(main_path + ", " + main_filename + ", " + main_ext)
             web_file_helper.rename_url_ext_shift()
-    if web_file_list.is_exist():
-        print('全てのファイルが存在する')
-    else:
+    if not web_file_list.is_exist():
         print('ファイルが存在しない')
+        sys.exit()
+    print('ファイルが存在する')
