@@ -17,6 +17,7 @@ from downloading import *
 import sys
 from chromeDriverHelper import *
 from irvineHelper import *
+from webFileListHelper import *
 
 from dataclasses import dataclass
 
@@ -58,9 +59,9 @@ class UrlDeploymentValue:
 
 class UrlDeployment:
     """
+    「UrlDeploymentValue 値オブジェクト」
     「str スクレイプ対象URL, list selectors」が引数で渡されるケース
     「str 末尾画像URL, str タイトル」が引数で渡されるケース
-    「list 画像URLリスト, str タイトル」が引数で渡されるケース
     """
     value_object: UrlDeploymentValue = None
     url_list: list = []
@@ -69,26 +70,25 @@ class UrlDeployment:
         if value_object is not None:
             if isinstance(value_object, UrlDeploymentValue):
                 self.value_object = value_object
-            else:
-                if isinstance(value_object, str):
-                    # URLかチェックする
-                    __parse = urlparse(value_object)
-                    if not __parse.scheme:
-                        print('引数が不正です。URLではない？')
-                        sys.exit(1)
-                    if __parse.path[-4:] == '.jpg' or __parse.path[-4:] == '.png':
-                        __image_url = value_object
-                        __title = '[] a'
-                    else:
-                        __driver = ChromeDriverHelper(value_object, selectors)
-                        __title = __driver.get_title()
-                        __image_url = driver.get_last_image_url()
-                    __image_urls = self.__deployment(__image_url)
-                    self.value_object = UrlDeploymentValue(value_object,
-                                                           selectors,
-                                                           __title,
-                                                           __image_urls,
-                                                           )
+            elif isinstance(value_object, str):
+                # URLかチェックする
+                __parse = urlparse(value_object)
+                if not __parse.scheme:
+                    print('引数が不正です。URLではない？')
+                    sys.exit(1)
+                if __parse.path[-4:] == '.jpg' or __parse.path[-4:] == '.png':
+                    __image_url = value_object
+                    __title = selectors
+                else:
+                    __driver = ChromeDriverHelper(value_object, selectors)
+                    __title = __driver.get_title()
+                    __image_url = __driver.get_last_image_url()
+                __image_urls = self.__deployment(__image_url)
+                self.value_object = UrlDeploymentValue(value_object,
+                                                       selectors,
+                                                       __title,
+                                                       __image_urls,
+                                                       )
 
     def __deployment(self, image_url):
         """末尾画像URLを展開して、URLリスト=url_listを作る
@@ -164,71 +164,25 @@ if __name__ == '__main__':  # インポート時には動かない
         print('引数が不正です。')
         sys.exit(1)
 
-    # URLかチェックする
-    if not paste_str:
-        print('引数が不正です。空です。')
-        sys.exit(1)
-    parse = urlparse(paste_str)
-    if not parse.scheme:
-        print('引数が不正です。URLではない？')
-        sys.exit(1)
-    if parse.path[-4:] == '.jpg' or parse.path[-4:] == '.png':
-        main_image_url = paste_str
-    else:
-        main_url = paste_str
-        print(main_url)
-        driver = ChromeDriverHelper(main_url, SELECTORS)
-        main_title = driver.get_title()
-        main_image_url = driver.get_last_image_url()
-    print(main_title)
-    print(main_image_url)
-
-    # 末尾画像URL=main_image_urlを展開して、URLリスト=url_listを作る
-    if not main_image_url:
-        print('引数が不正です。空です。')
-        sys.exit(1)
-    parse = urllib.parse.urlparse(main_image_url)
-    if not parse.scheme:
-        print('引数が不正です。URLではない？')
-        sys.exit(1)
-    # pathを/前後で分ける
-    path_before_name = parse.path[:parse.path.rfind('/') + 1]
-    path_after_name = parse.path[parse.path.rfind('/') + 1:]
-    print(path_before_name)
-    print(path_after_name)
-    # path_after_nameを.前後で分ける
-    base_name = path_after_name[:path_after_name.rfind('.')]
-    extend_name = path_after_name[path_after_name.rfind('.'):]
-    print(base_name)
-    print(extend_name)
-    if not base_name.isdecimal():
-        print('引数が不正です。数値ではない？')
-        sys.exit(1)
-    count = int(base_name)
-    for i in range(count):
-        url_list.append(urllib.parse.urlunparse((parse.scheme,
-                                                 parse.netloc,
-                                                 path_before_name + str(i + 1) + extend_name,
-                                                 parse.params,
-                                                 parse.query,
-                                                 parse.fragment)))
+    # スクレイピングして末尾画像のナンバーから全ての画像URLを推測して展開する
+    url_deployment = UrlDeployment(paste_str, SELECTORS)
+    url_list = url_deployment.get_image_urls()
     print(url_list)
 
     # irvineを起動して、ダウンロードする
     irvine = IrvineHelper(url_list)
     irvine.download()
-    fileDownloader = Downloading(url_list, folder_path)
-
-    if not fileDownloader.is_src_exist():
+    fileDownloader = WebFileListHelper(url_list, folder_path)
+    for count in enumerate(fileDownloader.get_file_list()[0].ext_list):
+        if fileDownloader.is_exist():
+            break
         # ダウンロードに失敗しているときは、失敗しているファイルの拡張子を変えてダウンロードしなおす
-        fileDownloader.rename_ext_shift()
-        irvine = IrvineHelper(fileDownloader.image_list)
+        fileDownloader.rename_url_ext_shift()
+        irvine = IrvineHelper(fileDownloader.get_only_url_of_file_not_exist())
         irvine.download()
-        fileDownloader = Downloading(fileDownloader.image_list, folder_path)
-
-    if not fileDownloader.rename_images():
+    if not fileDownloader.rename_filenames():
         sys.exit()
     if not fileDownloader.make_zip_file():
         sys.exit()
-    fileDownloader.rename_zip_file(main_title)
-    fileDownloader.download_file_clear()
+    fileDownloader.rename_zip_file(url_deployment.get_title())
+    fileDownloader.delete_images()

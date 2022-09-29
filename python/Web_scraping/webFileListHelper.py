@@ -63,6 +63,16 @@ class WebFileListHelper:
         """
         return copy.deepcopy(self.value_object.file_list)
 
+    def get_only_url_of_file_not_exist(self):
+        """ローカルにファイルがないURLだけのリストを得る
+        :return: list[str]
+        """
+        __url_list = []
+        for file in self.value_object.file_list:
+            if not os.path.isfile(file.get_path()):
+                __url_list.append(file.get_url())
+        return copy.deepcopy(__url_list)
+
     def get_folder_path_from_1st_element(self):
         """ファイルリストの一つ目に登録されているフォルダーパスを得る
         :return: str
@@ -88,11 +98,13 @@ class WebFileListHelper:
 
     def rename_filenames(self):
         """ファイルリストの各ファイルについて、ローカルに存在するファイルのファイル名をナンバリングファイル名に変更し、ファイルリストを更新する
-        :return: None
+        :return: bool 成功/失敗=True/False
         """
         for __count, __web_file_helper in enumerate(self.value_object.file_list):
             if os.path.isfile(__web_file_helper.get_path()):
-                __web_file_helper.rename_filename('{:04d}'.format(__count))
+                if not __web_file_helper.rename_filename('{:04d}'.format(__count)):
+                    return False
+        return True
 
     def make_zip_file(self):
         """ファイルリストのファイルについて、一つの圧縮ファイルにする

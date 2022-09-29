@@ -76,4 +76,11 @@ SELECTORS = {
                    '//*[@id="image-container"]/a/img',
                    lambda el: el.get_attribute("src")),
                   ],
+    # 'image_urls': [(By.XPATH,
+    #                 '//*[@id="thumbnail-container"]/div/div/a',
+    #                 lambda el: el.get_attribute("href")),
+    #                (By.XPATH,
+    #                 '//*[@id="image-container"]/a/img',
+    #                 lambda el: el.get_attribute("src")),
+    #                ],
 }

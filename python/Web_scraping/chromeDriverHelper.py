@@ -32,6 +32,7 @@ import time
 import subprocess
 import copy
 import sys
+import re
 import pyperclip  # クリップボード
 from urllib.parse import urlparse  # URLパーサー
 import datetime
@@ -117,6 +118,9 @@ class ChromeDriverHelper:
                     if selectors is not None:
                         self.__open_url(url)
                         title, title_sub, last_image_url = self.__gen_scraping(selectors)
+                        # title = self.__gen_scraping_2(selectors).__next__()
+                        # title_sub = self.__gen_scraping_2(selectors).__next__()
+                        # last_image_url = self.__gen_scraping_2(selectors).__next__()
                         if not title:
                             if not title_sub:
                                 # タイトルが得られない時は、タイトルを日時文字列にする
@@ -124,15 +128,35 @@ class ChromeDriverHelper:
                                 title = f'{now:%Y%m%d_%H%M%S}'
                             else:
                                 title = title_sub
+                        title = title.replace(os.sep, '￥')
+                        title = title.replace('/', '／')
+                        title = title.replace(':', '：')
+                        title = title.replace('*', '＊')
+                        title = title.replace('?', '？')
+                        title = title.replace('"', '”')
+                        title = title.replace('<', '＜')
+                        title = title.replace('>', '＞')
+                        title = title.replace('|', '｜')
+                        url_title = url.replace(os.sep, '￥')
+                        url_title = url_title.replace('/', '／')
+                        url_title = url_title.replace(':', '：')
+                        url_title = url_title.replace('*', '＊')
+                        url_title = url_title.replace('?', '？')
+                        url_title = url_title.replace('"', '”')
+                        url_title = url_title.replace('<', '＜')
+                        url_title = url_title.replace('>', '＞')
+                        url_title = url_title.replace('|', '｜')
                         self.back()
                         # NOTE: zipに入れてないので消えてまう
-                        self.save_source(os.path.join(OUTPUT_FOLDER_PATH, f'{title}.html'))
+                        # self.save_source(os.path.join(OUTPUT_FOLDER_PATH, f'{title}／{url}.html').replace(os.sep, '/'))
+                        self.save_source(f'{title}：{url_title}.html')
                         self.forward()
                         self.value_object = ChromeDriverHelperValue(url,
                                                                     selectors,
                                                                     title,
                                                                     last_image_url,
                                                                     )
+                        # print(list(self.__gen_scraping_2(selectors).__next__()))
 
     def __add_options(self, *args):
         """オプション追加
@@ -181,9 +205,8 @@ class ChromeDriverHelper:
         self.__driver.get(url)
 
     def __gen_scraping(self, selectors):
-        """スクレイピング結果を返すジェネレータ
-        chromeで開いているサイトに対してスクレイピングする
-        chromeで開いているサイトから、selectorsを辿り、タイトルと、画像リストの最終画像アドレスを取得する
+        """chromeで開いているサイトに対して、スクレイピング結果を返すジェネレータ
+        selectorsで、タイトルmainと、タイトルsub、画像リストの最終画像アドレスを指定する
         :param selectors: list dict list tuple(by, selector, action) スクレイピングの規則
         """
         for key, list_value in selectors.items():
@@ -198,7 +221,7 @@ class ChromeDriverHelper:
                     ret = ""
                 if ret and list_value:
                     ret_parse = urlparse(ret)
-                    if 0 < len(ret_parse.scheme):
+                    if ret_parse.scheme:
                         # listの末尾以外で、URLの時は、表示を更新する
                         self.__driver.get(ret)
                 else:
@@ -217,7 +240,8 @@ class ChromeDriverHelper:
         :return:
         """
         html = self.get_source()
-        with open(path, 'w', encoding='utf-8') as f:
+        new_path = re.sub(r'[:*?"<>|]+', '', path)
+        with open(new_path, 'w', encoding='utf-8') as f:
             f.write(html)
 
     def get_title(self):
