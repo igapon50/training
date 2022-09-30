@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """webファイルリストのヘルパー
 """
-
 import datetime
 import re  # 正規表現モジュール
 import zipfile  # zipファイル
@@ -69,7 +68,7 @@ class WebFileListHelper:
         """
         __url_list = []
         for file in self.value_object.file_list:
-            if not os.path.isfile(file.get_path()):
+            if not file.is_exist():
                 __url_list.append(file.get_url())
         return copy.deepcopy(__url_list)
 
@@ -84,7 +83,7 @@ class WebFileListHelper:
         :return: bool 全てのファイルが存在すればTrueを返す
         """
         for __web_file in self.get_file_list():
-            if not os.path.isfile(__web_file.get_path()):
+            if not __web_file.is_exist():
                 return False
         return True
 
@@ -93,7 +92,7 @@ class WebFileListHelper:
         :return: None
         """
         for __count, __web_file_helper in enumerate(self.value_object.file_list):
-            if not os.path.isfile(__web_file_helper.get_path()):
+            if not __web_file_helper.is_exist():
                 __web_file_helper.rename_url_ext_shift()
 
     def rename_filenames(self):
@@ -101,7 +100,7 @@ class WebFileListHelper:
         :return: bool 成功/失敗=True/False
         """
         for __count, __web_file_helper in enumerate(self.value_object.file_list):
-            if os.path.isfile(__web_file_helper.get_path()):
+            if __web_file_helper.is_exist():
                 if not __web_file_helper.rename_filename('{:04d}'.format(__count)):
                     return False
         return True
@@ -129,7 +128,7 @@ class WebFileListHelper:
         :return: bool 成功/失敗=True/False
         """
         __zip_folder = self.get_folder_path_from_1st_element()
-        new_zip_filename = re.sub(r'[\\/:*?"<>|]+', '', zip_filename)
+        new_zip_filename = fixed_path(zip_filename)
         if os.path.isfile(os.path.join(__zip_folder, '..', new_zip_filename + '.zip').replace(os.sep, '/')):
             print(f'圧縮リネームファイル{new_zip_filename}.zipが既に存在しています')
             return False

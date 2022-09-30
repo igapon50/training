@@ -12,9 +12,7 @@ irvineが終了したらダウンロードファイルをチェックする。
 成功している時は、リネームしてzipして削除する。
 """
 import urllib.parse
-import subprocess
 from downloading import *
-import sys
 from chromeDriverHelper import *
 from irvineHelper import *
 from webFileListHelper import *

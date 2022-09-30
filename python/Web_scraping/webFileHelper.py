@@ -12,6 +12,25 @@ from dataclasses import dataclass
 from const import *
 
 
+def fixed_file_name(file_name):
+    __file_name = copy.deepcopy(file_name)
+    __file_name = __file_name.replace(os.sep, '￥')
+    __file_name = __file_name.replace('/', '／')
+    return fixed_path(__file_name)
+
+
+def fixed_path(file_path):
+    __file_path = copy.deepcopy(file_path)
+    __file_path = __file_path.replace(':', '：')
+    __file_path = __file_path.replace('*', '＊')
+    __file_path = __file_path.replace('?', '？')
+    __file_path = __file_path.replace('"', '”')
+    __file_path = __file_path.replace('<', '＜')
+    __file_path = __file_path.replace('>', '＞')
+    __file_path = __file_path.replace('|', '｜')
+    return __file_path
+
+
 @dataclass(frozen=True)
 class WebFileHelperValue:
     """webファイルヘルパー値オブジェクト
@@ -80,11 +99,25 @@ class WebFileHelper:
                 return True
         return False
 
+    def is_exist(self):
+        """ファイルがローカルに存在すればTrueを返す
+        :return: bool
+        """
+        return os.path.isfile(self.get_path())
+
     def get_url(self):
         """URLを得る
         :return: str URL
         """
         return copy.deepcopy(self.value_object.url)
+
+    def get_path(self):
+        """ファイルのフルパスを得る
+        :return: str ファイルのフルパス(セパレータはスラッシュ)
+        """
+        return copy.deepcopy(os.path.join(self.get_folder_path(),
+                                          self.get_filename() + self.get_ext(),
+                                          ).replace(os.sep, '/'))
 
     def get_folder_path(self):
         """フォルダーパスを得る
@@ -112,14 +145,6 @@ class WebFileHelper:
         __path_after_name = __parse.path[__parse.path.rfind('/') + 1:]
         __extend_name = __path_after_name[__path_after_name.rfind('.'):]
         return copy.deepcopy(__extend_name)
-
-    def get_path(self):
-        """ファイルのフルパスを得る
-        :return: str ファイルのフルパス(セパレータはスラッシュ)
-        """
-        return copy.deepcopy(os.path.join(self.get_folder_path(),
-                                          self.get_filename() + self.get_ext(),
-                                          ).replace(os.sep, '/'))
 
     def rename_url_ext_shift(self):
         """ext_listの次の拡張子に、urlの拡張子をシフトする
