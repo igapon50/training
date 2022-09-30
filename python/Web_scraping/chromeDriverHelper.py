@@ -50,6 +50,25 @@ from dataclasses import dataclass
 from const import *
 
 
+def fixed_file_name(file_name):
+    __file_name = copy.deepcopy(file_name)
+    __file_name = __file_name.replace(os.sep, '￥')
+    __file_name = __file_name.replace('/', '／')
+    return fixed_path(__file_name)
+
+
+def fixed_path(file_path):
+    __file_path = copy.deepcopy(file_path)
+    __file_path = __file_path.replace(':', '：')
+    __file_path = __file_path.replace('*', '＊')
+    __file_path = __file_path.replace('?', '？')
+    __file_path = __file_path.replace('"', '”')
+    __file_path = __file_path.replace('<', '＜')
+    __file_path = __file_path.replace('>', '＞')
+    __file_path = __file_path.replace('|', '｜')
+    return __file_path
+
+
 @dataclass(frozen=True)
 class ChromeDriverHelperValue:
     """Chromeドライバ値オブジェクト
@@ -128,24 +147,8 @@ class ChromeDriverHelper:
                                 title = f'{now:%Y%m%d_%H%M%S}'
                             else:
                                 title = title_sub
-                        title = title.replace(os.sep, '￥')
-                        title = title.replace('/', '／')
-                        title = title.replace(':', '：')
-                        title = title.replace('*', '＊')
-                        title = title.replace('?', '？')
-                        title = title.replace('"', '”')
-                        title = title.replace('<', '＜')
-                        title = title.replace('>', '＞')
-                        title = title.replace('|', '｜')
-                        url_title = url.replace(os.sep, '￥')
-                        url_title = url_title.replace('/', '／')
-                        url_title = url_title.replace(':', '：')
-                        url_title = url_title.replace('*', '＊')
-                        url_title = url_title.replace('?', '？')
-                        url_title = url_title.replace('"', '”')
-                        url_title = url_title.replace('<', '＜')
-                        url_title = url_title.replace('>', '＞')
-                        url_title = url_title.replace('|', '｜')
+                        title = fixed_file_name(title)
+                        url_title = fixed_file_name(url)
                         self.back()
                         # NOTE: zipに入れてないので消えてまう
                         # self.save_source(os.path.join(OUTPUT_FOLDER_PATH, f'{title}／{url}.html').replace(os.sep, '/'))
@@ -227,6 +230,62 @@ class ChromeDriverHelper:
                 else:
                     yield ret
 
+    def __gen_scraping_2(self, selectors):
+        """chromeで開いているサイトに対して、スクレイピング結果を返すジェネレータ
+        selectorsで、タイトルmainと、タイトルsub、画像のアドレスリスト指定する
+        :param selectors: list dict list tuple(by, selector, action) スクレイピングの規則
+        """
+        for key, list_value in selectors.items():
+            back_count = 0
+            while list_value:
+                tuple_value = list_value.pop(0)
+                by, selector, action = tuple_value
+                try:
+                    if back_count:
+                        for i in range(back_count):
+                            self.forward()
+                            back_count -= 1
+                            elements = self.__driver.find_elements(by=by, value=selector)
+                            for elem in elements:
+                                ret = action(elem)
+                                if ret and list_value:
+                                    ret_parse = urlparse(ret)
+                                    if ret_parse.scheme:
+                                        # listの末尾以外で、URLの時は、表示を更新する
+                                        self.__driver.get(ret)
+                                else:
+                                    yield ret
+                    else:
+                        elements = self.__driver.find_elements(by=by, value=selector)
+                        if len(elements) == 1:
+                            for elem in elements:
+                                ret = action(elem)
+                                if ret and list_value:
+                                    ret_parse = urlparse(ret)
+                                    if ret_parse.scheme:
+                                        # listの末尾以外で、URLの時は、表示を更新する
+                                        self.__driver.get(ret)
+                                else:
+                                    yield ret
+                        else:  # elementsが複数の時
+                            for elem in elements:
+                                ret = action(elem)
+                                if ret and list_value:
+                                    ret_parse = urlparse(ret)
+                                    if ret_parse.scheme:
+                                        # listの末尾以外で、URLの時は、表示を更新する
+                                        self.__driver.get(ret)
+                                        back_count += 1
+                                else:  # listの末尾の時や、末尾でなくURLでもない時
+                                    yield ret
+                            # 表示を更新した分画面戻す
+                            for i in range(back_count):
+                                self.back()
+                except NoSuchElementException:
+                    # find_elementでelementが見つからなかったとき
+                    ret = ""
+                    yield ret
+
     def get_source(self):
         """chromeで現在表示しているページのソースコードを取得する
         :return: str ソースコード
@@ -240,7 +299,7 @@ class ChromeDriverHelper:
         :return:
         """
         html = self.get_source()
-        new_path = re.sub(r'[:*?"<>|]+', '', path)
+        new_path = fixed_path(path)
         with open(new_path, 'w', encoding='utf-8') as f:
             f.write(html)
 
