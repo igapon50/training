@@ -34,6 +34,7 @@ import sys
 import pyperclip  # クリップボード
 from urllib.parse import urlparse  # URLパーサー
 import datetime
+import time
 
 from selenium import webdriver
 from selenium.webdriver import Chrome
@@ -107,6 +108,8 @@ class ChromeDriverHelper:
     # value_object: ChromeDriverHelperValue = None
     __driver = None
     __source = None
+    __start_window_handle = None
+    __window_handle_list = []
     root_path = os.path.dirname(os.path.abspath(__file__))
     driver_path = os.path.join(root_path, r'driver\chromedriver.exe')
     chrome_path = r'"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"'
@@ -118,7 +121,7 @@ class ChromeDriverHelper:
             f' -remote-debugging-port={__port}' \
             f' --user-data-dir="{profile_path}"'
 
-    def __init__(self, value_object, selectors=None):
+    def __init__(self, value_object=None, selectors=None):
         """コンストラクタ
         値オブジェクトからの復元、
         または、urlとselectorsより、値オブジェクトを作成する
@@ -134,7 +137,7 @@ class ChromeDriverHelper:
                     url = value_object
                     if selectors is not None:
                         self.__open_url(url)
-                        title, title_sub, last_image_url = self.__gen_scraping(selectors)
+                        title, title_sub, last_image_url = self.__gen_scraping_element(selectors)
                         # title = self.__gen_scraping_2(selectors).__next__()
                         # title_sub = self.__gen_scraping_2(selectors).__next__()
                         # last_image_url = self.__gen_scraping_2(selectors).__next__()
@@ -148,7 +151,7 @@ class ChromeDriverHelper:
                         title = fixed_file_name(title)
                         url_title = fixed_file_name(url)
                         self.back()
-                        # NOTE: zipに入れてないので消えてまう
+                        # NOTE: ここに保存すると、zipに入れてないので消えてまう
                         # self.save_source(os.path.join(OUTPUT_FOLDER_PATH, f'{title}／{url}.html').replace(os.sep, '/'))
                         self.save_source(f'{title}：{url_title}.html')
                         self.forward()
@@ -157,7 +160,7 @@ class ChromeDriverHelper:
                                                                     title,
                                                                     last_image_url,
                                                                     )
-                        # print(list(self.__gen_scraping_2(selectors).__next__()))
+                        # print(list(self.__gen_scraping_elements(selectors).__next__()))
 
     def __add_options(self, *args):
         """オプション追加
@@ -178,6 +181,7 @@ class ChromeDriverHelper:
             print(e, "Chromeが起動していなかったので、起動して接続する。")
             self.__create()
             self.__connection()
+        self.__start_window_handle = self.__driver.current_window_handle
 
     def __connection(self):
         """起動しているchromeに接続
@@ -196,7 +200,7 @@ class ChromeDriverHelper:
         :return: なし
         """
         if self.__driver is not None:
-            self.__driver.close()
+            self.__driver.quit()
 
     def __open_url(self, url):
         """chromeにurlを開く
@@ -205,7 +209,7 @@ class ChromeDriverHelper:
         """
         self.__driver.get(url)
 
-    def __gen_scraping(self, selectors):
+    def __gen_scraping_element(self, selectors):
         """chromeで開いているサイトに対して、スクレイピング結果を返すジェネレータ
         selectorsで、タイトルmainと、タイトルsub、画像リストの最終画像アドレスを指定する
         :param selectors: list dict list tuple(by, selector, action) スクレイピングの規則
@@ -215,8 +219,8 @@ class ChromeDriverHelper:
                 tuple_value = list_value.pop(0)
                 by, selector, action = tuple_value
                 try:
-                    elem = self.__driver.find_element(by=by, value=selector)
-                    ret = action(elem)
+                    element = self.__driver.find_element(by=by, value=selector)
+                    ret = action(element)
                 except NoSuchElementException:
                     # find_elementでelementが見つからなかったとき
                     ret = ""
@@ -228,61 +232,40 @@ class ChromeDriverHelper:
                 else:
                     yield ret
 
-    def __gen_scraping_2(self, selectors):
+    def __gen_scraping_selectors(self, selectors):
         """chromeで開いているサイトに対して、スクレイピング結果を返すジェネレータ
-        selectorsで、タイトルmainと、タイトルsub、画像のアドレスリスト指定する
+        selectorsで、タイトルmainと、タイトルsub、画像のアドレスリストを指定する
         :param selectors: list dict list tuple(by, selector, action) スクレイピングの規則
         """
-        for key, list_value in selectors.items():
-            back_count = 0
-            while list_value:
-                tuple_value = list_value.pop(0)
-                by, selector, action = tuple_value
-                try:
-                    if back_count:
-                        for i in range(back_count):
-                            self.forward()
-                            back_count -= 1
-                            elements = self.__driver.find_elements(by=by, value=selector)
-                            for elem in elements:
-                                ret = action(elem)
-                                if ret and list_value:
-                                    ret_parse = urlparse(ret)
-                                    if ret_parse.scheme:
-                                        # listの末尾以外で、URLの時は、表示を更新する
-                                        self.__driver.get(ret)
-                                else:
-                                    yield ret
-                    else:
-                        elements = self.__driver.find_elements(by=by, value=selector)
-                        if len(elements) == 1:
-                            for elem in elements:
-                                ret = action(elem)
-                                if ret and list_value:
-                                    ret_parse = urlparse(ret)
-                                    if ret_parse.scheme:
-                                        # listの末尾以外で、URLの時は、表示を更新する
-                                        self.__driver.get(ret)
-                                else:
-                                    yield ret
-                        else:  # elementsが複数の時
-                            for elem in elements:
-                                ret = action(elem)
-                                if ret and list_value:
-                                    ret_parse = urlparse(ret)
-                                    if ret_parse.scheme:
-                                        # listの末尾以外で、URLの時は、表示を更新する
-                                        self.__driver.get(ret)
-                                        back_count += 1
-                                else:  # listの末尾の時や、末尾でなくURLでもない時
-                                    yield ret
-                            # 表示を更新した分画面戻す
-                            for i in range(back_count):
-                                self.back()
-                except NoSuchElementException:
-                    # find_elementでelementが見つからなかったとき
-                    ret = ""
-                    yield ret
+        for key, selector_list in selectors.items():
+            # TODO:
+            return self.__get_scraping_selector_list(selector_list)
+
+    def __get_scraping_selector_list(self, selector_list):
+        """現在の画面で連続的なスクレイピングして
+        :param selector_list:
+        :return:
+        """
+        while selector_list:
+            by, selector, action = selector_list.pop(0)
+            return self.__get_scraping_selector(by, selector, action)
+
+    def __get_scraping_selector(self, by, selector, action):
+        """現在の画面でスクレイピングして結果を返す
+        :param by:
+        :param selector:
+        :param action:
+        :return:
+        """
+        try:
+            elements = self.__driver.find_elements(by=by, value=selector)
+            ret = []
+            for elem in elements:
+                ret.append(action(elem))
+        except NoSuchElementException:
+            # find_elementsでelementが見つからなかったとき
+            ret = [""]
+        return ret
 
     def get_source(self):
         """chromeで現在表示しているページのソースコードを取得する
@@ -325,6 +308,62 @@ class ChromeDriverHelper:
         """
         self.__driver.forward()
 
+    def next_tab(self):
+        self.__shift_tab(1)
+
+    def previous_tab(self):
+        self.__shift_tab(-1)
+
+    def __shift_tab(self, step):
+        index = 0
+        count = len(self.__window_handle_list)
+        if self.__driver.current_window_handle in self.__window_handle_list:
+            index = self.__window_handle_list.index(self.__driver.current_window_handle)
+        self.__driver.switch_to.window(self.__window_handle_list[(index + step) % count])
+
+    def open(self, url):
+        """新しいタブでurlを開く
+        :param url: str 開くURL
+        :return: str 開いたタブのハンドル
+        """
+        self.__driver.switch_to.new_window()
+        self.__open_url(url)
+        self.__window_handle_list.append(self.__driver.current_window_handle)
+        return self.__window_handle_list[-1]
+
+    def open_list(self, url_list):
+        """新しいタブでurlリストを開く
+        :param url_list:  list[str] 開くURLのリスト
+        :return: list[str] 開いたタブのハンドルリスト
+        """
+        window_handle_list = []
+        for url in url_list:
+            window_handle_list.append(self.open(url))
+        return window_handle_list
+
+    def close(self, window_handle=None):
+        """指定の画面か、現在の画面を閉じる
+        :param window_handle: str 閉じる画面のハンドル
+        :return: None
+        """
+        try:
+            if not window_handle:
+                window_handle = self.__driver.current_window_handle
+            else:
+                self.__driver.switch_to.window(window_handle)
+            index = self.__window_handle_list.index(window_handle)
+            self.__driver.close()
+            del self.__window_handle_list[index]
+            if len(self.__window_handle_list) == 0:
+                self.__driver.switch_to.window(self.__start_window_handle)
+            else:
+                if index:
+                    index -= 1
+                self.__driver.switch_to.window(self.__window_handle_list[index])
+        except ValueError:
+            print("ValueError 指定のwindow_handleがありません。")
+            exit()
+
 
 if __name__ == '__main__':  # インポート時には動かない
     main_url = None
@@ -346,8 +385,32 @@ if __name__ == '__main__':  # インポート時には動かない
         print('引数が不正です。')
         sys.exit()
 
-    driver = ChromeDriverHelper(main_url, SELECTORS)
-    main_title = driver.get_title()
-    main_image_url = driver.get_last_image_url()
-    print(main_image_url + "," + main_title)
-    pyperclip.copy(main_image_url + "," + main_title)
+    # driver = ChromeDriverHelper(main_url, SELECTORS)
+    # main_title = driver.get_title()
+    # main_image_url = driver.get_last_image_url()
+    # print(main_image_url + "," + main_title)
+    # pyperclip.copy(main_image_url + "," + main_title)
+
+    # テスト　若者 | かわいいフリー素材集 いらすとや
+    image_url_list = [
+        'https://1.bp.blogspot.com/-tzoOQwlaRac/X1LskKZtKEI/AAAAAAABa_M/'
+        '89phuGIVDkYGY_uNKvFB6ZiNHxR7bQYcgCNcBGAsYHQ/'
+        's180-c/fashion_dekora.png',
+        'https://1.bp.blogspot.com/-gTf4sWnRdDw/X0B4RSQQLrI/AAAAAAABarI/'
+        'MJ9DW90dSVwtMjuUoErxemnN4nPXBnXUwCNcBGAsYHQ/'
+        's180-c/otaku_girl_fashion.png',
+        'https://1.bp.blogspot.com/-K8DEj7le73Y/XuhW_wO41mI/AAAAAAABZjQ/'
+        'NMEk02WcUBEVBDsEJpCxTN6T0NmqG20qwCNcBGAsYHQ/'
+        's180-c/kesyou_jirai_make.png',
+    ]
+    driver = ChromeDriverHelper()
+    driver.open_list(image_url_list)
+    for image_url in image_url_list:
+        driver.next_tab()
+        time.sleep(1)
+    for image_url in image_url_list:
+        driver.previous_tab()
+        time.sleep(1)
+    for image_url in image_url_list:
+        driver.close()
+        time.sleep(1)
