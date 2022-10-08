@@ -2,18 +2,19 @@
 # -*- coding: utf-8 -*-
 """Selenium Chromeドライバのヘルパー
 Chrome.batを実行して、Chromeを起動しておくと、その続きから操作できる。
-スクレイピングしたいurlをクリップボードにコピーして、実行する。
-    起動しているChromeに接続する、起動していなければ起動して接続する、ChromeでURLを開きスクレイピングする __init__
-    Chromeに接続する __connection
-    Chromeを起動する __create
-    Chromeを閉じる destroy
-    ChromeでURLを開く __open_url
-    Chromeで開いているページをスクレイピングする __gen_scraping
-    Chromeで開いているページのsourceを取得する get_source
-    タイトルを取得する get_title
-    最終画像アドレスを取得する get_last_image_url
-    履歴を一つ戻る back
-    履歴を一つ進む forward
+スクレイピングしたいurlをクリップボードにコピーして、実行するとスクレイピング結果がクリップボードに入る
+    destroy Chromeを閉じる
+    get_source Chromeで表示しているタブのsourceを取得する
+    save_source Chromeで表示しているタブのsourceをファイルに保存する
+    get_title タイトルを取得する
+    get_last_image_url 最終画像アドレスを取得する
+    back (画面遷移有)ブラウザの戻るボタン押下と同じ動作
+    forward (画面遷移有)ブラウザの進むボタン押下と同じ動作
+    next_tab (画面遷移有)openで作ったタブ(__window_handle_list)の内、一つ後のタブを表示する
+    previous_tab (画面遷移有)openで作ったタブ(__window_handle_list)の内、一つ前のタブを表示する
+    open (画面遷移有)新しいタブでurlを開く
+    open_list (画面遷移有)新しいタブでurlリストを開く
+    close (画面遷移有)指定の画面か、現在の画面を閉じる
 
 参考ブログ
 https://note.nkmk.me/python/
@@ -23,6 +24,7 @@ https://nikkie-ftnext.hatenablog.com/entry/value-object-python-dataclass
 https://selenium-python.readthedocs.io/
 https://www.seleniumqref.com/api/webdriver_gyaku.html
 https://www.selenium.dev/ja/documentation/webdriver/getting_started/
+https://kurozumi.github.io/selenium-python/index.html
 
 """
 import os
@@ -50,6 +52,10 @@ from const import *
 
 
 def fixed_file_name(file_name):
+    """ファイル名の禁止文字を全角文字に置き換える
+    :param file_name: str 置き換えたいファイル名
+    :return: str 置き換え後のファイル名
+    """
     __file_name = copy.deepcopy(file_name)
     __file_name = __file_name.replace(os.sep, '￥')
     __file_name = __file_name.replace('/', '／')
@@ -57,6 +63,10 @@ def fixed_file_name(file_name):
 
 
 def fixed_path(file_path):
+    """フォルダ名の禁止文字を全角文字に置き換える
+    :param file_path: str 置き換えたいフォルダパス
+    :return: str 置き換え後のフォルダパス
+    """
     __file_path = copy.deepcopy(file_path)
     __file_path = __file_path.replace(':', '：')
     __file_path = __file_path.replace('*', '＊')
@@ -115,6 +125,10 @@ class ChromeDriverHelper:
     chrome_path = r'"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"'
     __options = ChromeOptions()
     __port = "9222"
+    __chrome_arg = ['--blink-settings=imagesEnabled=false',  # 画像非表示
+                    # '--incognito',  # シークレットモードで起動する
+                    # '--headless',  # バックグラウンドで起動する
+                    ]
     __chrome_opt = ('debuggerAddress', f'127.0.0.1:{__port}')
     profile_path = r'C:\Users\igapon\temp'
     __cmd = f'{chrome_path}' \
@@ -137,28 +151,41 @@ class ChromeDriverHelper:
                     url = value_object
                     if selectors is not None:
                         self.__open_url(url)
+                        # image_urls_list = None
                         # title, title_sub, last_image_url = self.__gen_scraping_element(selectors)
-                        # if not title:
-                        #     if not title_sub:
-                        #         # タイトルが得られない時は、タイトルを日時文字列にする
-                        #         now = datetime.datetime.now()
-                        #         title = f'{now:%Y%m%d_%H%M%S}'
-                        #     else:
-                        #         title = title_sub
-                        # title = fixed_file_name(title)
-                        # url_title = fixed_file_name(url)
-                        # self.back()
-                        # # NOTE: ここに保存すると、zipに入れてないので消えてまう
-                        # # self.save_source(os.path.join(OUTPUT_FOLDER_PATH, f'{title}／{url}.html').replace(os.sep, '/'))
-                        # self.save_source(f'{title}：{url_title}.html')
-                        # self.forward()
-                        # self.value_object = ChromeDriverHelperValue(url,
-                        #                                             selectors,
-                        #                                             title,
-                        #                                             last_image_url,
-                        #                                             )
+                        # print(title, title_sub, last_image_url)
+                        last_image_url = None
                         title, title_sub, image_urls_list = self.__gen_scraping_selectors(selectors)
                         print(title, title_sub, image_urls_list)
+                        if isinstance(title, list):
+                            title = title[0]
+                        if isinstance(title_sub, list):
+                            title_sub = title_sub[0]
+                        if image_urls_list and image_urls_list[0]:
+                            last_image_url = image_urls_list[0]
+                        if not title:
+                            if not title_sub:
+                                # タイトルが得られない時は、タイトルを日時文字列にする
+                                now = datetime.datetime.now()
+                                title = f'{now:%Y%m%d_%H%M%S}'
+                            else:
+                                title = title_sub
+                        title = fixed_file_name(title)
+                        url_title = fixed_file_name(url)
+                        # self.back()
+                        # NOTE: ここに保存すると、zipに入れてないので消えてまう
+                        # self.save_source(os.path.join(OUTPUT_FOLDER_PATH, f'{title}／{url}.html').replace(os.sep, '/'))
+                        self.save_source(f'{title}：{url_title}.html')
+                        # self.forward()
+                        if last_image_url:
+                            self.value_object = ChromeDriverHelperValue(url,
+                                                                        selectors,
+                                                                        title,
+                                                                        last_image_url,
+                                                                        )
+                        else:
+                            print("image_urls_listが不正")
+                            exit()
 
     def __add_options(self, *args):
         """オプション追加
@@ -167,13 +194,19 @@ class ChromeDriverHelper:
         """
         self.__options.add_experimental_option(*args)
 
+    def __add_argument(self, args):
+        self.__options.add_argument(args)
+
     def __start(self):
         """Chromeへの接続を完了する。起動していなければ起動する。
         :return:
         """
+        # TODO: __add_argumentが効いてない、使い方を調べる
+        for arg in self.__chrome_arg:
+            self.__add_argument(arg)
         self.__add_options(*self.__chrome_opt)
         try:
-            # タイムアウト長いので、なるべくChrome起動してから呼び出したい
+            # NOTE: タイムアウト長いので、なるべくChrome起動してから呼び出したい
             self.__connection()
         except Exception as e:
             print(e, "Chromeが起動していなかったので、起動して接続する。")
@@ -198,19 +231,27 @@ class ChromeDriverHelper:
         :return: なし
         """
         if self.__driver is not None:
+            for __window_handle in self.__window_handle_list:
+                self.close()
+            if self.__start_window_handle:
+                self.__driver.switch_to.window(self.__start_window_handle)
+                self.__driver.close()
+                self.__start_window_handle = None
             self.__driver.quit()
+            self.__driver = None
 
     def __open_url(self, url):
-        """chromeにurlを開く
+        """(画面依存)chromeにurlを開く
         :param url: str chromeで開くURL
         :return: なし
         """
         self.__driver.get(url)
 
     def __gen_scraping_element(self, selectors):
-        """chromeで開いているサイトに対して、スクレイピング結果を返すジェネレータ
+        """(画面依存)chromeで開いているサイトに対して、スクレイピング結果を返すジェネレータ
         selectorsで、タイトルmainと、タイトルsub、画像リストの最終画像アドレスを指定する
         :param selectors: list dict list tuple(by, selector, action) スクレイピングの規則
+        :return: str スクレイピング結果を返す
         """
         for key, list_value in selectors.items():
             while list_value:
@@ -231,18 +272,12 @@ class ChromeDriverHelper:
                     yield ret
 
     def __gen_scraping_selectors(self, selectors):
-        """chromeで開いているサイトに対して、スクレイピング結果を返すジェネレータ
-        selectorsで、タイトルmainと、タイトルsub、画像のアドレスリストを指定する
+        """(画面依存)chromeで開いているサイトに対して、スクレイピング結果を返すジェネレータ
+        selectorsで、タイトルmainと、タイトルsub、画像のアドレスリストor最終画像青ドレスを指定する
         :param selectors: list dict list tuple(by, selector, action) スクレイピングの規則
+        :return: list[str] スクレイピング結果をlistに入れて返す
         """
         for key, selector_list in selectors.items():
-            #         yield self.__gen_scraping_selector_list(selector_list)
-            #
-            # def __gen_scraping_selector_list(self, selector_list):
-            #     """(画面遷移有)現在の画面(self._window_handle_list)から、多重スクレイピングして、結果を返す
-            #     :param selector_list:
-            #     :return:
-            #     """
             while selector_list:
                 by, selector, action = selector_list.pop(0)
                 ret_list = self.__get_scraping_selector(by, selector, action)
@@ -294,14 +329,14 @@ class ChromeDriverHelper:
         return ret_list
 
     def get_source(self):
-        """現在の画面(chromeで現在表示しているタブ)のソースコードを取得する
+        """(画面依存)現在の画面(chromeで現在表示しているタブ)のソースコードを取得する
         :return: str ソースコード
         """
         self.__source = self.__driver.page_source
         return copy.deepcopy(self.__source)
 
     def save_source(self, path='./title.html'):
-        """現在の画面のソースコードをファイルに保存する
+        """(画面依存)現在の画面のソースコードをファイルに保存する
         :param path: str 保存するファイルパス(URLかタイトルを指定するとよさそう)
         :return:
         """
@@ -314,13 +349,17 @@ class ChromeDriverHelper:
         """タイトル取得
         :return: str タイトル
         """
-        return copy.deepcopy(self.value_object.title)
+        if self.value_object:
+            return copy.deepcopy(self.value_object.title)
+        return None
 
     def get_last_image_url(self):
         """最終画像アドレス取得
         :return: str 最終画像アドレス
         """
-        return copy.deepcopy(self.value_object.last_image_url)
+        if self.value_object:
+            return copy.deepcopy(self.value_object.last_image_url)
+        return None
 
     def back(self):
         """(画面遷移有)ブラウザの戻るボタン押下と同じ動作
@@ -335,9 +374,15 @@ class ChromeDriverHelper:
         self.__driver.forward()
 
     def next_tab(self):
+        """(画面遷移有)openで作ったタブ(__window_handle_list)の内、一つ後のタブを表示する
+        :return:
+        """
         self.__shift_tab(1)
 
     def previous_tab(self):
+        """(画面遷移有)openで作ったタブ(__window_handle_list)の内、一つ前のタブを表示する
+        :return:
+        """
         self.__shift_tab(-1)
 
     def __shift_tab(self, step):
@@ -373,6 +418,7 @@ class ChromeDriverHelper:
         :return: None
         """
         try:
+            # TODO: self.__start_window_handleで呼び出されたら？self.__start_window_handleは閉じないようにしたい
             if not window_handle:
                 window_handle = self.__driver.current_window_handle
             else:
@@ -391,30 +437,31 @@ class ChromeDriverHelper:
             exit()
 
 
-SELECTORS_2 = {
-    'title_jp': [(By.XPATH,
-                  '//div/div/div/h2',  # //*[@id="info"]/h2
-                  lambda el: el.text),
-                 ],
-    'title_en': [(By.XPATH,
-                  '//div/div/div/h1',  # //*[@id="info"]/h1
-                  lambda el: el.text),
-                 ],
-    # 'image_url': [(By.XPATH,
-    #                '(//*[@id="thumbnail-container"]/div/div/a)[last()]',
-    #                lambda el: el.get_attribute("href")),
-    #               (By.XPATH,
-    #                '//*[@id="image-container"]/a/img',
-    #                lambda el: el.get_attribute("src")),
-    #               ],
-    'image_urls': [(By.XPATH,
-                    '//*[@id="thumbnail-container"]/div/div/a',
-                    lambda el: el.get_attribute("href")),
-                   (By.XPATH,
-                    '//*[@id="image-container"]/a/img',
-                    lambda el: el.get_attribute("src")),
-                   ],
-}
+def test1():
+    # テスト　若者 | かわいいフリー素材集 いらすとや
+    image_url_list = [
+        'https://1.bp.blogspot.com/-tzoOQwlaRac/X1LskKZtKEI/AAAAAAABa_M/'
+        '89phuGIVDkYGY_uNKvFB6ZiNHxR7bQYcgCNcBGAsYHQ/'
+        's180-c/fashion_dekora.png',
+        'https://1.bp.blogspot.com/-gTf4sWnRdDw/X0B4RSQQLrI/AAAAAAABarI/'
+        'MJ9DW90dSVwtMjuUoErxemnN4nPXBnXUwCNcBGAsYHQ/'
+        's180-c/otaku_girl_fashion.png',
+        'https://1.bp.blogspot.com/-K8DEj7le73Y/XuhW_wO41mI/AAAAAAABZjQ/'
+        'NMEk02WcUBEVBDsEJpCxTN6T0NmqG20qwCNcBGAsYHQ/'
+        's180-c/kesyou_jirai_make.png',
+    ]
+    __driver = ChromeDriverHelper()
+    __driver.open_list(image_url_list)
+    for _ in image_url_list:
+        __driver.next_tab()
+        time.sleep(1)
+    for _ in image_url_list:
+        __driver.previous_tab()
+        time.sleep(1)
+    for _ in image_url_list:
+        __driver.close()
+        time.sleep(1)
+
 
 if __name__ == '__main__':  # インポート時には動かない
     main_url = None
@@ -436,34 +483,13 @@ if __name__ == '__main__':  # インポート時には動かない
         print('引数が不正です。')
         sys.exit()
 
-    # driver = ChromeDriverHelper(main_url, SELECTORS)
-    # main_title = driver.get_title()
-    # main_image_url = driver.get_last_image_url()
-    # print(main_image_url + "," + main_title)
-    # pyperclip.copy(main_image_url + "," + main_title)
+    driver = ChromeDriverHelper(main_url, SELECTORS)
+    main_title = driver.get_title()
+    main_image_url = driver.get_last_image_url()
+    print(main_image_url + "," + main_title)
+    pyperclip.copy(main_image_url + "," + main_title)
 
-    # テスト　若者 | かわいいフリー素材集 いらすとや
-    image_url_list = [
-        'https://1.bp.blogspot.com/-tzoOQwlaRac/X1LskKZtKEI/AAAAAAABa_M/'
-        '89phuGIVDkYGY_uNKvFB6ZiNHxR7bQYcgCNcBGAsYHQ/'
-        's180-c/fashion_dekora.png',
-        'https://1.bp.blogspot.com/-gTf4sWnRdDw/X0B4RSQQLrI/AAAAAAABarI/'
-        'MJ9DW90dSVwtMjuUoErxemnN4nPXBnXUwCNcBGAsYHQ/'
-        's180-c/otaku_girl_fashion.png',
-        'https://1.bp.blogspot.com/-K8DEj7le73Y/XuhW_wO41mI/AAAAAAABZjQ/'
-        'NMEk02WcUBEVBDsEJpCxTN6T0NmqG20qwCNcBGAsYHQ/'
-        's180-c/kesyou_jirai_make.png',
-    ]
-    driver = ChromeDriverHelper()
-    driver.open_list(image_url_list)
-    for _ in image_url_list:
-        driver.next_tab()
-        time.sleep(1)
-    for _ in image_url_list:
-        driver.previous_tab()
-        time.sleep(1)
-    for _ in image_url_list:
-        driver.close()
-        time.sleep(1)
-
-    # driver = ChromeDriverHelper("", SELECTORS_2)
+    # test1()
+    driver.destroy()
+    driver.get_title()
+    driver.get_source()
