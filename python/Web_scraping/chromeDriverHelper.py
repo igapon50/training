@@ -15,11 +15,13 @@ Chrome.batを実行して、Chromeを起動しておくと、その続きから�
     open (画面遷移有)新しいタブでurlを開く
     open_list (画面遷移有)新しいタブでurlリストを開く
     close (画面遷移有)指定の画面か、現在の画面を閉じる
+    download_image ダウンロード実行用スクリプトを生成＆実行
 
 参考ブログ
 https://note.nkmk.me/python/
 https://maku77.github.io/python/
 https://nikkie-ftnext.hatenablog.com/entry/value-object-python-dataclass
+https://blog.wotakky.net/2018/08/12/post-4829/
 参考リファレンス
 https://selenium-python.readthedocs.io/
 https://www.seleniumqref.com/api/webdriver_gyaku.html
@@ -27,14 +29,7 @@ https://www.selenium.dev/ja/documentation/webdriver/getting_started/
 https://kurozumi.github.io/selenium-python/index.html
 
 """
-import os
-# import timeout_decorator
-# from timeout_timer import timeout
 import subprocess
-import copy
-import sys
-import pyperclip  # クリップボード
-from urllib.parse import urlparse  # URLパーサー
 import datetime
 import time
 
@@ -48,7 +43,7 @@ from selenium.common.exceptions import NoSuchElementException
 from webdriver_manager.chrome import ChromeDriverManager
 from dataclasses import dataclass
 
-from const import *
+from webFileHelper import *
 
 
 def fixed_file_name(file_name):
@@ -307,22 +302,15 @@ class ChromeDriverHelper:
             ret_list = []
             __temp_window_handle_list = copy.deepcopy(self.__window_handle_list)
             if __temp_window_handle_list:
-                # 二段目以降のスクレイピング
-                for _ in __temp_window_handle_list:
-                    elements = self.__driver.find_elements(by=by, value=selector)
-                    for elem in elements:
-                        text = action(elem)
-                        ret_list.append(text)
-                    self.close()
+                count = len(__temp_window_handle_list)
             else:
-                # 一段目のスクレイピング
+                count = 1
+            for _ in range(count):
                 elements = self.__driver.find_elements(by=by, value=selector)
                 for elem in elements:
                     text = action(elem)
                     ret_list.append(text)
-                # TODO: closeの処理を、__temp_window_handle_listに限定して、呼び出せるようにしたい
-                # TODO: 一段目と、二段目を共通処理にしたい
-                # self.close()
+                self.close()
         except NoSuchElementException:
             # find_elementsでelementが見つからなかったとき
             ret_list = [""]
@@ -413,16 +401,19 @@ class ChromeDriverHelper:
         return window_handle_list
 
     def close(self, window_handle=None):
-        """(画面遷移有)指定の画面か、現在の画面を閉じる
+        """(画面遷移有)openで開いた画面の内、指定の画面か、現在の画面を閉じる
         :param window_handle: str 閉じる画面のハンドル
         :return: None
         """
         try:
-            # TODO: self.__start_window_handleで呼び出されたら？self.__start_window_handleは閉じないようにしたい
             if not window_handle:
                 window_handle = self.__driver.current_window_handle
             else:
                 self.__driver.switch_to.window(window_handle)
+            if window_handle == self.__start_window_handle:
+                return
+            if self.__driver.current_window_handle == self.__start_window_handle:
+                return
             index = self.__window_handle_list.index(window_handle)
             self.__driver.close()
             del self.__window_handle_list[index]
@@ -435,6 +426,32 @@ class ChromeDriverHelper:
         except ValueError:
             print("ValueError 指定のwindow_handleがありません。")
             exit()
+
+    def download_image(self, image_url):
+        """(画面依存)ダウンロード実行用スクリプトを生成＆実行
+        chromeのデフォルトダウンロードフォルダに保存される
+        :param image_url:
+        :return:
+        """
+        __web_file = WebFileHelper(image_url)
+        __filename = __web_file.get_filename() + __web_file.get_ext()
+        script_str = """
+        window.URL = window.URL || window.webkitURL;
+
+        var xhr = new XMLHttpRequest(),
+        a = document.createElement('a'), file;
+
+        xhr.open('GET', '""" + image_url + """', true);
+        xhr.responseType = 'blob';
+        xhr.onload = function () {
+        file = new Blob([xhr.response], { type : 'application/octet-stream' });
+        a.href = window.URL.createObjectURL(file);
+        a.download = '""" + __filename + """';
+        a.click();
+        };
+        xhr.send();
+        """
+        self.__driver.execute_script(script_str)
 
 
 def test1():
@@ -452,7 +469,8 @@ def test1():
     ]
     __driver = ChromeDriverHelper()
     __driver.open_list(image_url_list)
-    for _ in image_url_list:
+    for __image_url in image_url_list:
+        __driver.download_image(__image_url)
         __driver.next_tab()
         time.sleep(1)
     for _ in image_url_list:
@@ -483,13 +501,11 @@ if __name__ == '__main__':  # インポート時には動かない
         print('引数が不正です。')
         sys.exit()
 
+    # test1()
+
     driver = ChromeDriverHelper(main_url, SELECTORS)
     main_title = driver.get_title()
     main_image_url = driver.get_last_image_url()
     print(main_image_url + "," + main_title)
     pyperclip.copy(main_image_url + "," + main_title)
 
-    # test1()
-    driver.destroy()
-    driver.get_title()
-    driver.get_source()
