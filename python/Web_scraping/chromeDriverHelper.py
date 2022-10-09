@@ -152,9 +152,9 @@ class ChromeDriverHelper:
                         last_image_url = None
                         title, title_sub, image_urls_list = self.__gen_scraping_selectors(selectors)
                         print(title, title_sub, image_urls_list)
-                        if isinstance(title, list):
+                        if title and isinstance(title, list):
                             title = title[0]
-                        if isinstance(title_sub, list):
+                        if title_sub and isinstance(title_sub, list):
                             title_sub = title_sub[0]
                         if image_urls_list and image_urls_list[0]:
                             last_image_url = image_urls_list[0]

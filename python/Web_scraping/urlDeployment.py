@@ -64,7 +64,7 @@ class UrlDeployment:
     value_object: UrlDeploymentValue = None
     url_list: list = []
 
-    def __init__(self, value_object, selectors):
+    def __init__(self, value_object, selectors_or_title=None):
         if value_object is not None:
             if isinstance(value_object, UrlDeploymentValue):
                 self.value_object = value_object
@@ -76,14 +76,16 @@ class UrlDeployment:
                     sys.exit(1)
                 if __parse.path[-4:] == '.jpg' or __parse.path[-4:] == '.png':
                     __image_url = value_object
-                    __title = selectors
+                    __title = selectors_or_title
+                    __selectors = None
                 else:
-                    __driver = ChromeDriverHelper(value_object, selectors)
+                    __selectors = selectors_or_title
+                    __driver = ChromeDriverHelper(value_object, __selectors)
                     __title = __driver.get_title()
                     __image_url = __driver.get_last_image_url()
                 __image_urls = self.__deployment(__image_url)
                 self.value_object = UrlDeploymentValue(value_object,
-                                                       selectors,
+                                                       __selectors,
                                                        __title,
                                                        __image_urls,
                                                        )
