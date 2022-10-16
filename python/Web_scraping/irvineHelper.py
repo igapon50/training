@@ -69,9 +69,9 @@ class IrvineHelperValue:
     Irvineのヘルパーオブジェクト
     """
     exe_path: str = r'c:\Program1\irvine1_3_0\irvine.exe'.replace(os.sep, '/')
-    list_path: str = r''
+    list_path: str = r'./irvine_download_list.txt'
 
-    def __init__(self, list_path, exe_path=exe_path):
+    def __init__(self, list_path=list_path, exe_path=exe_path):
         """
         完全コンストラクタパターン
         :param list_path: str Irvineでダウンロードするファイルリストのファイルパス
@@ -87,7 +87,7 @@ class IrvineHelper:
     """
     Irvineのヘルパー
     """
-    list_path: str = r'./irvine_download_list.txt'
+    list_path: str = IrvineHelperValue.list_path
     value_object: IrvineHelperValue = None
     running: bool = False
 
@@ -95,9 +95,9 @@ class IrvineHelper:
         """
         コンストラクタ
         :param target_value:
-            list IrvineでダウンロードするURLリスト
+            IrvineHelperValue 値オブジェクト
             または、str IrvineでダウンロードするURLリストが列挙されたファイルへのパス
-            または、IrvineHelperValue 値オブジェクト
+            または、list IrvineでダウンロードするURLリスト
         :param exe_path: str Irvine.exeのパス
         """
         if isinstance(target_value, IrvineHelperValue):
@@ -119,13 +119,13 @@ class IrvineHelper:
                 self.value_object = IrvineHelperValue(self.list_path)
         else:
             print('IrvineHelperで想定外の引数が指定された')
-            exit()
+            raise ValueError
         if not os.path.isfile(self.value_object.exe_path):
             print(f'Irvine.exeが見つかりません:{self.value_object.exe_path}')
-            exit()
+            raise ValueError
         if not os.path.isfile(self.value_object.list_path):
             print(f'ダウンロードファイルリストのファイルが見つかりません:{self.value_object.list_path}')
-            exit()
+            raise ValueError
 
     def download(self):
         """

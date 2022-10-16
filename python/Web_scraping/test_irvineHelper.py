@@ -1,5 +1,6 @@
 import unittest
 from irvineHelper import *
+from webFileListHelper import *
 
 
 class MyTestCase(unittest.TestCase):
@@ -25,13 +26,8 @@ class MyTestCase(unittest.TestCase):
 
     def test___init___01(self):
         """引数無コンストラクタ"""
-        irvine_helper = IrvineHelper()
-        self.assertTrue(isinstance(irvine_helper, IrvineHelper))
-        self.assertEqual(IrvineHelper.list_path, irvine_helper.list_path)
-        self.assertEqual(IrvineHelper.running, irvine_helper.running)
-        self.assertNotEqual(IrvineHelper.value_object, irvine_helper.value_object)
-        self.assertEqual(IrvineHelper.list_path, irvine_helper.value_object.list_path)
-        self.assertEqual(IrvineHelperValue.exe_path, irvine_helper.value_object.exe_path)
+        with self.assertRaises(ValueError):
+            irvine_helper = IrvineHelper()
 
     def test___init___02(self):
         """引数有コンストラクタ"""
@@ -46,7 +42,7 @@ class MyTestCase(unittest.TestCase):
     def test___init___03(self):
         """引数有コンストラクタ"""
         __irvine_helper = IrvineHelper(self.image_url_list)
-        irvine_helper = IrvineHelper(__irvine_helper)
+        irvine_helper = IrvineHelper(__irvine_helper.value_object)
         self.assertTrue(isinstance(irvine_helper, IrvineHelper))
         self.assertEqual(IrvineHelper.list_path, irvine_helper.list_path)
         self.assertEqual(IrvineHelper.running, irvine_helper.running)
@@ -54,12 +50,14 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(IrvineHelper.list_path, irvine_helper.value_object.list_path)
         self.assertEqual(IrvineHelperValue.exe_path, irvine_helper.value_object.exe_path)
 
-    def test_something(self):
-        """引数有コンストラクタ"""
+    def test_download(self):
+        """ダウンロード"""
         irvine_helper = IrvineHelper(self.image_url_list)
-        # irvine_helper.download()
-        self.assertTrue(isinstance(irvine_helper, IrvineHelper))
-        self.assertEqual(True, False)  # add assertion here
+        irvine_helper.download()
+        __web_file_list = WebFileListHelper(self.image_url_list)
+        self.assertTrue(__web_file_list.is_exist())
+        # 後始末
+        __web_file_list.delete_images()
 
 
 if __name__ == '__main__':
