@@ -36,20 +36,20 @@ class WebFileHelperValue:
     """webファイルヘルパー値オブジェクト
     """
     url: str
-    folder_path: str
+    folder_path: str = os.path.join(os.path.dirname(os.path.abspath(__file__)), OUTPUT_FOLDER_PATH).replace(os.sep, '/')
 
-    def __init__(self, url, folder_path):
+    def __init__(self, url, folder_path=folder_path):
         """完全コンストラクタパターン
         :param url: str webファイルのURL
         :param folder_path: str フォルダのフルパス(セパレータは、円マークでもスラッシュでもよい、内部ではスラッシュで持つ)
         """
         if not url:
-            raise ValueError(f"不正:引数urlが無い")
+            raise ValueError(f"{self.__class__}引数エラー:url=None")
         if not self.is_url_only(url):
-            raise ValueError(f"不正:引数urlがURLではない[{url}]")
+            raise ValueError(f"{self.__class__}引数エラー:urlがURLではない[{url}]")
         object.__setattr__(self, "url", url)
         if not folder_path:
-            raise ValueError(f"不正:引数file_pathが無い")
+            raise ValueError(f"{self.__class__}引数エラー:file_path=None")
         object.__setattr__(self, "folder_path", folder_path.replace(os.sep, '/'))
 
     @staticmethod
@@ -61,14 +61,13 @@ class WebFileHelper:
     """webファイルのヘルパー
     """
     value_object: WebFileHelperValue = None
-    __root_path = os.path.dirname(os.path.abspath(__file__))
-    __folder_path = os.path.join(__root_path, OUTPUT_FOLDER_PATH).replace(os.sep, '/')
+    folder_path: str = WebFileHelperValue.folder_path
     # TODO: ext_list増やすなら、優先度順にrename_url_ext_shiftが働くようにしたい
     # ext_list = ['.jpg', '.png', '.jpeg', '.webp', '.svg', '.svgz', '.gif', '.tif', '.tiff', '.psd', '.bmp']
-    ext_list = ['.jpg', '.png']  # これを画像とする
+    ext_list: list = ['.jpg', '.png']  # これを画像とする
     dst_filename: str = None
 
-    def __init__(self, value_object, folder_path=__folder_path):
+    def __init__(self, value_object=None, folder_path=folder_path):
         """コンストラクタ
         値オブジェクトからの復元、
         または、urlとfolder_pathより、値オブジェクトを作成する
@@ -79,14 +78,15 @@ class WebFileHelper:
             if isinstance(value_object, WebFileHelperValue):
                 self.value_object = value_object
                 self.dst_filename = self.get_filename()
+            elif isinstance(value_object, str):
+                __url = value_object
+                if folder_path:
+                    self.value_object = WebFileHelperValue(__url, folder_path)
+                    self.dst_filename = self.get_filename()
             else:
-                if isinstance(value_object, str):
-                    __url = value_object
-                    if folder_path:
-                        self.value_object = WebFileHelperValue(__url,
-                                                               folder_path,
-                                                               )
-                        self.dst_filename = self.get_filename()
+                raise ValueError(f"{self.__class__}引数エラー:value_objectの型")
+        else:
+            raise ValueError(f"{self.__class__}引数エラー:value_object=None")
 
     def is_image(self):
         """画像化判定
