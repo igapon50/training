@@ -12,25 +12,6 @@ from dataclasses import dataclass
 from const import *
 
 
-def fixed_file_name(file_name):
-    __file_name = copy.deepcopy(file_name)
-    __file_name = __file_name.replace(os.sep, '￥')
-    __file_name = __file_name.replace('/', '／')
-    return fixed_path(__file_name)
-
-
-def fixed_path(file_path):
-    __file_path = copy.deepcopy(file_path)
-    __file_path = __file_path.replace(':', '：')
-    __file_path = __file_path.replace('*', '＊')
-    __file_path = __file_path.replace('?', '？')
-    __file_path = __file_path.replace('"', '”')
-    __file_path = __file_path.replace('<', '＜')
-    __file_path = __file_path.replace('>', '＞')
-    __file_path = __file_path.replace('|', '｜')
-    return __file_path
-
-
 @dataclass(frozen=True)
 class WebFileHelperValue:
     """webファイルヘルパー値オブジェクト
@@ -87,6 +68,32 @@ class WebFileHelper:
                 raise ValueError(f"{self.__class__}引数エラー:value_objectの型")
         else:
             raise ValueError(f"{self.__class__}引数エラー:value_object=None")
+
+    @staticmethod
+    def fixed_path(file_path):
+        """フォルダ名の禁止文字を全角文字に置き換える
+        :param file_path: str 置き換えたいフォルダパス
+        :return: str 置き換え後のフォルダパス
+        """
+        __file_path = copy.deepcopy(file_path)
+        __file_path = __file_path.replace(':', '：')
+        __file_path = __file_path.replace('*', '＊')
+        __file_path = __file_path.replace('?', '？')
+        __file_path = __file_path.replace('"', '”')
+        __file_path = __file_path.replace('<', '＜')
+        __file_path = __file_path.replace('>', '＞')
+        __file_path = __file_path.replace('|', '｜')
+        return __file_path
+
+    def fixed_file_name(self, file_name):
+        """ファイル名の禁止文字を全角文字に置き換える
+        :param file_name: str 置き換えたいファイル名
+        :return: str 置き換え後のファイル名
+        """
+        __file_name = copy.deepcopy(file_name)
+        __file_name = __file_name.replace(os.sep, '￥')
+        __file_name = __file_name.replace('/', '／')
+        return self.fixed_path(__file_name)
 
     def is_image(self):
         """画像化判定
@@ -158,9 +165,7 @@ class WebFileHelper:
             __index = (__index + 1) % len(self.ext_list)
             __ext = self.ext_list[__index]
             __url = self.get_url()[::-1].replace(self.get_ext()[::-1], __ext[::-1])[::-1]
-            self.value_object = WebFileHelperValue(__url,
-                                                   self.get_folder_path(),
-                                                   )
+            self.value_object = WebFileHelperValue(__url, self.get_folder_path())
 
     def rename_filename(self, new_file_name):
         """ローカルにあるファイルのファイル名を変更する
@@ -177,41 +182,3 @@ class WebFileHelper:
             os.rename(self.get_path(), dst_path)
             self.dst_filename = new_file_name
         return True
-
-
-if __name__ == '__main__':  # インポート時には動かない
-    main_url = None
-    # 引数チェック
-    if 2 == len(sys.argv):
-        # Pythonに以下の2つ引数を渡す想定
-        # 0は固定でスクリプト名
-        # 1.対象のURL
-        main_url = sys.argv[1]
-    elif 1 == len(sys.argv):
-        # 引数がなければ、クリップボードからURLを得る
-        paste_str = pyperclip.paste()
-        if paste_str:
-            parse = urlparse(paste_str)
-            if parse.scheme:
-                main_url = paste_str
-        # クリップボードが空なら、デフォルトURLを用いる
-    else:
-        print('引数が不正です。')
-        sys.exit()
-
-    # テスト　若者 | かわいいフリー素材集 いらすとや
-    image_url = 'https://1.bp.blogspot.com/-tzoOQwlaRac/X1LskKZtKEI/AAAAAAABa_M/'\
-                '89phuGIVDkYGY_uNKvFB6ZiNHxR7bQYcgCNcBGAsYHQ/'\
-                's180-c/fashion_dekora.png'
-    web_file_helper = WebFileHelper(image_url)
-    print(web_file_helper.is_image())
-    for __item in web_file_helper.ext_list:
-        main_url = web_file_helper.get_url()
-        main_folder_path = web_file_helper.get_folder_path()
-        main_path = web_file_helper.get_path()
-        main_filename = web_file_helper.get_filename()
-        main_ext = web_file_helper.get_ext()
-        print(main_url + ", " + main_folder_path)
-        print(main_path + ", " + main_filename + ", " + main_ext)
-        web_file_helper.rename_url_ext_shift()
-    # pyperclip.copy(path + ", " + filename + ", " + ext)

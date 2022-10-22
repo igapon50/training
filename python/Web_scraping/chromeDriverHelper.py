@@ -46,33 +46,6 @@ from dataclasses import dataclass
 from webFileHelper import *
 
 
-def fixed_file_name(file_name):
-    """ファイル名の禁止文字を全角文字に置き換える
-    :param file_name: str 置き換えたいファイル名
-    :return: str 置き換え後のファイル名
-    """
-    __file_name = copy.deepcopy(file_name)
-    __file_name = __file_name.replace(os.sep, '￥')
-    __file_name = __file_name.replace('/', '／')
-    return fixed_path(__file_name)
-
-
-def fixed_path(file_path):
-    """フォルダ名の禁止文字を全角文字に置き換える
-    :param file_path: str 置き換えたいフォルダパス
-    :return: str 置き換え後のフォルダパス
-    """
-    __file_path = copy.deepcopy(file_path)
-    __file_path = __file_path.replace(':', '：')
-    __file_path = __file_path.replace('*', '＊')
-    __file_path = __file_path.replace('?', '？')
-    __file_path = __file_path.replace('"', '”')
-    __file_path = __file_path.replace('<', '＜')
-    __file_path = __file_path.replace('>', '＞')
-    __file_path = __file_path.replace('|', '｜')
-    return __file_path
-
-
 @dataclass(frozen=True)
 class ChromeDriverHelperValue:
     """Chromeドライバ値オブジェクト
@@ -165,8 +138,8 @@ class ChromeDriverHelper:
                                 title = f'{now:%Y%m%d_%H%M%S}'
                             else:
                                 title = title_sub
-                        title = fixed_file_name(title)
-                        url_title = fixed_file_name(url)
+                        title = self.fixed_file_name(title)
+                        url_title = self.fixed_file_name(url)
                         # self.back()
                         # NOTE: ここに保存すると、zipに入れてないので消えてまう
                         # self.save_source(os.path.join(OUTPUT_FOLDER_PATH, f'{title}／{url}.html').replace(os.sep, '/'))
@@ -181,6 +154,32 @@ class ChromeDriverHelper:
                         else:
                             print("image_urls_listが不正")
                             exit()
+
+    @staticmethod
+    def fixed_path(file_path):
+        """フォルダ名の禁止文字を全角文字に置き換える
+        :param file_path: str 置き換えたいフォルダパス
+        :return: str 置き換え後のフォルダパス
+        """
+        __file_path = copy.deepcopy(file_path)
+        __file_path = __file_path.replace(':', '：')
+        __file_path = __file_path.replace('*', '＊')
+        __file_path = __file_path.replace('?', '？')
+        __file_path = __file_path.replace('"', '”')
+        __file_path = __file_path.replace('<', '＜')
+        __file_path = __file_path.replace('>', '＞')
+        __file_path = __file_path.replace('|', '｜')
+        return __file_path
+
+    def fixed_file_name(self, file_name):
+        """ファイル名の禁止文字を全角文字に置き換える
+        :param file_name: str 置き換えたいファイル名
+        :return: str 置き換え後のファイル名
+        """
+        __file_name = copy.deepcopy(file_name)
+        __file_name = __file_name.replace(os.sep, '￥')
+        __file_name = __file_name.replace('/', '／')
+        return self.fixed_path(__file_name)
 
     def __add_options(self, *args):
         """オプション追加
@@ -329,7 +328,7 @@ class ChromeDriverHelper:
         :return:
         """
         html = self.get_source()
-        new_path = fixed_path(path)
+        new_path = self.fixed_path(path)
         with open(new_path, 'w', encoding='utf-8') as f:
             f.write(html)
 

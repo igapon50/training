@@ -128,7 +128,7 @@ class WebFileListHelper:
         :return: bool 成功/失敗=True/False
         """
         __zip_folder = self.get_folder_path_from_1st_element()
-        new_zip_filename = fixed_path(zip_filename)
+        new_zip_filename = WebFileHelper.fixed_path(zip_filename)
         if os.path.isfile(os.path.join(__zip_folder, '..', new_zip_filename + '.zip').replace(os.sep, '/')):
             print(f'圧縮リネームファイル{new_zip_filename}.zipが既に存在しています')
             return False
@@ -147,72 +147,3 @@ class WebFileListHelper:
             os.mkdir(__zip_folder)
         else:
             os.mkdir(__zip_folder + '\\')
-
-
-if __name__ == '__main__':  # インポート時には動かない
-    main_url = None
-    # 引数チェック
-    if 2 == len(sys.argv):
-        # Pythonに以下の2つ引数を渡す想定
-        # 0は固定でスクリプト名
-        # 1.対象のURL
-        main_url = sys.argv[1]
-    elif 1 == len(sys.argv):
-        # 引数がなければ、クリップボードからURLを得る
-        paste_str = pyperclip.paste()
-        if paste_str:
-            parse = urlparse(paste_str)
-            if parse.scheme:
-                main_url = paste_str
-        # クリップボードが空なら、デフォルトURLを用いる
-    else:
-        print('引数が不正です。')
-        sys.exit()
-
-    # テスト　若者 | かわいいフリー素材集 いらすとや
-    image_url_list = [
-        'https://1.bp.blogspot.com/-tzoOQwlaRac/X1LskKZtKEI/AAAAAAABa_M/'
-        '89phuGIVDkYGY_uNKvFB6ZiNHxR7bQYcgCNcBGAsYHQ/'
-        's180-c/fashion_dekora.png',
-        'https://1.bp.blogspot.com/-gTf4sWnRdDw/X0B4RSQQLrI/AAAAAAABarI/'
-        'MJ9DW90dSVwtMjuUoErxemnN4nPXBnXUwCNcBGAsYHQ/'
-        's180-c/otaku_girl_fashion.png',
-    ]
-    fileDownloader = Downloading(image_url_list, OUTPUT_FOLDER_PATH)
-    ret = fileDownloader.download()
-    if not ret:
-        print('ダウンロード失敗')
-        sys.exit()
-    web_file_list = WebFileListHelper(image_url_list)
-    if not web_file_list.is_exist():
-        print('ダウンロードファイルが存在しない')
-        sys.exit()
-    web_file_list.rename_filenames()
-    if not web_file_list.is_exist():
-        print('リネームファイルが存在しない')
-        sys.exit()
-    ret = web_file_list.make_zip_file()
-    if not ret:
-        print('zipファイル作成失敗')
-        sys.exit()
-    ret = web_file_list.rename_zip_file('若者 | かわいいフリー素材集 いらすとや')
-    if not ret:
-        print('zipファイルリネーム失敗')
-        sys.exit()
-    web_file_list.delete_images()
-
-    for web_file_helper in web_file_list.value_object.web_file_list:
-        print(web_file_helper.is_image())
-        for __item in web_file_helper.ext_list:
-            main_url = web_file_helper.get_url()
-            main_folder_path = web_file_helper.get_folder_path()
-            main_path = web_file_helper.get_path()
-            main_filename = web_file_helper.get_filename()
-            main_ext = web_file_helper.get_ext()
-            print(main_url + ", " + main_folder_path)
-            print(main_path + ", " + main_filename + ", " + main_ext)
-            web_file_helper.rename_url_ext_shift()
-    if not web_file_list.is_exist():
-        print('ファイルが存在しない')
-        sys.exit()
-    print('ファイルが存在する')
