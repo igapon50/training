@@ -173,7 +173,7 @@ if __name__ == '__main__':  # インポート時には動かない
     irvine = IrvineHelper(url_list)
     irvine.download()
     fileDownloader = WebFileListHelper(url_list, folder_path)
-    for count in enumerate(fileDownloader.get_file_list()[0].ext_list):
+    for count in enumerate(fileDownloader.get_web_file_list()[0].ext_list):
         if fileDownloader.is_exist():
             break
         # ダウンロードに失敗しているときは、失敗しているファイルの拡張子を変えてダウンロードしなおす

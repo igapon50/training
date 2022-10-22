@@ -25,6 +25,7 @@ class MyTestCase(unittest.TestCase):
     def tearDown(self):
         print("tearDown")
         del self.image_url
+        del self.image_url_list
 
     def test___init___01(self):
         """引数無コンストラクタ"""

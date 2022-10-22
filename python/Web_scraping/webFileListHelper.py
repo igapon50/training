@@ -14,29 +14,27 @@ from downloading import *
 class WebFileListHelperValue:
     """Webファイルリスト値オブジェクト
     """
-    file_list: list
+    web_file_list: list
 
-    def __init__(self, file_list):
+    def __init__(self, web_file_list):
         """完全コンストラクタパターン
-        :param file_list: list webファイルリスト
+        :param web_file_list: list webファイルリスト
         """
-        if not file_list:
-            raise ValueError(f"不正:引数file_listが無い")
-        for count, item in enumerate(file_list):
+        if not web_file_list:
+            raise ValueError(f"{self.__class__}引数エラー:web_file_list=None")
+        for count, item in enumerate(web_file_list):
             if not isinstance(item, WebFileHelper):
-                raise ValueError(f"不正:引数file_listの{count}個目がWebFileHelperで無い")
-        object.__setattr__(self, "file_list", file_list)
+                raise ValueError(f"{self.__class__}引数エラー:web_file_listの{count}個目がWebFileHelperで無い")
+        object.__setattr__(self, "web_file_list", web_file_list)
 
 
 class WebFileListHelper:
-    """webファイルのヘルパー
+    """webファイルリストのヘルパー
     """
     value_object: WebFileListHelperValue = None
-    __web_file_list: list = []
-    __root_path = os.path.dirname(os.path.abspath(__file__))
-    __folder_path = os.path.join(__root_path, OUTPUT_FOLDER_PATH).replace(os.sep, '/')
+    folder_path: str = os.path.join(os.path.dirname(os.path.abspath(__file__)), OUTPUT_FOLDER_PATH).replace(os.sep, '/')
 
-    def __init__(self, value_object, folder_path=__folder_path):
+    def __init__(self, value_object=None, folder_path=folder_path):
         """コンストラクタ
         値オブジェクトからの復元、
         または、urlリストとfolder_pathより、値オブジェクトを作成する
@@ -46,28 +44,30 @@ class WebFileListHelper:
         if value_object:
             if isinstance(value_object, WebFileListHelperValue):
                 self.value_object = value_object
+            elif isinstance(value_object, list):
+                if folder_path:
+                    __urls = value_object
+                    __web_file_list = []
+                    for __url in __urls:
+                        __web_file_list.append(WebFileHelper(__url, folder_path))
+                    self.value_object = WebFileListHelperValue(__web_file_list)
             else:
-                if isinstance(value_object, list):
-                    if folder_path:
-                        __urls = value_object
-                        for __url in __urls:
-                            self.__web_file_list.append(WebFileHelper(__url,
-                                                                      folder_path,
-                                                                      ))
-                        self.value_object = WebFileListHelperValue(self.__web_file_list)
+                raise ValueError(f"{self.__class__}引数エラー:value_objectの型")
+        else:
+            raise ValueError(f"{self.__class__}引数エラー:value_object=None")
 
-    def get_file_list(self):
+    def get_web_file_list(self):
         """ファイルリストを得る
         :return: list[WebFileHelper]
         """
-        return copy.deepcopy(self.value_object.file_list)
+        return copy.deepcopy(self.value_object.web_file_list)
 
     def get_only_url_of_file_not_exist(self):
         """ローカルにファイルがないURLだけのリストを得る
         :return: list[str]
         """
         __url_list = []
-        for file in self.value_object.file_list:
+        for file in self.value_object.web_file_list:
             if not file.is_exist():
                 __url_list.append(file.get_url())
         return copy.deepcopy(__url_list)
@@ -76,13 +76,13 @@ class WebFileListHelper:
         """ファイルリストの一つ目に登録されているフォルダーパスを得る
         :return: str
         """
-        return copy.deepcopy(self.get_file_list()[0].get_folder_path())
+        return copy.deepcopy(self.get_web_file_list()[0].get_folder_path())
 
     def is_exist(self):
         """ファイルリストの全ファイルがローカルに存在する
         :return: bool 全てのファイルが存在すればTrueを返す
         """
-        for __web_file in self.get_file_list():
+        for __web_file in self.get_web_file_list():
             if not __web_file.is_exist():
                 return False
         return True
@@ -91,7 +91,7 @@ class WebFileListHelper:
         """ファイルリストの各ファイルについて、ローカルに存在しないファイルの拡張子をシフトし、ファイルリストを更新する
         :return: None
         """
-        for __count, __web_file_helper in enumerate(self.value_object.file_list):
+        for __count, __web_file_helper in enumerate(self.value_object.web_file_list):
             if not __web_file_helper.is_exist():
                 __web_file_helper.rename_url_ext_shift()
 
@@ -99,7 +99,7 @@ class WebFileListHelper:
         """ファイルリストの各ファイルについて、ローカルに存在するファイルのファイル名をナンバリングファイル名に変更し、ファイルリストを更新する
         :return: bool 成功/失敗=True/False
         """
-        for __count, __web_file_helper in enumerate(self.value_object.file_list):
+        for __count, __web_file_helper in enumerate(self.value_object.web_file_list):
             if __web_file_helper.is_exist():
                 if not __web_file_helper.rename_filename('{:04d}'.format(__count)):
                     return False
@@ -118,7 +118,7 @@ class WebFileListHelper:
             os.rename(__zip_folder + '.zip', __zip_folder + f'{__now_str}.zip')
             print(f'圧縮ファイル{__zip_folder}.zipが既に存在したので{__zip_folder}{__now_str}.zipに変名しました')
         with zipfile.ZipFile(__zip_folder + '.zip', 'w', zipfile.ZIP_DEFLATED) as zip_file:
-            for __web_file_helper in self.get_file_list():
+            for __web_file_helper in self.get_web_file_list():
                 zip_file.write(__web_file_helper.get_path())
         return True
 
@@ -201,7 +201,7 @@ if __name__ == '__main__':  # インポート時には動かない
         sys.exit()
     web_file_list.delete_images()
 
-    for web_file_helper in web_file_list.value_object.file_list:
+    for web_file_helper in web_file_list.value_object.web_file_list:
         print(web_file_helper.is_image())
         for __item in web_file_helper.ext_list:
             main_url = web_file_helper.get_url()
