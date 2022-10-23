@@ -64,7 +64,7 @@ class ChromeDriverHelperValue:
         """
         if url is not None:
             if not self.is_url_only(url):
-                raise ValueError(f"不正:引数urlがURLではない[{url}]")
+                raise ValueError(f"{self.__class__}引数エラー:urlがURLではない[{url}]")
             object.__setattr__(self, "url", url)
         if selectors is not None:
             object.__setattr__(self, "selectors", selectors)
@@ -83,7 +83,7 @@ class ChromeDriverHelperValue:
 class ChromeDriverHelper:
     """指定のサイトを読み込み、スクレイピングする
     """
-    # value_object: ChromeDriverHelperValue = None
+    value_object: ChromeDriverHelperValue = None
     __driver = None
     __source = None
     __start_window_handle = None
@@ -111,49 +111,48 @@ class ChromeDriverHelper:
         :param selectors: list スクレイピングする際のセレクタリスト
         """
         self.__start()
-        if value_object is not None:
+        if value_object:
             if isinstance(value_object, ChromeDriverHelperValue):
                 self.value_object = value_object
-            else:
-                if isinstance(value_object, str):
-                    url = value_object
-                    if selectors is not None:
-                        self.__open_url(url)
-                        # image_urls_list = None
-                        # title, title_sub, last_image_url = self.__gen_scraping_element(selectors)
-                        # print(title, title_sub, last_image_url)
-                        last_image_url = None
-                        title, title_sub, image_urls_list = self.__gen_scraping_selectors(selectors)
-                        print(title, title_sub, image_urls_list)
-                        if title and isinstance(title, list):
-                            title = title[0]
-                        if title_sub and isinstance(title_sub, list):
-                            title_sub = title_sub[0]
-                        if image_urls_list and image_urls_list[0]:
-                            last_image_url = image_urls_list[0]
-                        if not title:
-                            if not title_sub:
-                                # タイトルが得られない時は、タイトルを日時文字列にする
-                                now = datetime.datetime.now()
-                                title = f'{now:%Y%m%d_%H%M%S}'
-                            else:
-                                title = title_sub
-                        title = self.fixed_file_name(title)
-                        url_title = self.fixed_file_name(url)
-                        # self.back()
-                        # NOTE: ここに保存すると、zipに入れてないので消えてまう
-                        # self.save_source(os.path.join(OUTPUT_FOLDER_PATH, f'{title}／{url}.html').replace(os.sep, '/'))
-                        self.save_source(f'{title}：{url_title}.html')
-                        # self.forward()
-                        if last_image_url:
-                            self.value_object = ChromeDriverHelperValue(url,
-                                                                        selectors,
-                                                                        title,
-                                                                        last_image_url,
-                                                                        )
+            elif isinstance(value_object, str):
+                url = value_object
+                if selectors:
+                    self.__open_url(url)
+                    # image_urls_list = None
+                    # title, title_sub, last_image_url = self.__gen_scraping_element(selectors)
+                    # print(title, title_sub, last_image_url)
+                    last_image_url = None
+                    title, title_sub, image_urls_list = self.__gen_scraping_selectors(selectors)
+                    print(title, title_sub, image_urls_list)
+                    if title and isinstance(title, list):
+                        title = title[0]
+                    if title_sub and isinstance(title_sub, list):
+                        title_sub = title_sub[0]
+                    if image_urls_list and image_urls_list[0]:
+                        last_image_url = image_urls_list[0]
+                    if not title:
+                        if not title_sub:
+                            # タイトルが得られない時は、タイトルを日時文字列にする
+                            now = datetime.datetime.now()
+                            title = f'{now:%Y%m%d_%H%M%S}'
                         else:
-                            print("image_urls_listが不正")
-                            exit()
+                            title = title_sub
+                    title = self.fixed_file_name(title)
+                    url_title = self.fixed_file_name(url)
+                    # self.back()
+                    # NOTE: ここに保存すると、zipに入れてないので消えてまう
+                    # self.save_source(os.path.join(OUTPUT_FOLDER_PATH, f'{title}／{url}.html').replace(os.sep, '/'))
+                    self.save_source(f'{title}：{url_title}.html')
+                    # self.forward()
+                    if last_image_url:
+                        self.value_object = ChromeDriverHelperValue(url,
+                                                                    selectors,
+                                                                    title,
+                                                                    last_image_url,
+                                                                    )
+                    else:
+                        print("image_urls_listが不正")
+                        exit()
 
     @staticmethod
     def fixed_path(file_path):
