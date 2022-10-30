@@ -184,5 +184,7 @@ if __name__ == '__main__':  # インポート時には動かない
         sys.exit()
     if not fileDownloader.make_zip_file():
         sys.exit()
-    fileDownloader.rename_zip_file(url_deployment.get_title())
+    if not fileDownloader.rename_zip_file(url_deployment.get_title()):
+        if not fileDownloader.rename_zip_file(url_deployment.get_title() + '：' + url_deployment.value_object.url):
+            sys.exit()
     fileDownloader.delete_images()

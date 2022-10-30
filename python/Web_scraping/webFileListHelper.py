@@ -128,12 +128,15 @@ class WebFileListHelper:
         :return: bool 成功/失敗=True/False
         """
         __zip_folder = self.get_folder_path_from_1st_element()
-        new_zip_filename = WebFileHelper.fixed_path(zip_filename)
-        if os.path.isfile(os.path.join(__zip_folder, '..', new_zip_filename + '.zip').replace(os.sep, '/')):
+        new_zip_filename = WebFileHelper.fixed_file_name(zip_filename)
+        src_zip_path = __zip_folder + '.zip'
+        dst_zip_path = new_zip_filename + '.zip'
+        new_zip_path = os.path.join(__zip_folder, '..', dst_zip_path).replace(os.sep, '/')
+        if os.path.isfile(new_zip_path):
             print(f'圧縮リネームファイル{new_zip_filename}.zipが既に存在しています')
             return False
         print(f'圧縮ファイル名を付け直します:{new_zip_filename}.zip')
-        os.rename(__zip_folder + '.zip', new_zip_filename + '.zip')
+        os.rename(src_zip_path, dst_zip_path)
         return True
 
     def delete_images(self):

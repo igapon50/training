@@ -85,7 +85,8 @@ class WebFileHelper:
         __file_path = __file_path.replace('|', '｜')
         return __file_path
 
-    def fixed_file_name(self, file_name):
+    @staticmethod
+    def fixed_file_name(file_name):
         """ファイル名の禁止文字を全角文字に置き換える
         :param file_name: str 置き換えたいファイル名
         :return: str 置き換え後のファイル名
@@ -93,7 +94,7 @@ class WebFileHelper:
         __file_name = copy.deepcopy(file_name)
         __file_name = __file_name.replace(os.sep, '￥')
         __file_name = __file_name.replace('/', '／')
-        return self.fixed_path(__file_name)
+        return WebFileHelper.fixed_path(__file_name)
 
     def is_image(self):
         """画像化判定

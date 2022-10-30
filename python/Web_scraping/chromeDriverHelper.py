@@ -72,7 +72,7 @@ class ChromeDriverHelperValue:
             object.__setattr__(self, "title", title)
         if last_image_url is not None:
             if not self.is_url_only(last_image_url):
-                raise ValueError(f"不正:引数last_image_urlがurlではない[{last_image_url}]")
+                raise ValueError(f"{self.__class__}引数エラー:last_image_urlがurlではない[{last_image_url}]")
             object.__setattr__(self, "last_image_url", last_image_url)
 
     @staticmethod
@@ -151,8 +151,7 @@ class ChromeDriverHelper:
                                                                     last_image_url,
                                                                     )
                     else:
-                        print("image_urls_listが不正")
-                        exit()
+                        raise ValueError(f"{self.__class__}引数エラー:image_urls_listが不正[{image_urls_list}]")
 
     @staticmethod
     def fixed_path(file_path):
