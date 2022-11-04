@@ -6,7 +6,7 @@ Webサイトから画像のURLリストを作り、ダウンロードされて�
 # local source
 from const import *
 from func import *
-from scraping import *
+from scraping_requests import *
 
 if __name__ == '__main__':  # インポート時には動かない
     imglist_filepath = RESULT_FILE_PATH
@@ -33,15 +33,15 @@ if __name__ == '__main__':  # インポート時には動かない
     print(target_url)
 
     # ファイルのURLリストを作成
-    scraping = Scraping(target_url, img_css_select, img_attr, img_title_css)
-    if not scraping:
+    scraping_requests = ScrapingRequests(target_url, img_css_select, img_attr, img_title_css)
+    if not scraping_requests:
         print(msg_error_exit)
-        sys.exit(scraping)
-    scraping.save_text(RESULT_FILE_PATH + '1.txt')
-    scraping.save_pickle(RESULT_FILE_PATH + '1.pkl')
-    file_url_list = scraping.get_image_list()
-    title = scraping.get_title()
-    scraping.clip_copy()
+        sys.exit(scraping_requests)
+    scraping_requests.save_text(RESULT_FILE_PATH + '1.txt')
+    scraping_requests.save_pickle(RESULT_FILE_PATH + '1.pkl')
+    file_url_list = scraping_requests.get_image_list()
+    title = scraping_requests.get_title()
+    scraping_requests.clip_copy()
 
     # ファイルのダウンロード
     print('タイトルとURLリストをクリップボードにコピーし、ファイルに保存済み')
