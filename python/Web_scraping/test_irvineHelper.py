@@ -66,7 +66,7 @@ class MyTestCase(unittest.TestCase):
         test_target.download()
         __test_target = WebFileListHelper(self.image_url_list)
         self.assertTrue(__test_target.is_exist())
-        # 後始末
+        # 後処理
         __test_target.delete_images()
 
 
