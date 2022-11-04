@@ -1,5 +1,6 @@
 import unittest
 from chromeDriverHelper import *
+from webFileListHelper import *
 
 
 class MyTestCase(unittest.TestCase):
@@ -103,6 +104,25 @@ class MyTestCase(unittest.TestCase):
         """ファイルリストを得る"""
         test_target = ChromeDriverHelper(self.url, self.selectors)
         self.assertEqual(test_target.get_title(), "カテゴリー「若者」")
+
+    def test_open_tabs(self):
+        """open_tabs/download_image/next_tab/previous_tab/closeメソッドのテスト"""
+        __driver = ChromeDriverHelper()
+        __driver.open_tabs(self.image_url_list)
+        for _ in self.image_url_list:
+            __driver.download_image()
+            __driver.next_tab()
+            time.sleep(1)
+        for _ in self.image_url_list:
+            __driver.previous_tab()
+            time.sleep(1)
+        for _ in self.image_url_list:
+            __driver.close()
+            time.sleep(1)
+        __web_file_list = WebFileListHelper(self.image_url_list)
+        self.assertTrue(__web_file_list.is_exist())
+        # 後処理
+        __web_file_list.delete_images()
 
 
 if __name__ == '__main__':
