@@ -45,7 +45,7 @@ class WebFileHelper:
     folder_path: str = WebFileHelperValue.folder_path
     # TODO: ext_list増やすなら、優先度順にrename_url_ext_shiftが働くようにしたい
     # ext_list = ['.jpg', '.png', '.jpeg', '.webp', '.svg', '.svgz', '.gif', '.tif', '.tiff', '.psd', '.bmp']
-    ext_list: list = ['.jpg', '.png']  # これを画像とする
+    ext_list: list = ['.jpg', '.png', '.gif']  # これを画像とする
     dst_filename: str = None
 
     def __init__(self, value_object=None, folder_path=folder_path):

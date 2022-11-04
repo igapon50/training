@@ -13,9 +13,9 @@ Chrome.batを実行して、Chromeを起動しておくと、その続きから�
     next_tab (画面遷移有)openで作ったタブ(__window_handle_list)の内、一つ後のタブを表示する
     previous_tab (画面遷移有)openで作ったタブ(__window_handle_list)の内、一つ前のタブを表示する
     open (画面遷移有)新しいタブでurlを開く
-    open_list (画面遷移有)新しいタブでurlリストを開く
+    open_tabs (画面遷移有)新しいタブでurlリストを開く
     close (画面遷移有)指定の画面か、現在の画面を閉じる
-    download_image ダウンロード実行用スクリプトを生成＆実行
+    download_image (画面依存)表示されている画像を保存する(Chromeデフォルトダウンロードフォルダに保存)
 
 参考ブログ
 https://note.nkmk.me/python/
@@ -93,11 +93,12 @@ class ChromeDriverHelper:
     chrome_path = r'"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"'
     __options = ChromeOptions()
     __port = "9222"
-    __chrome_arg = ['--blink-settings=imagesEnabled=false',  # 画像非表示
-                    # '--incognito',  # シークレットモードで起動する
-                    # '--headless',  # バックグラウンドで起動する
-                    ]
-    __chrome_opt = ('debuggerAddress', f'127.0.0.1:{__port}')
+    __chrome_add_argument = ['--blink-settings=imagesEnabled=false',  # 画像非表示
+                             # '--incognito',  # シークレットモードで起動する
+                             # '--headless',  # バックグラウンドで起動する
+                             ]
+    __chrome_add_experimental_option = ('debuggerAddress', f'127.0.0.1:{__port}')
+    # ("prefs", {"download.default_directory": {__dir}}),
     profile_path = r'C:\Users\igapon\temp'
     __cmd = f'{chrome_path}' \
             f' -remote-debugging-port={__port}' \
@@ -194,9 +195,9 @@ class ChromeDriverHelper:
         :return:
         """
         # TODO: __add_argumentが効いてない、使い方を調べる
-        for arg in self.__chrome_arg:
+        for arg in self.__chrome_add_argument:
             self.__add_argument(arg)
-        self.__add_options(*self.__chrome_opt)
+        self.__add_options(*self.__chrome_add_experimental_option)
         try:
             # NOTE: タイムアウト長いので、なるべくChrome起動してから呼び出したい
             self.__connection()
@@ -387,7 +388,7 @@ class ChromeDriverHelper:
         self.__window_handle_list.append(self.__driver.current_window_handle)
         return self.__window_handle_list[-1]
 
-    def open_list(self, url_list):
+    def open_tabs(self, url_list):
         """(画面遷移有)新しいタブでurlリストを開く
         :param url_list:  list[str] 開くURLのリスト
         :return: list[str] 開いたタブのハンドルリスト
@@ -424,13 +425,14 @@ class ChromeDriverHelper:
             print("ValueError 指定のwindow_handleがありません。")
             exit()
 
-    def download_image(self, image_url):
-        """(画面依存)ダウンロード実行用スクリプトを生成＆実行
+    def download_image(self):
+        """(画面依存)表示されている画像を保存する
         chromeのデフォルトダウンロードフォルダに保存される
-        :param image_url:
+        ダウンロード実行用スクリプトを生成＆実行する
         :return:
         """
-        __web_file = WebFileHelper(image_url)
+        __image_url = self.__driver.current_url
+        __web_file = WebFileHelper(__image_url)
         __filename = __web_file.get_filename() + __web_file.get_ext()
         script_str = """
         window.URL = window.URL || window.webkitURL;
@@ -438,7 +440,7 @@ class ChromeDriverHelper:
         var xhr = new XMLHttpRequest(),
         a = document.createElement('a'), file;
 
-        xhr.open('GET', '""" + image_url + """', true);
+        xhr.open('GET', '""" + __image_url + """', true);
         xhr.responseType = 'blob';
         xhr.onload = function () {
         file = new Blob([xhr.response], { type : 'application/octet-stream' });
@@ -449,33 +451,6 @@ class ChromeDriverHelper:
         xhr.send();
         """
         self.__driver.execute_script(script_str)
-
-
-def test1():
-    # テスト　若者 | かわいいフリー素材集 いらすとや
-    image_url_list = [
-        'https://1.bp.blogspot.com/-tzoOQwlaRac/X1LskKZtKEI/AAAAAAABa_M/'
-        '89phuGIVDkYGY_uNKvFB6ZiNHxR7bQYcgCNcBGAsYHQ/'
-        's180-c/fashion_dekora.png',
-        'https://1.bp.blogspot.com/-gTf4sWnRdDw/X0B4RSQQLrI/AAAAAAABarI/'
-        'MJ9DW90dSVwtMjuUoErxemnN4nPXBnXUwCNcBGAsYHQ/'
-        's180-c/otaku_girl_fashion.png',
-        'https://1.bp.blogspot.com/-K8DEj7le73Y/XuhW_wO41mI/AAAAAAABZjQ/'
-        'NMEk02WcUBEVBDsEJpCxTN6T0NmqG20qwCNcBGAsYHQ/'
-        's180-c/kesyou_jirai_make.png',
-    ]
-    __driver = ChromeDriverHelper()
-    __driver.open_list(image_url_list)
-    for __image_url in image_url_list:
-        __driver.download_image(__image_url)
-        __driver.next_tab()
-        time.sleep(1)
-    for _ in image_url_list:
-        __driver.previous_tab()
-        time.sleep(1)
-    for _ in image_url_list:
-        __driver.close()
-        time.sleep(1)
 
 
 if __name__ == '__main__':  # インポート時には動かない
@@ -497,8 +472,6 @@ if __name__ == '__main__':  # インポート時には動かない
     else:
         print('引数が不正です。')
         sys.exit()
-
-    # test1()
 
     driver = ChromeDriverHelper(main_url, SELECTORS)
     main_title = driver.get_title()
