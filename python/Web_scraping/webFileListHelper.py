@@ -2,19 +2,15 @@
 # -*- coding: utf-8 -*-
 """webファイルリストのヘルパー
 """
-import datetime
-import re  # 正規表現モジュール
-import zipfile  # zipファイル
-import shutil  # 高水準のファイル操作
 from webFileHelper import *
 from downloading import *
 
 
 @dataclass(frozen=True)
 class WebFileListHelperValue:
-    """Webファイルリスト値オブジェクト
-    """
-    web_file_list: list
+    """値オブジェクト"""
+    web_file_list: list = None
+    folder_path: str = os.path.join(os.path.dirname(os.path.abspath(__file__)), OUTPUT_FOLDER_PATH).replace(os.sep, '/')
 
     def __init__(self, web_file_list):
         """完全コンストラクタパターン
@@ -29,10 +25,9 @@ class WebFileListHelperValue:
 
 
 class WebFileListHelper:
-    """webファイルリストのヘルパー
-    """
+    """webファイルリスト"""
     value_object: WebFileListHelperValue = None
-    folder_path: str = os.path.join(os.path.dirname(os.path.abspath(__file__)), OUTPUT_FOLDER_PATH).replace(os.sep, '/')
+    folder_path: str = WebFileListHelperValue.folder_path
 
     def __init__(self, value_object=None, folder_path=folder_path):
         """コンストラクタ
@@ -46,11 +41,12 @@ class WebFileListHelper:
                 self.value_object = value_object
             elif isinstance(value_object, list):
                 if folder_path:
-                    __urls = value_object
                     __web_file_list = []
-                    for __url in __urls:
+                    for __url in value_object:
                         __web_file_list.append(WebFileHelper(__url, folder_path))
                     self.value_object = WebFileListHelperValue(__web_file_list)
+                else:
+                    raise ValueError(f"{self.__class__}引数エラー:folder_path=None")
             else:
                 raise ValueError(f"{self.__class__}引数エラー:value_objectの型")
         else:

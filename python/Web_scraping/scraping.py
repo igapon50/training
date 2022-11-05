@@ -4,11 +4,7 @@
 スクレイピングユーティリティ
     * サイトURLと、selectorsを指定して、スクレイピングする
 """
-
 # standard library
-from urllib.parse import urlparse  # URLパーサー
-from urllib.parse import urljoin  # URL結合
-
 # 3rd party packages
 import pickle
 import sys
@@ -16,9 +12,8 @@ import copy
 import pyperclip  # クリップボード
 from dataclasses import dataclass
 import json
-
+from selenium.webdriver.common.by import By
 # local source
-from const import *
 
 # 最大再起回数を1万回にする
 sys.setrecursionlimit(10000)
@@ -136,29 +131,3 @@ class Scraping:
         with open(load_path, 'rb') as work_file:
             self.value_object = pickle.load(work_file)
             return True
-
-
-# 検証コード
-if __name__ == '__main__':  # インポート時には動かない
-    imglist_filepath = RESULT_FILE_PATH
-    target_url = DEFAULT_TARGET_URL
-    folder_path = OUTPUT_FOLDER_PATH
-    # 引数チェック
-    if 2 == len(sys.argv):
-        # Pythonに以下の2つ引数を渡す想定
-        # 0は固定でスクリプト名
-        # 1.対象のURL
-        target_url = sys.argv[1]
-    elif 1 == len(sys.argv):
-        # 引数がなければ、クリップボードからURLを得る
-        paste_str = pyperclip.paste()
-        if paste_str:
-            parse = urlparse(paste_str)
-            if parse.scheme:
-                target_url = paste_str
-    # クリップボードが空なら、デフォルトURLを用いる
-    else:
-        print('引数が不正です。')
-        print(msg_error_exit)
-        sys.exit(1)
-    print(target_url)

@@ -2,8 +2,12 @@
 # -*- coding: utf-8 -*-
 """
 クローリング
-    * downloadlist.txtから、URLを読み込んでスクレイピング＆ダウンロードする。
-    * downloadlist.txtファイルに処理対象サイトURLを、一行に一URL記載しておく。
+    * 指定サイト(site_url)をセレクタ(selectors)でクローリングする
+    * クローリング結果を、ページリスト(crawling_list.txt)に登録する
+    * ページリスト(get_site_urls_from_local)に登録されている、それぞれのページをスクレイピングする
+    * スクレイピング結果を、ダウンロードリストに登録する
+    * ダウンロードリストに登録されている、それぞれのファイルをダウンロードする
+    * ダウンロードしたファイルを変名して圧縮する
 """
 import subprocess
 from chromeDriverHelper import *
@@ -50,7 +54,7 @@ class Crawling:
                 else:
                     raise ValueError(f"{self.__class__}引数エラー:selectors=None")
             else:
-                raise ValueError(f"{self.__class__}引数エラー:selectorsがstrではない")
+                raise ValueError(f"{self.__class__}引数エラー:value_objectの型")
         else:
             raise ValueError(f"{self.__class__}引数エラー:value_object=None")
 
