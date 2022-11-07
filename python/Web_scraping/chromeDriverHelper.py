@@ -43,7 +43,7 @@ from selenium.common.exceptions import NoSuchElementException
 from webdriver_manager.chrome import ChromeDriverManager
 from dataclasses import dataclass
 
-from webFileHelper import *
+from webFileListHelper import *
 
 
 @dataclass(frozen=True)
@@ -93,12 +93,15 @@ class ChromeDriverHelper:
     chrome_path = r'"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"'
     __options = ChromeOptions()
     __port = "9222"
+    __default_directory = WebFileListHelper.folder_path
     __chrome_add_argument = ['--blink-settings=imagesEnabled=false',  # 画像非表示
                              # '--incognito',  # シークレットモードで起動する
                              # '--headless',  # バックグラウンドで起動する
                              ]
-    __chrome_add_experimental_option = ('debuggerAddress', f'127.0.0.1:{__port}')
-    # ("prefs", {"download.default_directory": {__dir}}),
+    __chrome_add_experimental_option = [('debuggerAddress', f'127.0.0.1:{__port}'),
+                                        # TODO: prefsはdebuggerAddressと同時に指定できない？
+                                        # ('prefs', {'download.default_directory': __default_directory}),
+                                        ]
     profile_path = r'C:\Users\igapon\temp'
     __cmd = f'{chrome_path}' \
             f' -remote-debugging-port={__port}' \
@@ -195,9 +198,11 @@ class ChromeDriverHelper:
         :return:
         """
         # TODO: __add_argumentが効いてない、使い方を調べる
-        for arg in self.__chrome_add_argument:
-            self.__add_argument(arg)
-        self.__add_options(*self.__chrome_add_experimental_option)
+#        for arg in self.__chrome_add_argument:
+#            self.__add_argument(arg)
+        for args in self.__chrome_add_experimental_option:
+            print(*args)
+            self.__add_options(*args)
         try:
             # NOTE: タイムアウト長いので、なるべくChrome起動してから呼び出したい
             self.__connection()
