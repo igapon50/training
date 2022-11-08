@@ -136,7 +136,7 @@ class WebFileListHelper:
         return True
 
     def delete_images_folder(self):
-        """ファイルリストのファイルについて、ローカルから削除する
+        """ファイルリストのローカルファイルをフォルダごと削除する
         :return: None
         """
         __zip_folder = self.get_folder_path_from_1st_element()
@@ -152,5 +152,4 @@ class WebFileListHelper:
         :return: None
         """
         for __web_file in self.get_web_file_list():
-            if os.path.isfile(__web_file.get_path()):
-                os.remove(__web_file.get_path())
+            __web_file.delete_image()

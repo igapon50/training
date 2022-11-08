@@ -137,12 +137,12 @@ class WebFileHelper:
         """ファイル名を得る
         :return: str ファイル名(拡張子除く)
         """
-        __parse = urlparse(self.get_url())
-        __path_after_name = __parse.path[__parse.path.rfind('/') + 1:]
-        __base_name = __path_after_name[:__path_after_name.rfind('.')]
         if self.dst_filename:
             return copy.deepcopy(self.dst_filename)
         else:
+            __parse = urlparse(self.get_url())
+            __path_after_name = __parse.path[__parse.path.rfind('/') + 1:]
+            __base_name = __path_after_name[:__path_after_name.rfind('.')]
             return copy.deepcopy(__base_name)
 
     def get_ext(self):
@@ -171,10 +171,11 @@ class WebFileHelper:
     def rename_filename(self, new_file_name):
         """ローカルにあるファイルのファイル名を変更する
         :param new_file_name: str 変更する新しいファイル名
-        :return: bool
+        :return: bool True/False=変更(した/しなかった)
         """
         if not os.path.isfile(self.get_path()):
             print('ファイルがローカルにないので処理をスキップします')
+            return False
         else:
             dst_path = os.path.join(self.get_folder_path(), new_file_name + self.get_ext())
             if os.path.isfile(dst_path):
@@ -183,3 +184,10 @@ class WebFileHelper:
             os.rename(self.get_path(), dst_path)
             self.dst_filename = new_file_name
         return True
+
+    def delete_image(self):
+        """ファイルリストのファイルについて、ローカルから削除する
+        :return: None
+        """
+        if os.path.isfile(self.get_path()):
+            os.remove(self.get_path())
