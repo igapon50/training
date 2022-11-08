@@ -124,8 +124,7 @@ class MyTestCase(unittest.TestCase):
         __web_file_list = WebFileListHelper(self.image_url_list, downloads_path)
         self.assertTrue(__web_file_list.is_exist())
         # 後処理
-        # NOTE: PermissionError(13, 'アクセスが拒否されました。')
-        # __web_file_list.delete_images()
+        __web_file_list.delete_images()
 
 
 if __name__ == '__main__':

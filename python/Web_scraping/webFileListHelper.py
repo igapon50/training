@@ -135,7 +135,7 @@ class WebFileListHelper:
         os.rename(src_zip_path, dst_zip_path)
         return True
 
-    def delete_images(self):
+    def delete_images_folder(self):
         """ファイルリストのファイルについて、ローカルから削除する
         :return: None
         """
@@ -146,3 +146,11 @@ class WebFileListHelper:
             os.mkdir(__zip_folder)
         else:
             os.mkdir(__zip_folder + '\\')
+
+    def delete_images(self):
+        """ファイルリストのファイルについて、ローカルから削除する
+        :return: None
+        """
+        for __web_file in self.get_web_file_list():
+            if os.path.isfile(__web_file.get_path()):
+                os.remove(__web_file.get_path())
