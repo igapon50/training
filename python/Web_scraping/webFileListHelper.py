@@ -2,10 +2,11 @@
 # -*- coding: utf-8 -*-
 """webファイルリストのヘルパー
 """
-from webFileHelper import *
+import zipfile  # zipファイル
+
 from irvineHelper import *
 from chromeDriverHelper import *
-from downloading import *
+from webFileHelper import *
 
 
 @dataclass(frozen=True)
@@ -30,6 +31,7 @@ class WebFileListHelper:
     """webファイルリスト"""
     value_object: WebFileListHelperValue = None
     folder_path: str = WebFileListHelperValue.folder_path
+    ext_list: list = WebFileHelper.ext_list
 
     def __init__(self, value_object=None, folder_path=folder_path):
         """コンストラクタ

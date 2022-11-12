@@ -30,10 +30,15 @@ https://www.selenium.dev/ja/documentation/webdriver/getting_started/
 https://kurozumi.github.io/selenium-python/index.html
 
 """
+import os
+import copy
+import sys
+
 import subprocess
 import datetime
 import time
 import pyperclip  # クリップボード
+from urllib.parse import urlparse  # URLパーサー
 
 from selenium import webdriver
 from selenium.webdriver import Chrome
@@ -45,8 +50,9 @@ from selenium.common.exceptions import NoSuchElementException
 from webdriver_manager.chrome import ChromeDriverManager
 from dataclasses import dataclass
 
+from const import *
 from webFileHelper import *
-from webFileListHelper import *
+# from webFileListHelper import *
 
 
 @dataclass(frozen=True)
