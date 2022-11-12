@@ -5,6 +5,9 @@
 import os
 import copy
 import sys
+
+# 3rd party packages
+import requests  # HTTP通信
 import pyperclip  # クリップボード
 from urllib.parse import urlparse  # URLパーサー
 from dataclasses import dataclass
@@ -168,6 +171,44 @@ class WebFileHelper:
             __ext = self.ext_list[__index]
             __url = self.get_url()[::-1].replace(self.get_ext()[::-1], __ext[::-1])[::-1]
             self.value_object = WebFileHelperValue(__url, self.get_folder_path())
+
+    def download_requests(self):
+        """requestsを用いて、ファイルをダウンロードする
+        :return: bool 成功/失敗=True/False
+        """
+        # フォルダーがなければ作成する
+        if not os.path.isdir(self.get_folder_path()):
+            os.makedirs(self.get_folder_path())
+        try:
+            if not self.is_exist():
+                images = self.get_image_content_by_requests()
+                with open(self.get_path(), "wb") as img_file:
+                    img_file.write(images)
+            else:
+                print('Skip ' + self.get_path())
+        except KeyboardInterrupt:
+            print("キーボード割込み")
+        except Exception as err:
+            print(self.get_url() + ' ', end='')  # 改行なし
+            print(err)
+            return False
+        return True
+
+    def get_image_content_by_requests(self, timeout=30):
+        """requestsを用いて、imageのコンテンツを取得する。
+        サーバー落ちているとリダイレクトでエラー画像になることがあるのでリダイレクトFalse
+        :param timeout: int タイムアウト時間[s]
+        :return: bytes 読み込んだimageのバイナリデータ
+        """
+        response = requests.get(self.get_url(), allow_redirects=False, timeout=timeout)
+        if response.status_code != requests.codes.ok:
+            e = Exception("HTTP status: " + str(response.status_code))  # + " " + file_url + " " + response.url)
+            raise e
+        content_type = response.headers["content-type"]
+        if 'image' not in content_type:
+            e = Exception("Content-Type: " + content_type)  # + " " + file_url + " " + response.url)
+            raise e
+        return response.content
 
     def rename_filename(self, new_file_name):
         """ローカルにあるファイルのファイル名を変更して、dst_filenameにも設定する

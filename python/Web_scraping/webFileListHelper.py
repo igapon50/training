@@ -103,6 +103,13 @@ class WebFileListHelper:
                 return False
         return True
 
+    def download_requests(self):
+        """requestsを用いて、ファイルリストをダウンロードする
+        :return:
+        """
+        for __web_file in self.get_web_file_list():
+            __web_file.download_requests()
+
     def download_irvine(self):
         """irvineを用いて、ファイルリストをダウンロードする
         :return:

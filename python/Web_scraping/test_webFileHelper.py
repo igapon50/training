@@ -87,6 +87,14 @@ class MyTestCase(unittest.TestCase):
         test_target = WebFileHelper(self.image_url)
         self.assertEqual(test_target.get_folder_path(), test_target.value_object.folder_path)
 
+    def test_download_requests(self):
+        """フォルダーパスを得る"""
+        test_target = WebFileHelper(self.image_url)
+        test_target.download_requests()
+        self.assertTrue(test_target.is_exist())
+        # 後処理
+        test_target.delete_image()
+
 
 if __name__ == '__main__':
     unittest.main()
