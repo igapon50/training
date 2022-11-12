@@ -8,6 +8,7 @@ import sys
 import pyperclip  # クリップボード
 from urllib.parse import urlparse  # URLパーサー
 from dataclasses import dataclass
+import shutil
 
 from const import *
 
@@ -97,7 +98,7 @@ class WebFileHelper:
         return WebFileHelper.fixed_path(__file_name)
 
     def is_image(self):
-        """画像化判定
+        """画像か判定する(ext_listにある拡張子か調べる)
         :return: bool
         """
         __parse = urlparse(self.get_url())
@@ -155,7 +156,7 @@ class WebFileHelper:
         return copy.deepcopy(__extend_name)
 
     def rename_url_ext_shift(self):
-        """ext_listの次の拡張子に、urlの拡張子をシフトする
+        """urlの画像拡張子を、ext_listの次の拡張子にシフトする
         現在の拡張子はext_listの何番目か調べて、次の拡張子にurlを変更して、値オブジェクトを作り直す
         :return:
         """
@@ -169,7 +170,7 @@ class WebFileHelper:
             self.value_object = WebFileHelperValue(__url, self.get_folder_path())
 
     def rename_filename(self, new_file_name):
-        """ローカルにあるファイルのファイル名を変更する
+        """ローカルにあるファイルのファイル名を変更して、dst_filenameにも設定する
         :param new_file_name: str 変更する新しいファイル名
         :return: bool True/False=変更(した/しなかった)
         """
@@ -186,8 +187,20 @@ class WebFileHelper:
         return True
 
     def delete_image(self):
-        """ファイルリストのファイルについて、ローカルから削除する
+        """ローカルのファイルを削除する
         :return: None
         """
         if os.path.isfile(self.get_path()):
             os.remove(self.get_path())
+
+    def move(self, new_path):
+        """ファイルを移動する(get_folder_path()は変わらない)
+        :param new_path: 移動先のフォルダーパス
+        :return:
+        """
+        if self.is_exist():
+            # TODO: 移動先のフォルダに同名のファイルが存在する場合の対応
+            # TODO: new_pathが存在しない場合
+            shutil.move(self.get_path(), new_path)
+        else:
+            print('ローカルファイルが不足しているため、ファイルの移動を中止した')

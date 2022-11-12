@@ -12,10 +12,11 @@ Chrome.batを実行して、Chromeを起動しておくと、その続きから�
     forward (画面遷移有)ブラウザの進むボタン押下と同じ動作
     next_tab (画面遷移有)openで作ったタブ(__window_handle_list)の内、一つ後のタブを表示する
     previous_tab (画面遷移有)openで作ったタブ(__window_handle_list)の内、一つ前のタブを表示する
+    download_image (画面遷移有)urlの画像を保存する(open → save_image → closeする)
     open (画面遷移有)新しいタブでurlを開く
     open_tabs (画面遷移有)新しいタブでurlリストを開く
     close (画面遷移有)指定の画面か、現在の画面を閉じる
-    download_image (画面依存)表示されている画像を保存する(Chromeデフォルトダウンロードフォルダに保存)
+    save_image (画面依存)表示されている画像を保存する(Chromeデフォルトダウンロードフォルダに保存)
 
 参考ブログ
 https://note.nkmk.me/python/
@@ -32,6 +33,7 @@ https://kurozumi.github.io/selenium-python/index.html
 import subprocess
 import datetime
 import time
+import pyperclip  # クリップボード
 
 from selenium import webdriver
 from selenium.webdriver import Chrome
@@ -43,6 +45,7 @@ from selenium.common.exceptions import NoSuchElementException
 from webdriver_manager.chrome import ChromeDriverManager
 from dataclasses import dataclass
 
+from webFileHelper import *
 from webFileListHelper import *
 
 
@@ -93,7 +96,9 @@ class ChromeDriverHelper:
     chrome_path = r'"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"'
     __options = ChromeOptions()
     __port = "9222"
-    __default_directory = WebFileListHelper.folder_path
+    __default_directory: str = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                            OUTPUT_FOLDER_PATH).replace(os.sep, '/')
+
     __chrome_add_argument = ['--blink-settings=imagesEnabled=false',  # 画像非表示
                              # '--incognito',  # シークレットモードで起動する
                              # '--headless',  # バックグラウンドで起動する
@@ -383,6 +388,15 @@ class ChromeDriverHelper:
             index = self.__window_handle_list.index(self.__driver.current_window_handle)
         self.__driver.switch_to.window(self.__window_handle_list[(index + step) % count])
 
+    def download_image(self, url):
+        """(画面遷移有)urlの画像を保存する(open → save_image → closeする)
+        :param url: 画像のurl
+        :return:
+        """
+        __handle = self.open(url)
+        self.save_image()
+        self.close(__handle)
+
     def open(self, url):
         """(画面遷移有)新しいタブでurlを開く
         :param url: str 開くURL
@@ -430,7 +444,7 @@ class ChromeDriverHelper:
             print("ValueError 指定のwindow_handleがありません。")
             exit()
 
-    def download_image(self):
+    def save_image(self):
         """(画面依存)表示されている画像を保存する
         chromeのデフォルトダウンロードフォルダに保存される
         ダウンロード実行用スクリプトを生成＆実行する

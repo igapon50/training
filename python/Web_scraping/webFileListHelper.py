@@ -3,6 +3,8 @@
 """webファイルリストのヘルパー
 """
 from webFileHelper import *
+from irvineHelper import *
+from chromeDriverHelper import *
 from downloading import *
 
 
@@ -53,10 +55,28 @@ class WebFileListHelper:
             raise ValueError(f"{self.__class__}引数エラー:value_object=None")
 
     def get_web_file_list(self):
-        """ファイルリストを得る
+        """webファイルリストを得る
         :return: list[WebFileHelper]
         """
         return copy.deepcopy(self.value_object.web_file_list)
+
+    def get_path_list(self):
+        """ファイルパスのリストを得る
+        :return: list[str]
+        """
+        __paths = []
+        for __web_file in self.get_web_file_list():
+            __paths.append(__web_file.get_path())
+        return copy.deepcopy(__paths)
+
+    def get_url_list(self):
+        """URLのリストを得る
+        :return: list[str]
+        """
+        __urls = []
+        for __web_file in self.get_web_file_list():
+            __urls.append(__web_file.get_url())
+        return copy.deepcopy(__urls)
 
     def get_only_url_of_file_not_exist(self):
         """ローカルにファイルがないURLだけのリストを得る
@@ -82,6 +102,24 @@ class WebFileListHelper:
             if not __web_file.is_exist():
                 return False
         return True
+
+    def download_irvine(self):
+        """irvineを用いて、ファイルリストをダウンロードする
+        :return:
+        """
+        __irvine = IrvineHelper(self.get_url_list())
+        __irvine.download()
+
+    def download_chrome_driver(self):
+        """selenium chromeDriverを用いて、画像をデフォルトダウンロードフォルダにダウンロードして、指定のフォルダに移動する
+        :return:
+        """
+        __driver = ChromeDriverHelper()
+        for __url in self.get_url_list():
+            __driver.download_image(__url)
+        downloads_path = os.path.join(os.getenv("HOMEDRIVE"), os.getenv("HOMEPATH"), "downloads")
+        __web_file_list = WebFileListHelper(self.get_url_list(), downloads_path)
+        __web_file_list.move(self.get_folder_path_from_1st_element())
 
     def rename_url_ext_shift(self):
         """ファイルリストの各ファイルについて、ローカルに存在しないファイルの拡張子をシフトし、ファイルリストを更新する
@@ -135,7 +173,7 @@ class WebFileListHelper:
         os.rename(src_zip_path, dst_zip_path)
         return True
 
-    def delete_images_folder(self):
+    def delete_local_folder(self):
         """ファイルリストのローカルファイルをフォルダごと削除する
         :return: None
         """
@@ -147,9 +185,20 @@ class WebFileListHelper:
         else:
             os.mkdir(__zip_folder + '\\')
 
-    def delete_images(self):
+    def delete_local_files(self):
         """ファイルリストのファイルについて、ローカルから削除する
         :return: None
         """
         for __web_file in self.get_web_file_list():
             __web_file.delete_image()
+
+    def move(self, new_path):
+        """ファイルリストのローカルファイルを移動する
+        :param new_path: 移動先のフォルダーパス
+        :return:
+        """
+        if self.is_exist():
+            for __web_file in self.get_web_file_list():
+                __web_file.move(new_path)
+        else:
+            print('ローカルファイルが不足しているため、ファイルリストの移動を中止した')

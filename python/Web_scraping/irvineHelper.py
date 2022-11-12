@@ -136,19 +136,3 @@ class IrvineHelper:
         self.running = True
         proc.wait()
         self.running = False
-
-
-if __name__ == '__main__':  # インポート時には動かない
-    # テスト　若者 | かわいいフリー素材集 いらすとや
-    image_url_list = [
-        'https://1.bp.blogspot.com/-tzoOQwlaRac/X1LskKZtKEI/AAAAAAABa_M/89phuGIVDkYGY_uNKvFB6ZiNHxR7bQYcgCNcBGAsYHQ/'
-        's180-c/fashion_dekora.png',
-        'https://1.bp.blogspot.com/-gTf4sWnRdDw/X0B4RSQQLrI/AAAAAAABarI/MJ9DW90dSVwtMjuUoErxemnN4nPXBnXUwCNcBGAsYHQ/'
-        's180-c/otaku_girl_fashion.png',
-    ]
-    irvine = IrvineHelper(image_url_list)
-    irvine.download()
-    print(irvine.list_path)
-    print(irvine.running)
-    print(irvine.value_object.list_path)
-    print(irvine.value_object.exe_path)

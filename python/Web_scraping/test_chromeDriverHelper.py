@@ -106,11 +106,11 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(test_target.get_title(), "カテゴリー「若者」")
 
     def test_open_tabs(self):
-        """open_tabs/download_image/next_tab/previous_tab/closeメソッドのテスト"""
+        """open_tabs/save_image/next_tab/previous_tab/closeメソッドのテスト"""
         __driver = ChromeDriverHelper()
         __driver.open_tabs(self.image_url_list)
         for _ in self.image_url_list:
-            __driver.download_image()
+            __driver.save_image()
             __driver.next_tab()
             time.sleep(1)
         for _ in self.image_url_list:
@@ -124,7 +124,20 @@ class MyTestCase(unittest.TestCase):
         __web_file_list = WebFileListHelper(self.image_url_list, downloads_path)
         self.assertTrue(__web_file_list.is_exist())
         # 後処理
-        __web_file_list.delete_images()
+        __web_file_list.delete_local_files()
+
+    def test_download_image(self):
+        """download_imageメソッドのテスト"""
+        __driver = ChromeDriverHelper()
+        for __url in self.image_url_list:
+            __driver.download_image(__url)
+            time.sleep(1)
+        # NOTE: prefsオプションが機能しないので、downloadsフォルダで確認する
+        downloads_path = os.path.join(os.getenv("HOMEDRIVE"), os.getenv("HOMEPATH"), "downloads")
+        __web_file_list = WebFileListHelper(self.image_url_list, downloads_path)
+        self.assertTrue(__web_file_list.is_exist())
+        # 後処理
+        __web_file_list.delete_local_files()
 
 
 if __name__ == '__main__':
