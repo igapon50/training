@@ -14,6 +14,7 @@ from dataclasses import dataclass
 import json
 from selenium.webdriver.common.by import By
 # local source
+from chromeDriverHelper import *
 
 # 最大再起回数を1万回にする
 sys.setrecursionlimit(10000)
@@ -60,7 +61,7 @@ class Scraping:
         else:
             raise ValueError(f"{self.__class__}引数エラー:value_object=None")
 
-    def get_value_objects(self):
+    def get_value_object(self):
         """値オブジェクトを取得する"""
         return copy.deepcopy(self.value_object)
 
