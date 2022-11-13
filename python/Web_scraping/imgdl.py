@@ -42,7 +42,6 @@ if __name__ == '__main__':  # インポート時には動かない
     # 情報をファイルに保存する
     scraping_requests.save_text(RESULT_FILE_PATH + '1.txt')
     scraping_requests.save_pickle(RESULT_FILE_PATH + '1.pkl')
-    # target_data = crawling.get_value_objects()
     # 使用する情報を取得する
     file_url_list = scraping_requests.get_image_list()
     title = scraping_requests.get_title()

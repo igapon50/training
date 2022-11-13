@@ -48,7 +48,6 @@ if __name__ == '__main__':  # インポート時には動かない
         sys.exit()
     scraping_requests.save_text(RESULT_FILE_PATH + '1.txt')
     scraping_requests.save_pickle(RESULT_FILE_PATH + '1.pkl')
-    # target_data = crawling.get_value_objects()
     file_url_list = scraping_requests.get_image_list()
     title = scraping_requests.get_title()
     # ダウンロードを開始する

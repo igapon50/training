@@ -69,13 +69,8 @@ class MyTestCase(unittest.TestCase):
 
     def test___init___03(self):
         """引数有コンストラクタ"""
-        test_target = ChromeDriverHelper(self.url, "")
-        self.assertTrue(isinstance(test_target, ChromeDriverHelper))
-        self.assertFalse(isinstance(test_target.value_object, ChromeDriverHelperValue))
-        self.assertEqual(ChromeDriverHelper.root_path, test_target.root_path)
-        self.assertEqual(ChromeDriverHelper.driver_path, test_target.driver_path)
-        self.assertEqual(ChromeDriverHelper.chrome_path, test_target.chrome_path)
-        self.assertEqual(ChromeDriverHelper.profile_path, test_target.profile_path)
+        with self.assertRaises(ValueError):
+            test_target = ChromeDriverHelper(self.url, "")
 
     def test___init___04(self):
         """引数有コンストラクタ"""
@@ -106,9 +101,9 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(test_target.get_title(), "カテゴリー「若者」")
 
     def test_open_tabs(self):
-        """open_tabs/save_image/next_tab/previous_tab/closeメソッドのテスト"""
+        """open_new_tabs/save_image/next_tab/previous_tab/closeメソッドのテスト"""
         __driver = ChromeDriverHelper()
-        __driver.open_tabs(self.image_url_list)
+        __driver.open_new_tabs(self.image_url_list)
         for _ in self.image_url_list:
             __driver.save_image()
             __driver.next_tab()

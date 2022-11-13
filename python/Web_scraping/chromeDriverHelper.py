@@ -12,9 +12,10 @@ Chrome.batを実行して、Chromeを起動しておくと、その続きから�
     forward (画面遷移有)ブラウザの進むボタン押下と同じ動作
     next_tab (画面遷移有)openで作ったタブ(__window_handle_list)の内、一つ後のタブを表示する
     previous_tab (画面遷移有)openで作ったタブ(__window_handle_list)の内、一つ前のタブを表示する
-    download_image (画面遷移有)urlの画像を保存する(open → save_image → closeする)
-    open (画面遷移有)新しいタブでurlを開く
-    open_tabs (画面遷移有)新しいタブでurlリストを開く
+    download_image (画面遷移有)urlの画像を保存する(open_new_tab → save_image → closeする)
+    open_current_tab (画面依存)現在表示されているタブでurlを開く
+    open_new_tab (画面遷移有)新しいタブでurlを開く
+    open_new_tabs (画面遷移有)新しいタブでurlリストを開く
     close (画面遷移有)指定の画面か、現在の画面を閉じる
     save_image (画面依存)表示されている画像を保存する(Chromeデフォルトダウンロードフォルダに保存)
 
@@ -122,6 +123,7 @@ class ChromeDriverHelper:
         """コンストラクタ
         値オブジェクトからの復元、
         または、urlとselectorsより、値オブジェクトを作成する
+        TODO: selectorsでimage_listを取得して使う場合、現在は最終画像を取得している
         :param value_object: list 対象となるサイトURL、または、値オブジェクト
         :param selectors: list スクレイピングする際のセレクタリスト
         """
@@ -131,42 +133,9 @@ class ChromeDriverHelper:
                 self.value_object = value_object
             elif isinstance(value_object, str):
                 url = value_object
-                if selectors:
-                    self.__open_url(url)
-                    # image_urls_list = None
-                    # title, title_sub, last_image_url = self.__gen_scraping_element(selectors)
-                    # print(title, title_sub, last_image_url)
-                    last_image_url = None
-                    title, title_sub, image_urls_list = self.__gen_scraping_selectors(selectors)
-                    print(title, title_sub, image_urls_list)
-                    if title and isinstance(title, list):
-                        title = title[0]
-                    if title_sub and isinstance(title_sub, list):
-                        title_sub = title_sub[0]
-                    if image_urls_list and image_urls_list[0]:
-                        last_image_url = image_urls_list[0]
-                    if not title:
-                        if not title_sub:
-                            # タイトルが得られない時は、タイトルを日時文字列にする
-                            now = datetime.datetime.now()
-                            title = f'{now:%Y%m%d_%H%M%S}'
-                        else:
-                            title = title_sub
-                    title = self.fixed_file_name(title)
-                    url_title = self.fixed_file_name(url)
-                    # self.back()
-                    # NOTE: ここに保存すると、zipに入れてないので消えてまう
-                    # self.save_source(os.path.join(OUTPUT_FOLDER_PATH, f'{title}／{url}.html').replace(os.sep, '/'))
-                    self.save_source(f'{title}：{url_title}.html')
-                    # self.forward()
-                    if last_image_url:
-                        self.value_object = ChromeDriverHelperValue(url,
-                                                                    selectors,
-                                                                    title,
-                                                                    last_image_url,
-                                                                    )
-                    else:
-                        raise ValueError(f"{self.__class__}引数エラー:image_urls_listが不正[{image_urls_list}]")
+                self.create_value_object(url, selectors)
+            else:
+                raise ValueError(f"{self.__class__}引数エラー:value_objectが不正[{value_object}]")
 
     @staticmethod
     def fixed_path(file_path):
@@ -194,6 +163,47 @@ class ChromeDriverHelper:
         __file_name = __file_name.replace('/', '／')
         return self.fixed_path(__file_name)
 
+    def create_value_object(self, url, selectors):
+        if not url:
+            raise ValueError(f"{self.__class__}引数エラー:urlが不正[{url}]")
+        if not selectors:
+            raise ValueError(f"{self.__class__}引数エラー:selectorsが不正[{selectors}]")
+        self.open_current_tab(url)
+        # image_urls_list = None
+        # title, title_sub, last_image_url = self.__gen_scraping_element(selectors)
+        # print(title, title_sub, last_image_url)
+        last_image_url = None
+        title, title_sub, image_urls_list = self.__gen_scraping_selectors(selectors)
+        print(title, title_sub, image_urls_list)
+        if title and isinstance(title, list):
+            title = title[0]
+        if title_sub and isinstance(title_sub, list):
+            title_sub = title_sub[0]
+        if image_urls_list and image_urls_list[0]:
+            last_image_url = image_urls_list[0]
+        if not last_image_url:
+            raise ValueError(f"{self.__class__}引数エラー:last_image_urlが不正[{last_image_url}]")
+        if not title:
+            if not title_sub:
+                # タイトルが得られない時は、タイトルを日時文字列にする
+                now = datetime.datetime.now()
+                title = f'{now:%Y%m%d_%H%M%S}'
+            else:
+                title = title_sub
+        title = self.fixed_file_name(title)
+        url_title = self.fixed_file_name(url)
+        # self.back()
+        # NOTE: ここに保存すると、zipに入れてないので消えてまう
+        # self.save_source(os.path.join(OUTPUT_FOLDER_PATH, f'{title}／{url}.html').replace(os.sep, '/'))
+        self.save_source(f'{title}：{url_title}.html')
+        # self.forward()
+        self.value_object = ChromeDriverHelperValue(url,
+                                                    selectors,
+                                                    title,
+                                                    last_image_url,
+                                                    )
+        return self.value_object
+
     def __add_options(self, *args):
         """オプション追加
         :param args: tuple(str, str) 追加するキーと値
@@ -205,7 +215,7 @@ class ChromeDriverHelper:
         self.__options.add_argument(args)
 
     def __start(self):
-        """Chromeへの接続を完了する。起動していなければ起動する。
+        """Chromeへの接続を完了する。起動していなければ起動する。既に開いているtabは、とりあえず気にしない
         :return:
         """
         # TODO: __add_argumentが効いてない、使い方を調べる
@@ -249,13 +259,6 @@ class ChromeDriverHelper:
             self.__driver.quit()
             self.__driver = None
 
-    def __open_url(self, url):
-        """(画面依存)chromeにurlを開く
-        :param url: str chromeで開くURL
-        :return: なし
-        """
-        self.__driver.get(url)
-
     def __gen_scraping_element(self, selectors):
         """(画面依存)chromeで開いているサイトに対して、スクレイピング結果を返すジェネレータ
         selectorsで、タイトルmainと、タイトルsub、画像リストの最終画像アドレスを指定する
@@ -295,7 +298,7 @@ class ChromeDriverHelper:
                     for url in ret_list:
                         ret_parse = urlparse(url)
                         if ret_parse.scheme:
-                            self.open(url)
+                            self.open_new_tab(url)
                         else:
                             print(f"URLではない：{url}")
                             exit()
@@ -395,32 +398,39 @@ class ChromeDriverHelper:
         self.__driver.switch_to.window(self.__window_handle_list[(index + step) % count])
 
     def download_image(self, url):
-        """(画面遷移有)urlの画像を保存する(open → save_image → closeする)
+        """(画面遷移有)urlの画像を保存する(open_new_tab → save_image → closeする)
         :param url: 画像のurl
         :return:
         """
-        __handle = self.open(url)
+        __handle = self.open_new_tab(url)
         self.save_image()
         self.close(__handle)
 
-    def open(self, url):
+    def open_current_tab(self, url):
+        """(画面依存)現在表示されているタブでurlを開く
+        :param url: str chromeで開くURL
+        :return: なし
+        """
+        self.__driver.get(url)
+
+    def open_new_tab(self, url):
         """(画面遷移有)新しいタブでurlを開く
         :param url: str 開くURL
         :return: str 開いたタブのハンドル
         """
         self.__driver.switch_to.new_window()
-        self.__open_url(url)
+        self.open_current_tab(url)
         self.__window_handle_list.append(self.__driver.current_window_handle)
         return self.__window_handle_list[-1]
 
-    def open_tabs(self, url_list):
+    def open_new_tabs(self, url_list):
         """(画面遷移有)新しいタブでurlリストを開く
         :param url_list:  list[str] 開くURLのリスト
         :return: list[str] 開いたタブのハンドルリスト
         """
         window_handle_list = []
         for url in url_list:
-            window_handle_list.append(self.open(url))
+            window_handle_list.append(self.open_new_tab(url))
         return window_handle_list
 
     def close(self, window_handle=None):
