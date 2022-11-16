@@ -91,7 +91,7 @@ class ChromeDriverHelperValue:
 
 
 class ChromeDriverHelper:
-    """指定のサイトを読み込み、スクレイピングする
+    """chromeドライバを操作する
     """
     value_object: ChromeDriverHelperValue = None
     __driver = None
@@ -173,14 +173,65 @@ class ChromeDriverHelper:
         # title, title_sub, last_image_url = self.__gen_scraping_element(selectors)
         # print(title, title_sub, last_image_url)
         last_image_url = None
-        title, title_sub, image_urls_list = self.__gen_scraping_selectors(selectors)
-        print(title, title_sub, image_urls_list)
+        title, title_sub, image_urls = self.__gen_scraping_selectors(selectors)
+        print(title, title_sub, image_urls)
         if title and isinstance(title, list):
             title = title[0]
         if title_sub and isinstance(title_sub, list):
             title_sub = title_sub[0]
-        if image_urls_list and image_urls_list[0]:
-            last_image_url = image_urls_list[0]
+        if image_urls and image_urls[0]:
+            last_image_url = image_urls[0]
+        if not last_image_url:
+            raise ValueError(f"{self.__class__}引数エラー:last_image_urlが不正[{last_image_url}]")
+        if not title:
+            if not title_sub:
+                # タイトルが得られない時は、タイトルを日時文字列にする
+                now = datetime.datetime.now()
+                title = f'{now:%Y%m%d_%H%M%S}'
+            else:
+                title = title_sub
+        title = self.fixed_file_name(title)
+        url_title = self.fixed_file_name(url)
+        # self.back()
+        # NOTE: ここに保存すると、zipに入れてないので消えてまう
+        # self.save_source(os.path.join(OUTPUT_FOLDER_PATH, f'{title}／{url}.html').replace(os.sep, '/'))
+        self.save_source(f'{title}：{url_title}.html')
+        # self.forward()
+        self.value_object = ChromeDriverHelperValue(url,
+                                                    selectors,
+                                                    title,
+                                                    last_image_url,
+                                                    )
+        return self.value_object
+
+    def create_value_object2(self, url, selectors):
+        if not url:
+            raise ValueError(f"{self.__class__}引数エラー:urlが不正[{url}]")
+        if not selectors:
+            raise ValueError(f"{self.__class__}引数エラー:selectorsが不正[{selectors}]")
+        self.open_current_tab(url)
+        items = {}
+        for key, selector_list in selectors.items():
+            items[key] = self.__get_scraping_selector_list(selector_list)
+        title = None
+        if 'title_jp' in items:
+            title = items['title_jp']
+        title_sub = None
+        if 'title_en' in items:
+            title_sub = items['title_en']
+        image_urls = None
+        if 'image_urls' in items:
+            image_urls = items['image_urls']
+        last_image_url = None
+        if 'last_image_url' in items:
+            last_image_url = items['last_image_url']
+        print(title, title_sub, last_image_url, image_urls)
+        if title and isinstance(title, list):
+            title = title[0]
+        if title_sub and isinstance(title_sub, list):
+            title_sub = title_sub[0]
+        if image_urls and image_urls[0]:
+            last_image_url = image_urls[0]
         if not last_image_url:
             raise ValueError(f"{self.__class__}引数エラー:last_image_urlが不正[{last_image_url}]")
         if not title:
@@ -261,8 +312,7 @@ class ChromeDriverHelper:
 
     def __gen_scraping_element(self, selectors):
         """(画面依存)chromeで開いているサイトに対して、スクレイピング結果を返すジェネレータ
-        selectorsで、タイトルmainと、タイトルsub、画像リストの最終画像アドレスを指定する
-        :param selectors: list dict list tuple(by, selector, action) スクレイピングの規則
+        :param selectors: dict{key, list[tuple(by, selector, action)]}] スクレイピングの規則
         :return: str スクレイピング結果を返す
         """
         for key, list_value in selectors.items():
@@ -285,8 +335,7 @@ class ChromeDriverHelper:
 
     def __gen_scraping_selectors(self, selectors):
         """(画面依存)chromeで開いているサイトに対して、スクレイピング結果を返すジェネレータ
-        selectorsで、タイトルmainと、タイトルsub、画像のアドレスリストor最終画像青ドレスを指定する
-        :param selectors: list dict list tuple(by, selector, action) スクレイピングの規則
+        :param selectors: dict{key, list[tuple(by, selector, action)]}] スクレイピングの規則
         :return: list[str] スクレイピング結果をlistに入れて返す
         """
         for key, selector_list in selectors.items():
@@ -306,6 +355,28 @@ class ChromeDriverHelper:
                     for _ in self.__window_handle_list:
                         self.close()
                     yield ret_list
+
+    def __get_scraping_selector_list(self, selector_list):
+        """(画面依存)chromeで開いているサイトに対して、スクレイピング結果を返すジェネレータ
+        :param selector_list: list[tuple(by, selector, action)] スクレイピングの規則
+        :return: list[str] スクレイピング結果をlistに入れて返す
+        """
+        while selector_list:
+            by, selector, action = selector_list.pop(0)
+            ret_list = self.__get_scraping_selector(by, selector, action)
+            if ret_list and ret_list[0] and selector_list:
+                # ret_listに値があり、selector_listの末尾ではない時
+                for url in ret_list:
+                    ret_parse = urlparse(url)
+                    if ret_parse.scheme:
+                        self.open_new_tab(url)
+                    else:
+                        print(f"URLではない：{url}")
+                        exit()
+            else:
+                for _ in self.__window_handle_list:
+                    self.close()
+                return ret_list
 
     def __get_scraping_selector(self, by, selector, action):
         """(画面遷移有)現在の画面(self._window_handle_listがあればそれ、無ければself.__start_window_handle)について、
