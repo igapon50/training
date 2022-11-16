@@ -133,7 +133,7 @@ class ChromeDriverHelper:
                 self.value_object = value_object
             elif isinstance(value_object, str):
                 url = value_object
-                self.create_value_object(url, selectors)
+                self.create_value_object2(url, selectors)
             else:
                 raise ValueError(f"{self.__class__}引数エラー:value_objectが不正[{value_object}]")
 
@@ -223,13 +223,15 @@ class ChromeDriverHelper:
         if 'image_urls' in items:
             image_urls = items['image_urls']
         last_image_url = None
-        if 'last_image_url' in items:
-            last_image_url = items['last_image_url']
+        if 'image_url' in items:
+            last_image_url = items['image_url']
         print(title, title_sub, last_image_url, image_urls)
         if title and isinstance(title, list):
             title = title[0]
         if title_sub and isinstance(title_sub, list):
             title_sub = title_sub[0]
+        if last_image_url and isinstance(last_image_url, list):
+            last_image_url = last_image_url[0]
         if image_urls and image_urls[0]:
             last_image_url = image_urls[0]
         if not last_image_url:
