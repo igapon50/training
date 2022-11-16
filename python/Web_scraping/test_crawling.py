@@ -52,6 +52,17 @@ class MyTestCase(unittest.TestCase):
         test_target = Crawling(self.site_url, self.selectors, self.crawling_file_path)
         self.assertNotEqual(Crawling.crawling_file_path, test_target.get_crawling_file_path())
 
+    def test_save_text(self):
+        test_target = Crawling(self.site_url, self.selectors)
+        self.assertTrue(test_target.save_text())
+
+    def test_load_text(self):
+        test_target = Crawling(self.site_url, self.selectors)
+        __value_object = test_target.get_value_object()
+        self.assertTrue(test_target.save_text())
+        self.assertTrue(test_target.load_text(self.selectors))
+        self.assertEqual(__value_object, test_target.get_value_object())
+
 
 if __name__ == '__main__':
     unittest.main()
