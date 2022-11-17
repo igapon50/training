@@ -29,12 +29,12 @@ class WebFileHelperValue:
         :param folder_path: str フォルダのフルパス(セパレータは、円マークでもスラッシュでもよい、内部ではスラッシュで持つ)
         """
         if not url:
-            raise ValueError(f"{self.__class__}引数エラー:url=None")
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}引数エラー:url=None")
         if not self.is_url_only(url):
-            raise ValueError(f"{self.__class__}引数エラー:urlがURLではない[{url}]")
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}引数エラー:urlがURLではない[{url}]")
         object.__setattr__(self, "url", url)
         if not folder_path:
-            raise ValueError(f"{self.__class__}引数エラー:file_path=None")
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}引数エラー:file_path=None")
         object.__setattr__(self, "folder_path", folder_path.replace(os.sep, '/'))
 
     @staticmethod
@@ -69,9 +69,11 @@ class WebFileHelper:
                     self.value_object = WebFileHelperValue(__url, folder_path)
                     self.dst_filename = self.get_filename()
             else:
-                raise ValueError(f"{self.__class__}引数エラー:value_objectの型")
+                raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                                 f"引数エラー:value_objectの型")
         else:
-            raise ValueError(f"{self.__class__}引数エラー:value_object=None")
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:value_object=None")
 
     @staticmethod
     def fixed_path(file_path):

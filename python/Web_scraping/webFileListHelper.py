@@ -20,10 +20,12 @@ class WebFileListHelperValue:
         :param web_file_list: list webファイルリスト
         """
         if not web_file_list:
-            raise ValueError(f"{self.__class__}引数エラー:web_file_list=None")
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:web_file_list=None")
         for count, item in enumerate(web_file_list):
             if not isinstance(item, WebFileHelper):
-                raise ValueError(f"{self.__class__}引数エラー:web_file_listの{count}個目がWebFileHelperで無い")
+                raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                                 f"引数エラー:web_file_listの{count}個目がWebFileHelperで無い")
         object.__setattr__(self, "web_file_list", web_file_list)
 
 
@@ -50,11 +52,14 @@ class WebFileListHelper:
                         __web_file_list.append(WebFileHelper(__url, folder_path))
                     self.value_object = WebFileListHelperValue(__web_file_list)
                 else:
-                    raise ValueError(f"{self.__class__}引数エラー:folder_path=None")
+                    raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                                     f"引数エラー:folder_path=None")
             else:
-                raise ValueError(f"{self.__class__}引数エラー:value_objectの型")
+                raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                                 f"引数エラー:value_objectの型")
         else:
-            raise ValueError(f"{self.__class__}引数エラー:value_object=None")
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:value_object=None")
 
     def get_web_file_list(self):
         """webファイルリストを得る

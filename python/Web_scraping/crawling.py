@@ -29,17 +29,23 @@ class CrawlingValue:
         if crawling_urls is None:
             crawling_urls = []
         if not site_url:
-            raise ValueError(f"{self.__class__}引数エラー:site_url=None")
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:site_url=None")
         if not selectors:
-            raise ValueError(f"{self.__class__}引数エラー:selectors=None")
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:selectors=None")
         if not crawling_file_path:
-            raise ValueError(f"{self.__class__}引数エラー:crawling_file_path=None")
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:crawling_file_path=None")
         if not isinstance(site_url, str):
-            raise ValueError(f"{self.__class__}引数エラー:site_urlがstrではない")
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:site_urlがstrではない")
         if not isinstance(selectors, dict):
-            raise ValueError(f"{self.__class__}引数エラー:selectorsがdictではない")
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:selectorsがdictではない")
         if not isinstance(crawling_file_path, str):
-            raise ValueError(f"{self.__class__}引数エラー:crawling_file_pathがstrではない")
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:crawling_file_pathがstrではない")
         object.__setattr__(self, "site_url", site_url)
         object.__setattr__(self, "selectors", selectors)
         object.__setattr__(self, "crawling_file_path", crawling_file_path)
@@ -60,11 +66,14 @@ class Crawling:
                 if selectors:
                     self.value_object = CrawlingValue(value_object, selectors, crawling_file_path)
                 else:
-                    raise ValueError(f"{self.__class__}引数エラー:selectors=None")
+                    raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                                     f"引数エラー:selectors=None")
             else:
-                raise ValueError(f"{self.__class__}引数エラー:value_objectの型")
+                raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                                 f"引数エラー:value_objectの型")
         else:
-            raise ValueError(f"{self.__class__}引数エラー:value_object=None")
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:value_object=None")
 
     def get_value_object(self):
         """値オブジェクトを取得する"""

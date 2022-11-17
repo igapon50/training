@@ -37,7 +37,8 @@ class UrlDeploymentValue:
         """
         if url is not None:
             if not self.is_url_only(url):
-                raise ValueError(f"不正:引数urlがURLではない[{url}]")
+                raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                                 f"不正:引数urlがURLではない[{url}]")
             object.__setattr__(self, "url", url)
         if selectors is not None:
             object.__setattr__(self, "selectors", selectors)
@@ -46,7 +47,8 @@ class UrlDeploymentValue:
         if image_urls is not None:
             for image_url in image_urls:
                 if not self.is_url_only(image_url):
-                    raise ValueError(f"不正:引数last_image_urlがurlではない[{image_url}]")
+                    raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                                     f"不正:引数last_image_urlがurlではない[{image_url}]")
             object.__setattr__(self, "image_urls", image_urls)
 
     @staticmethod
