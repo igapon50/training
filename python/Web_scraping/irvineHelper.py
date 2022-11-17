@@ -118,11 +118,14 @@ class IrvineHelper:
             else:
                 self.value_object = IrvineHelperValue(self.list_path)
         else:
-            raise ValueError(f"{self.__class__}引数エラー:value_object=[{self.value_object}]")
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:value_object=[{self.value_object}]")
         if not os.path.isfile(self.value_object.exe_path):
-            raise ValueError(f"{self.__class__}引数エラー:exe_path=[{self.value_object.exe_path}]")
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:exe_path=[{self.value_object.exe_path}]")
         if not os.path.isfile(self.value_object.list_path):
-            raise ValueError(f"{self.__class__}引数エラー:list_path=[{self.value_object.list_path}]")
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:list_path=[{self.value_object.list_path}]")
 
     def download(self):
         """

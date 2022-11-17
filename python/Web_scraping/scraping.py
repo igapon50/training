@@ -32,13 +32,17 @@ class ScrapingValue:
         :param selectors: list スクレイピングする際のXPATH
         """
         if not site_url:
-            raise ValueError(f"{self.__class__}引数エラー:site_url=None")
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:site_url=None")
         if not selectors:
-            raise ValueError(f"{self.__class__}引数エラー:selectors=None")
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:selectors=None")
         if not isinstance(site_url, str):
-            raise ValueError(f"{self.__class__}引数エラー:site_urlがstrではない")
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:site_urlがstrではない")
         if not isinstance(selectors, dict):
-            raise ValueError(f"{self.__class__}引数エラー:selectorsがdictではない")
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:selectorsがdictではない")
         object.__setattr__(self, "site_url", site_url)
         object.__setattr__(self, "selectors", selectors)
 
@@ -55,11 +59,14 @@ class Scraping:
                 if selectors:
                     self.value_object = ScrapingValue(value_object, selectors)
                 else:
-                    raise ValueError(f"{self.__class__}引数エラー:selectors=None")
+                    raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                                     f"引数エラー:selectors=None")
             else:
-                raise ValueError(f"{self.__class__}引数エラー:selectorsがstrではない")
+                raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                                 f"引数エラー:selectorsがstrではない")
         else:
-            raise ValueError(f"{self.__class__}引数エラー:value_object=None")
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:value_object=None")
 
     def get_value_object(self):
         """値オブジェクトを取得する"""
