@@ -199,7 +199,7 @@ class WebFileListHelper:
         :return: None
         """
         for __web_file in self.get_web_file_list():
-            __web_file.delete_image()
+            __web_file.delete_local_file()
 
     def move(self, new_path):
         """ファイルリストのローカルファイルを移動する

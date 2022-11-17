@@ -93,7 +93,7 @@ class MyTestCase(unittest.TestCase):
         test_target.download_requests()
         self.assertTrue(test_target.is_exist())
         # 後処理
-        test_target.delete_image()
+        test_target.delete_local_file()
 
 
 if __name__ == '__main__':

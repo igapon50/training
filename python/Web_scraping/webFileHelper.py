@@ -227,7 +227,7 @@ class WebFileHelper:
             self.dst_filename = new_file_name
         return True
 
-    def delete_image(self):
+    def delete_local_file(self):
         """ローカルのファイルを削除する
         :return: None
         """
