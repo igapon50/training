@@ -47,6 +47,10 @@ class MyTestCase(unittest.TestCase):
         del self.image_url
         del self.image_url_list
 
+    def test___init___00(self):
+        with self.assertRaisesRegex(ValueError, f'^{self.__class__.__name__}.{sys._getframe().f_code.co_name}$'):
+            raise ValueError(f'{self.__class__.__name__}.{sys._getframe().f_code.co_name}')
+
     def test___init___01(self):
         """引数無コンストラクタ"""
         test_target = ChromeDriverHelper()
@@ -69,10 +73,15 @@ class MyTestCase(unittest.TestCase):
 
     def test___init___03(self):
         """引数有コンストラクタ"""
+        with self.assertRaisesRegex(ValueError, '^ChromeDriverHelper.create_value_object\d+引数エラー:'):
+            test_target = ChromeDriverHelper("test")
+
+    def test___init___04(self):
+        """引数有コンストラクタ"""
         with self.assertRaises(ValueError):
             test_target = ChromeDriverHelper(self.url, "")
 
-    def test___init___04(self):
+    def test___init___05(self):
         """引数有コンストラクタ"""
         test_target = ChromeDriverHelper(self.url, self.selectors)
         self.assertTrue(isinstance(test_target, ChromeDriverHelper))
@@ -83,7 +92,7 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(ChromeDriverHelper.chrome_path, test_target.chrome_path)
         self.assertEqual(ChromeDriverHelper.profile_path, test_target.profile_path)
 
-    def test___init___05(self):
+    def test___init___06(self):
         """引数有コンストラクタ"""
         __web_file_list_helper = ChromeDriverHelper(self.url, self.selectors)
         test_target = ChromeDriverHelper(__web_file_list_helper.value_object)

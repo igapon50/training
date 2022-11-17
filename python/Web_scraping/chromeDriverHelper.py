@@ -74,7 +74,9 @@ class ChromeDriverHelperValue:
         """
         if url is not None:
             if not self.is_url_only(url):
-                raise ValueError(f"{self.__class__}引数エラー:urlがURLではない[{url}]")
+                # raise ValueError(f"{self.__class__}引数エラー:urlがURLではない[{url}]")
+                raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                                 f"引数エラー:urlがURLではない[{url}]")
             object.__setattr__(self, "url", url)
         if selectors is not None:
             object.__setattr__(self, "selectors", selectors)
@@ -82,7 +84,8 @@ class ChromeDriverHelperValue:
             object.__setattr__(self, "title", title)
         if last_image_url is not None:
             if not self.is_url_only(last_image_url):
-                raise ValueError(f"{self.__class__}引数エラー:last_image_urlがurlではない[{last_image_url}]")
+                raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                                 f"引数エラー:last_image_urlがurlではない[{last_image_url}]")
             object.__setattr__(self, "last_image_url", last_image_url)
 
     @staticmethod
@@ -135,7 +138,8 @@ class ChromeDriverHelper:
                 url = value_object
                 self.create_value_object2(url, selectors)
             else:
-                raise ValueError(f"{self.__class__}引数エラー:value_objectが不正[{value_object}]")
+                raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                                 f"引数エラー:value_objectが不正[{value_object}]")
 
     @staticmethod
     def fixed_path(file_path):
@@ -165,9 +169,11 @@ class ChromeDriverHelper:
 
     def create_value_object(self, url, selectors):
         if not url:
-            raise ValueError(f"{self.__class__}引数エラー:urlが不正[{url}]")
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:urlが不正[{url}]")
         if not selectors:
-            raise ValueError(f"{self.__class__}引数エラー:selectorsが不正[{selectors}]")
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:selectorsが不正[{selectors}]")
         self.open_current_tab(url)
         # image_urls_list = None
         # title, title_sub, last_image_url = self.__gen_scraping_element(selectors)
@@ -182,7 +188,8 @@ class ChromeDriverHelper:
         if image_urls and image_urls[0]:
             last_image_url = image_urls[0]
         if not last_image_url:
-            raise ValueError(f"{self.__class__}引数エラー:last_image_urlが不正[{last_image_url}]")
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:last_image_urlが不正[{last_image_url}]")
         if not title:
             if not title_sub:
                 # タイトルが得られない時は、タイトルを日時文字列にする
@@ -206,9 +213,11 @@ class ChromeDriverHelper:
 
     def create_value_object2(self, url, selectors):
         if not url:
-            raise ValueError(f"{self.__class__}引数エラー:urlが不正[{url}]")
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:urlが不正[{url}]")
         if not selectors:
-            raise ValueError(f"{self.__class__}引数エラー:selectorsが不正[{selectors}]")
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:selectorsが不正[{selectors}]")
         self.open_current_tab(url)
         items = {}
         for key, selector_list in selectors.items():
@@ -235,7 +244,8 @@ class ChromeDriverHelper:
         if image_urls and image_urls[0]:
             last_image_url = image_urls[0]
         if not last_image_url:
-            raise ValueError(f"{self.__class__}引数エラー:last_image_urlが不正[{last_image_url}]")
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:last_image_urlが不正[{last_image_url}]")
         if not title:
             if not title_sub:
                 # タイトルが得られない時は、タイトルを日時文字列にする
@@ -312,29 +322,6 @@ class ChromeDriverHelper:
             self.__driver.quit()
             self.__driver = None
 
-    def __gen_scraping_element(self, selectors):
-        """(画面依存)chromeで開いているサイトに対して、スクレイピング結果を返すジェネレータ
-        :param selectors: dict{key, list[tuple(by, selector, action)]}] スクレイピングの規則
-        :return: str スクレイピング結果を返す
-        """
-        for key, list_value in selectors.items():
-            while list_value:
-                tuple_value = list_value.pop(0)
-                by, selector, action = tuple_value
-                try:
-                    element = self.__driver.find_element(by=by, value=selector)
-                    ret = action(element)
-                except NoSuchElementException:
-                    # find_elementでelementが見つからなかったとき
-                    ret = ""
-                if ret and list_value:
-                    ret_parse = urlparse(ret)
-                    if ret_parse.scheme:
-                        # listの末尾以外で、URLの時は、表示を更新する
-                        self.__driver.get(ret)
-                else:
-                    yield ret
-
     def __gen_scraping_selectors(self, selectors):
         """(画面依存)chromeで開いているサイトに対して、スクレイピング結果を返すジェネレータ
         :param selectors: dict{key, list[tuple(by, selector, action)]}] スクレイピングの規則
@@ -351,8 +338,8 @@ class ChromeDriverHelper:
                         if ret_parse.scheme:
                             self.open_new_tab(url)
                         else:
-                            print(f"URLではない：{url}")
-                            exit()
+                            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                                             f"引数エラー:urlが不正[{url}]")
                 else:
                     for _ in self.__window_handle_list:
                         self.close()
@@ -373,8 +360,8 @@ class ChromeDriverHelper:
                     if ret_parse.scheme:
                         self.open_new_tab(url)
                     else:
-                        print(f"URLではない：{url}")
-                        exit()
+                        raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                                         f"引数エラー:urlが不正[{url}]")
             else:
                 for _ in self.__window_handle_list:
                     self.close()
