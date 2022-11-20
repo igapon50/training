@@ -6,8 +6,7 @@ Chrome.batを実行して、Chromeを起動しておくと、その続きから�
     destroy Chromeを閉じる
     get_source Chromeで表示しているタブのsourceを取得する
     save_source Chromeで表示しているタブのsourceをファイルに保存する
-    get_title タイトルを取得する
-    get_last_image_url 最終画像アドレスを取得する
+    get_items
     back (画面遷移有)ブラウザの戻るボタン押下と同じ動作
     forward (画面遷移有)ブラウザの進むボタン押下と同じ動作
     next_tab (画面遷移有)openで作ったタブ(__window_handle_list)の内、一つ後のタブを表示する
@@ -58,35 +57,41 @@ from webFileHelper import *
 
 @dataclass(frozen=True)
 class ChromeDriverHelperValue:
-    """Chromeドライバ値オブジェクト
-    """
-    url: str
-    selectors: list
-    title: str
-    last_image_url: str
+    """Chromeドライバ値オブジェクト"""
+    url: str = None
+    selectors: dict = None
+    items: dict = None
 
-    def __init__(self, url, selectors, title, last_image_url):
+    def __init__(self, url, selectors, items):
         """完全コンストラクタパターン
         :param url: str 処理対象サイトURL
-        :param selectors: list スクレイピングする際のセレクタリスト
-        :param title: str 取得したサイトタイトル
-        :param last_image_url: str 取得した最終画像のURL
+        :param selectors: dict スクレイピングする際のセレクタリスト
+        :param items: dict スクレイピングして取得した値の辞書
         """
-        if url is not None:
-            if not self.is_url_only(url):
-                # raise ValueError(f"{self.__class__}引数エラー:urlがURLではない[{url}]")
-                raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
-                                 f"引数エラー:urlがURLではない[{url}]")
-            object.__setattr__(self, "url", url)
-        if selectors is not None:
-            object.__setattr__(self, "selectors", selectors)
-        if title is not None:
-            object.__setattr__(self, "title", title)
-        if last_image_url is not None:
-            if not self.is_url_only(last_image_url):
-                raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
-                                 f"引数エラー:last_image_urlがurlではない[{last_image_url}]")
-            object.__setattr__(self, "last_image_url", last_image_url)
+        if not url:
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:urlが不正[{url}]")
+        if not selectors:
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:selectorsが不正[{selectors}]")
+        if not items:
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:itemsが不正[{items}]")
+        if not isinstance(url, str):
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:urlがstrではない")
+        if not isinstance(selectors, dict):
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:selectorsがdictではない")
+        if not isinstance(items, dict):
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:itemsがdictではない")
+        if not self.is_url_only(url):
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:urlがURLではない[{url}]")
+        object.__setattr__(self, "url", url)
+        object.__setattr__(self, "selectors", selectors)
+        object.__setattr__(self, "items", items)
 
     @staticmethod
     def is_url_only(string: str) -> bool:
@@ -126,7 +131,6 @@ class ChromeDriverHelper:
         """コンストラクタ
         値オブジェクトからの復元、
         または、urlとselectorsより、値オブジェクトを作成する
-        TODO: selectorsでimage_listを取得して使う場合、現在は最終画像を取得している
         :param value_object: list 対象となるサイトURL、または、値オブジェクト
         :param selectors: list スクレイピングする際のセレクタリスト
         """
@@ -135,8 +139,17 @@ class ChromeDriverHelper:
             if isinstance(value_object, ChromeDriverHelperValue):
                 self.value_object = value_object
             elif isinstance(value_object, str):
-                url = value_object
-                self.create_value_object2(url, selectors)
+                if selectors:
+                    url = value_object
+                    __selectors = copy.deepcopy(selectors)
+                    items = {}
+                    self.open_current_tab(url)
+                    for key, selector_list in __selectors.items():
+                        items[key] = self.__get_scraping_selector_list(selector_list)
+                    self.value_object = ChromeDriverHelperValue(url, __selectors, items)
+                else:
+                    raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                                     f"引数エラー:selectorsが不正[{selectors}]")
             else:
                 raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
                                  f"引数エラー:value_objectが不正[{value_object}]")
@@ -167,105 +180,30 @@ class ChromeDriverHelper:
         __file_name = __file_name.replace('/', '／')
         return self.fixed_path(__file_name)
 
-    def create_value_object(self, url, selectors):
-        if not url:
-            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
-                             f"引数エラー:urlが不正[{url}]")
-        if not selectors:
-            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
-                             f"引数エラー:selectorsが不正[{selectors}]")
-        self.open_current_tab(url)
-        # image_urls_list = None
-        # title, title_sub, last_image_url = self.__gen_scraping_element(selectors)
-        # print(title, title_sub, last_image_url)
-        last_image_url = None
-        title, title_sub, image_urls = self.__gen_scraping_selectors(selectors)
-        print(title, title_sub, image_urls)
-        if title and isinstance(title, list):
-            title = title[0]
-        if title_sub and isinstance(title_sub, list):
-            title_sub = title_sub[0]
-        if image_urls and image_urls[0]:
-            last_image_url = image_urls[0]
-        if not last_image_url:
-            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
-                             f"引数エラー:last_image_urlが不正[{last_image_url}]")
-        if not title:
-            if not title_sub:
-                # タイトルが得られない時は、タイトルを日時文字列にする
-                now = datetime.datetime.now()
-                title = f'{now:%Y%m%d_%H%M%S}'
-            else:
-                title = title_sub
-        title = self.fixed_file_name(title)
-        url_title = self.fixed_file_name(url)
-        # self.back()
-        # NOTE: ここに保存すると、zipに入れてないので消えてまう
-        # self.save_source(os.path.join(OUTPUT_FOLDER_PATH, f'{title}／{url}.html').replace(os.sep, '/'))
-        self.save_source(f'{title}：{url_title}.html')
-        # self.forward()
-        self.value_object = ChromeDriverHelperValue(url,
-                                                    selectors,
-                                                    title,
-                                                    last_image_url,
-                                                    )
-        return self.value_object
+    def get_value_object(self):
+        """値オブジェクトを取得する"""
+        if self.value_object:
+            return copy.deepcopy(self.value_object)
+        raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                         f"オブジェクトエラー:value_object")
 
-    def create_value_object2(self, url, selectors):
-        if not url:
-            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
-                             f"引数エラー:urlが不正[{url}]")
-        if not selectors:
-            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
-                             f"引数エラー:selectorsが不正[{selectors}]")
-        self.open_current_tab(url)
-        items = {}
-        for key, selector_list in selectors.items():
-            items[key] = self.__get_scraping_selector_list(selector_list)
-        title = None
-        if 'title_jp' in items:
-            title = items['title_jp']
-        title_sub = None
-        if 'title_en' in items:
-            title_sub = items['title_en']
-        image_urls = None
-        if 'image_urls' in items:
-            image_urls = items['image_urls']
-        last_image_url = None
-        if 'image_url' in items:
-            last_image_url = items['image_url']
-        print(title, title_sub, last_image_url, image_urls)
-        if title and isinstance(title, list):
-            title = title[0]
-        if title_sub and isinstance(title_sub, list):
-            title_sub = title_sub[0]
-        if last_image_url and isinstance(last_image_url, list):
-            last_image_url = last_image_url[0]
-        if image_urls and image_urls[0]:
-            last_image_url = image_urls[0]
-        if not last_image_url:
-            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
-                             f"引数エラー:last_image_urlが不正[{last_image_url}]")
-        if not title:
-            if not title_sub:
-                # タイトルが得られない時は、タイトルを日時文字列にする
-                now = datetime.datetime.now()
-                title = f'{now:%Y%m%d_%H%M%S}'
-            else:
-                title = title_sub
-        title = self.fixed_file_name(title)
-        url_title = self.fixed_file_name(url)
-        # self.back()
-        # NOTE: ここに保存すると、zipに入れてないので消えてまう
-        # self.save_source(os.path.join(OUTPUT_FOLDER_PATH, f'{title}／{url}.html').replace(os.sep, '/'))
-        self.save_source(f'{title}：{url_title}.html')
-        # self.forward()
-        self.value_object = ChromeDriverHelperValue(url,
-                                                    selectors,
-                                                    title,
-                                                    last_image_url,
-                                                    )
-        return self.value_object
+    def get_url(self):
+        if self.get_value_object():
+            return copy.deepcopy(self.get_value_object().url)
+        raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                         f"オブジェクトエラー:url")
+
+    def get_selectors(self):
+        if self.get_value_object():
+            return copy.deepcopy(self.get_value_object().selectors)
+        raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                         f"オブジェクトエラー:selectors")
+
+    def get_items(self):
+        if self.get_value_object():
+            return copy.deepcopy(self.get_value_object().items)
+        raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                         f"オブジェクトエラー:items")
 
     def __add_options(self, *args):
         """オプション追加
@@ -406,25 +344,8 @@ class ChromeDriverHelper:
         :return:
         """
         html = self.get_source()
-        new_path = self.fixed_path(path)
-        with open(new_path, 'w', encoding='utf-8') as f:
+        with open(path, 'w', encoding='utf-8') as f:
             f.write(html)
-
-    def get_title(self):
-        """タイトル取得
-        :return: str タイトル
-        """
-        if self.value_object:
-            return copy.deepcopy(self.value_object.title)
-        return None
-
-    def get_last_image_url(self):
-        """最終画像アドレス取得
-        :return: str 最終画像アドレス
-        """
-        if self.value_object:
-            return copy.deepcopy(self.value_object.last_image_url)
-        return None
 
     def back(self):
         """(画面遷移有)ブラウザの戻るボタン押下と同じ動作
@@ -546,31 +467,3 @@ class ChromeDriverHelper:
         xhr.send();
         """
         self.__driver.execute_script(script_str)
-
-
-if __name__ == '__main__':  # インポート時には動かない
-    main_url = None
-    # 引数チェック
-    if 2 == len(sys.argv):
-        # Pythonに以下の2つ引数を渡す想定
-        # 0は固定でスクリプト名
-        # 1.対象のURL
-        main_url = sys.argv[1]
-    elif 1 == len(sys.argv):
-        # 引数がなければ、クリップボードからURLを得る
-        paste_str = pyperclip.paste()
-        if 0 < len(paste_str):
-            parse = urlparse(paste_str)
-            if 0 < len(parse.scheme):
-                main_url = paste_str
-        # クリップボードが空なら、デフォルトURLを用いる
-    else:
-        print('引数が不正です。')
-        sys.exit()
-
-    driver = ChromeDriverHelper(main_url, SELECTORS)
-    main_title = driver.get_title()
-    main_image_url = driver.get_last_image_url()
-    print(main_image_url + "," + main_title)
-    pyperclip.copy(main_image_url + "," + main_title)
-

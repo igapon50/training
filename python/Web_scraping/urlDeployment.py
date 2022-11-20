@@ -81,9 +81,45 @@ class UrlDeployment:
                     __selectors = None
                 else:
                     __selectors = selectors_or_title
+                    page_url = value_object
                     __driver = ChromeDriverHelper(value_object, __selectors)
-                    __title = __driver.get_title()
-                    __image_url = __driver.get_last_image_url()
+                    items = __driver.get_items()
+
+                    title = None
+                    if 'title_jp' in items:
+                        title = items['title_jp']
+                    title_sub = None
+                    if 'title_en' in items:
+                        title_sub = items['title_en']
+                    image_urls = None
+                    if 'image_urls' in items:
+                        image_urls = items['image_urls']
+                    last_image_url = None
+                    if 'image_url' in items:
+                        last_image_url = items['image_url']
+                    print(title, title_sub, last_image_url, image_urls)
+                    if title and isinstance(title, list):
+                        title = title[0]
+                    if title_sub and isinstance(title_sub, list):
+                        title_sub = title_sub[0]
+                    if last_image_url and isinstance(last_image_url, list):
+                        last_image_url = last_image_url[0]
+                    if image_urls and image_urls[0]:
+                        last_image_url = image_urls[0]
+                    if not last_image_url:
+                        raise ValueError(f"エラー:last_image_urlが不正[{last_image_url}]")
+                    if not title:
+                        if not title_sub:
+                            # タイトルが得られない時は、タイトルを日時文字列にする
+                            now = datetime.datetime.now()
+                            title = f'{now:%Y%m%d_%H%M%S}'
+                        else:
+                            title = title_sub
+                    __title = __driver.fixed_file_name(title)
+                    url_title = __driver.fixed_file_name(page_url)
+                    target_path = f'{__title}：{url_title}.html'
+                    __driver.save_source(target_path)
+                    __image_url = last_image_url
                 __image_urls = self.__deployment(__image_url)
                 self.value_object = UrlDeploymentValue(value_object,
                                                        __selectors,
