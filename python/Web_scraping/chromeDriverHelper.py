@@ -2,11 +2,16 @@
 # -*- coding: utf-8 -*-
 """Selenium Chromeドライバのヘルパー
 Chrome.batを実行して、Chromeを起動しておくと、その続きから操作できる。
-スクレイピングしたいurlをクリップボードにコピーして、実行するとスクレイピング結果がクリップボードに入る
+コンストラクタで引数を指定するとスクレイピングまで実施され、get_value_objectが有効になる
+    fixed_path (staticmethod)フォルダ名の禁止文字を全角文字に置き換える
+    fixed_file_name ファイル名の禁止文字を全角文字に置き換える
+    get_value_object 値オブジェクトを取得する
+    get_url URLを取得する
+    get_selectors セレクタを取得する
+    get_items スクレイピング結果を取得する
     destroy Chromeを閉じる
     get_source Chromeで表示しているタブのsourceを取得する
     save_source Chromeで表示しているタブのsourceをファイルに保存する
-    get_items
     back (画面遷移有)ブラウザの戻るボタン押下と同じ動作
     forward (画面遷移有)ブラウザの進むボタン押下と同じ動作
     next_tab (画面遷移有)openで作ったタブ(__window_handle_list)の内、一つ後のタブを表示する
@@ -172,6 +177,7 @@ class ChromeDriverHelper:
 
     def fixed_file_name(self, file_name):
         """ファイル名の禁止文字を全角文字に置き換える
+        TODO: これもstaticに変更する
         :param file_name: str 置き換えたいファイル名
         :return: str 置き換え後のファイル名
         """
@@ -188,18 +194,21 @@ class ChromeDriverHelper:
                          f"オブジェクトエラー:value_object")
 
     def get_url(self):
+        """URLを取得する"""
         if self.get_value_object():
             return copy.deepcopy(self.get_value_object().url)
         raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
                          f"オブジェクトエラー:url")
 
     def get_selectors(self):
+        """セレクタを取得する"""
         if self.get_value_object():
             return copy.deepcopy(self.get_value_object().selectors)
         raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
                          f"オブジェクトエラー:selectors")
 
     def get_items(self):
+        """スクレイピング結果を取得する"""
         if self.get_value_object():
             return copy.deepcopy(self.get_value_object().items)
         raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
