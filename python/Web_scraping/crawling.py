@@ -125,23 +125,17 @@ class Crawling:
         raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
                          f"オブジェクトエラー:site_selectors")
 
-    def get_crawling_file_path(self):
-        if self.get_value_object().crawling_file_path:
-            return copy.deepcopy(self.get_value_object().crawling_file_path)
-        raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
-                         f"オブジェクトエラー:crawling_file_path")
-
     def get_crawling_items(self):
         if self.get_value_object().crawling_items:
             return copy.deepcopy(self.get_value_object().crawling_items)
         raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
                          f"オブジェクトエラー:crawling_items")
 
-    def get_site_urls_from_local(self):
-        __site_urls = []
-        with open(self.get_crawling_file_path(), 'r', encoding='utf-8') as __local_file:
-            __site_urls = __local_file.readlines()
-        return copy.deepcopy(__site_urls)
+    def get_crawling_file_path(self):
+        if self.get_value_object().crawling_file_path:
+            return copy.deepcopy(self.get_value_object().crawling_file_path)
+        raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                         f"オブジェクトエラー:crawling_file_path")
 
     def create_save_text(self):
         """保存用文字列の作成
