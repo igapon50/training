@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """Selenium Chromeドライバのヘルパー
 Chrome.batを実行して、Chromeを起動しておくと、その続きから操作できる。
-コンストラクタで引数を指定するとスクレイピングまで実施され、get_value_objectが有効になる
+コンストラクタで引数を指定するとスクレイピングまで実施されてget_value_objectが有効になる
     fixed_path (staticmethod)フォルダ名の禁止文字を全角文字に置き換える
     fixed_file_name ファイル名の禁止文字を全角文字に置き換える
     get_value_object 値オブジェクトを取得する
@@ -137,7 +137,7 @@ class ChromeDriverHelper:
         値オブジェクトからの復元、
         または、urlとselectorsより、値オブジェクトを作成する
         :param value_object: list 対象となるサイトURL、または、値オブジェクト
-        :param selectors: list スクレイピングする際のセレクタリスト
+        :param selectors: dict スクレイピングする際のセレクタリスト
         """
         self.__start()
         if value_object:
@@ -175,16 +175,16 @@ class ChromeDriverHelper:
         __file_path = __file_path.replace('|', '｜')
         return __file_path
 
-    def fixed_file_name(self, file_name):
+    @staticmethod
+    def fixed_file_name(file_name):
         """ファイル名の禁止文字を全角文字に置き換える
-        TODO: これもstaticに変更する
         :param file_name: str 置き換えたいファイル名
         :return: str 置き換え後のファイル名
         """
         __file_name = copy.deepcopy(file_name)
         __file_name = __file_name.replace(os.sep, '￥')
         __file_name = __file_name.replace('/', '／')
-        return self.fixed_path(__file_name)
+        return ChromeDriverHelper.fixed_path(__file_name)
 
     def get_value_object(self):
         """値オブジェクトを取得する"""
