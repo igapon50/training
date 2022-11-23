@@ -109,6 +109,15 @@ class Crawling:
                 dict1[key] = value
         return dict1
 
+    @staticmethod
+    def take_out(items, item_name):
+        ret_value = None
+        if item_name in items:
+            ret_value = copy.deepcopy(items[item_name])
+        if ret_value and isinstance(ret_value, list):
+            ret_value = ret_value[0]
+        return ret_value
+
     def get_value_object(self):
         """値オブジェクトを取得する"""
         if self.value_object:
@@ -196,6 +205,26 @@ class Crawling:
                 __crawling_items = self.dict_merge(__crawling_items, __crawling_items2)
             self.value_object = CrawlingValue(__site_url2, __selectors2, __crawling_items, __crawling_file_path2)
             return True
+
+    def is_url_included_exclusion_list(self, url):
+        crawling_items = self.get_crawling_items()
+        if 'exclusion_urls' in crawling_items:
+            if url in crawling_items['exclusion_urls']:
+                return True
+        return False
+
+    def move_url_from_page_urls_to_exclusion_urls(self, url):
+        site_url = self.get_site_url()
+        selectors = self.get_site_selectors()
+        crawling_file_path = self.get_crawling_file_path()
+        crawling_items = self.get_crawling_items()
+        if 'exclusion_urls' in crawling_items:
+            if url not in crawling_items['exclusion_urls']:
+                crawling_items['exclusion_urls'].append(url)
+        if 'page_urls' in crawling_items:
+            if url in crawling_items['page_urls']:
+                crawling_items['page_urls'].remove(url)
+        self.value_object = CrawlingValue(site_url, selectors, crawling_items, crawling_file_path)
 
 
 # 検証コード
