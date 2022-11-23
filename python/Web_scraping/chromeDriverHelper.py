@@ -143,16 +143,15 @@ class ChromeDriverHelper:
         self.__start()
         if value_object:
             if isinstance(value_object, ChromeDriverHelperValue):
+                value_object = copy.deepcopy(value_object)
                 self.value_object = value_object
             elif isinstance(value_object, str):
+                url = value_object
                 if selectors:
-                    url = value_object
-                    __selectors = copy.deepcopy(selectors)
-                    items = {}
+                    selectors = copy.deepcopy(selectors)
                     self.open_current_tab(url)
-                    for key, selector_list in __selectors.items():
-                        items[key] = self.__get_scraping_selector_list(selector_list)
-                    self.value_object = ChromeDriverHelperValue(url, __selectors, items)
+                    items = self.scraping(selectors)
+                    self.value_object = ChromeDriverHelperValue(url, selectors, items)
                 else:
                     raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
                                      f"引数エラー:selectorsが不正[{selectors}]")
@@ -187,6 +186,14 @@ class ChromeDriverHelper:
         __file_name = __file_name.replace('/', '／')
         return ChromeDriverHelper.fixed_path(__file_name)
 
+    def scraping(self, selectors):
+        """現在表示のURLにスクレイピングする"""
+        selectors = copy.deepcopy(selectors)
+        items = {}
+        for key, selector_list in selectors.items():
+            items[key] = self.__get_scraping_selector_list(selector_list)
+        return items
+
     def get_value_object(self):
         """値オブジェクトを取得する"""
         if self.value_object:
@@ -214,13 +221,6 @@ class ChromeDriverHelper:
             return copy.deepcopy(self.get_value_object().items)
         raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
                          f"オブジェクトエラー:items")
-
-    def scraping(self, selectors):
-        """現在表示のURLにスクレイピングする"""
-        items = {}
-        for key, selector_list in selectors.items():
-            items[key] = self.__get_scraping_selector_list(selector_list)
-        return items
 
     def __add_options(self, *args):
         """オプション追加

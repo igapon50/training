@@ -65,19 +65,19 @@ class Crawling:
     def __init__(self, value_object=None, site_selectors=None, crawling_file_path=crawling_file_path):
         if value_object:
             if isinstance(value_object, CrawlingValue):
+                value_object = copy.deepcopy(value_object)
                 self.value_object = value_object
                 self.load_text()
                 self.save_text()
             elif isinstance(value_object, str):
                 if site_selectors:
-                    __site_url = value_object
-                    __site_selectors = copy.deepcopy(site_selectors)
-                    __crawling_file_path = crawling_file_path
-                    __crawling_items = self.scraping(__site_url, __site_selectors)
-                    self.value_object = CrawlingValue(__site_url,
-                                                      __site_selectors,
-                                                      __crawling_items,
-                                                      __crawling_file_path)
+                    site_selectors = copy.deepcopy(site_selectors)
+                    site_url = value_object
+                    crawling_items = self.scraping(site_url, site_selectors)
+                    self.value_object = CrawlingValue(site_url,
+                                                      site_selectors,
+                                                      crawling_items,
+                                                      crawling_file_path)
                     self.load_text()
                     self.save_text()
                 else:
@@ -92,12 +92,15 @@ class Crawling:
 
     @staticmethod
     def scraping(url, selectors):
+        selectors = copy.deepcopy(selectors)
         chrome_driver = ChromeDriverHelper(url, selectors)
         return chrome_driver.get_items()
 
     @staticmethod
     def dict_merge(dict1, dict2):
         """dict2をdict1にマージする。dictは値がlistであること。list内の重複は削除。list内の順序を維持"""
+        dict1 = copy.deepcopy(dict1)
+        dict2 = copy.deepcopy(dict2)
         for key, value in dict2.items():
             if key in dict1:
                 dict1[key].extend(value)

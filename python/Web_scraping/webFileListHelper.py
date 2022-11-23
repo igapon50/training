@@ -44,13 +44,15 @@ class WebFileListHelper:
         """
         if value_object:
             if isinstance(value_object, WebFileListHelperValue):
+                value_object = copy.deepcopy(value_object)
                 self.value_object = value_object
             elif isinstance(value_object, list):
+                value_object = copy.deepcopy(value_object)
                 if folder_path:
-                    __web_file_list = []
-                    for __url in value_object:
-                        __web_file_list.append(WebFileHelper(__url, folder_path))
-                    self.value_object = WebFileListHelperValue(__web_file_list)
+                    web_file_list = []
+                    for url in value_object:
+                        web_file_list.append(WebFileHelper(url, folder_path))
+                    self.value_object = WebFileListHelperValue(web_file_list)
                 else:
                     raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
                                      f"引数エラー:folder_path=None")

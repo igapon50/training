@@ -52,6 +52,7 @@ irvine.ExecuteAction('actFileClose');
 # standard library
 import sys  # 終了時のエラー有無
 import os  # ファイルパス分解
+import copy
 import subprocess
 
 # 3rd party packages
@@ -101,6 +102,7 @@ class IrvineHelper:
         :param exe_path: str Irvine.exeのパス
         """
         if isinstance(value_object, IrvineHelperValue):
+            value_object = copy.deepcopy(value_object)
             self.value_object = value_object
         elif isinstance(value_object, str):
             if exe_path:
@@ -108,6 +110,7 @@ class IrvineHelper:
             else:
                 self.value_object = IrvineHelperValue(value_object)
         elif isinstance(value_object, list):
+            value_object = copy.deepcopy(value_object)
             with open(self.list_path, 'w', encoding='utf-8') as work_file:
                 buff = ''
                 for absolute_path in value_object:

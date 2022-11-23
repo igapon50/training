@@ -61,12 +61,13 @@ class WebFileHelper:
         """
         if value_object:
             if isinstance(value_object, WebFileHelperValue):
+                value_object = copy.deepcopy(value_object)
                 self.value_object = value_object
                 self.dst_filename = self.get_filename()
             elif isinstance(value_object, str):
-                __url = value_object
                 if folder_path:
-                    self.value_object = WebFileHelperValue(__url, folder_path)
+                    url = value_object
+                    self.value_object = WebFileHelperValue(url, folder_path)
                     self.dst_filename = self.get_filename()
             else:
                 raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
