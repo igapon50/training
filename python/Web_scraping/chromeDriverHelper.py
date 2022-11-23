@@ -9,6 +9,7 @@ Chrome.batを実行して、Chromeを起動しておくと、その続きから�
     get_url URLを取得する
     get_selectors セレクタを取得する
     get_items スクレイピング結果を取得する
+    scraping 現在表示のURLにスクレイピングする
     destroy Chromeを閉じる
     get_source Chromeで表示しているタブのsourceを取得する
     save_source Chromeで表示しているタブのsourceをファイルに保存する
@@ -213,6 +214,13 @@ class ChromeDriverHelper:
             return copy.deepcopy(self.get_value_object().items)
         raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
                          f"オブジェクトエラー:items")
+
+    def scraping(self, selectors):
+        """現在表示のURLにスクレイピングする"""
+        items = {}
+        for key, selector_list in selectors.items():
+            items[key] = self.__get_scraping_selector_list(selector_list)
+        return items
 
     def __add_options(self, *args):
         """オプション追加

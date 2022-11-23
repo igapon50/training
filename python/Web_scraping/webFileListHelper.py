@@ -216,3 +216,16 @@ class WebFileListHelper:
                 __web_file.move(new_path)
         else:
             print('ローカルファイルが不足しているため、ファイルリストの移動を中止した')
+
+    def update_value_object_by_deployment_url_list(self):
+        if len(self.get_web_file_list()) != 1:
+            return False
+        __web_file = self.get_web_file_list()[0]
+        url_list = __web_file.get_deployment_url_list()
+        folder_path = self.get_folder_path_from_1st_element()
+        __web_file_list = []
+        for __url in url_list:
+            __web_file_list.append(WebFileHelper(__url, folder_path))
+        self.value_object = WebFileListHelperValue(__web_file_list)
+        return True
+

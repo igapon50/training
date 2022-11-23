@@ -9,7 +9,7 @@ import sys
 # 3rd party packages
 import requests  # HTTP通信
 import pyperclip  # クリップボード
-from urllib.parse import urlparse  # URLパーサー
+from urllib.parse import *  # URLパーサー
 from dataclasses import dataclass
 import shutil
 
@@ -247,3 +247,33 @@ class WebFileHelper:
             shutil.move(self.get_path(), new_path)
         else:
             print('ローカルファイルが不足しているため、ファイルの移動を中止した')
+
+    def get_deployment_url_list(self):
+        """ナンバリングされたURLであれば、数字部分を末尾とした、URL展開してURLリスト=url_listを作る
+        TODO: ナンバリングのチェック、1000以上ならエラーにするなど
+        :return: list 展開した画像URLリスト
+        """
+        __parse = urlparse(self.get_url())
+        # pathを/前後で分ける
+        __path_before_name = __parse.path[:__parse.path.rfind('/') + 1]
+        __path_after_name = __parse.path[__parse.path.rfind('/') + 1:]
+        print(__path_before_name)
+        print(__path_after_name)
+        # path_after_nameを.前後で分ける
+        __base_name = __path_after_name[:__path_after_name.rfind('.')]
+        __extend_name = __path_after_name[__path_after_name.rfind('.'):]
+        print(__base_name)
+        print(__extend_name)
+        if not __base_name.isdecimal():
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"エラー:urlがナンバリングされていない[{__base_name}]")
+        __count = int(__base_name)
+        url_list = []
+        for d_count in range(__count):
+            url_list.append(urlunparse((__parse.scheme,
+                                        __parse.netloc,
+                                        __path_before_name + str(d_count + 1) + __extend_name,
+                                        __parse.params,
+                                        __parse.query,
+                                        __parse.fragment)))
+        return url_list
