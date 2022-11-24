@@ -165,15 +165,14 @@ class ChromeDriverHelper:
         :param file_path: str 置き換えたいフォルダパス
         :return: str 置き換え後のフォルダパス
         """
-        __file_path = copy.deepcopy(file_path)
-        __file_path = __file_path.replace(':', '：')
-        __file_path = __file_path.replace('*', '＊')
-        __file_path = __file_path.replace('?', '？')
-        __file_path = __file_path.replace('"', '”')
-        __file_path = __file_path.replace('<', '＜')
-        __file_path = __file_path.replace('>', '＞')
-        __file_path = __file_path.replace('|', '｜')
-        return __file_path
+        file_path = file_path.replace(':', '：')
+        file_path = file_path.replace('*', '＊')
+        file_path = file_path.replace('?', '？')
+        file_path = file_path.replace('"', '”')
+        file_path = file_path.replace('<', '＜')
+        file_path = file_path.replace('>', '＞')
+        file_path = file_path.replace('|', '｜')
+        return file_path
 
     @staticmethod
     def fixed_file_name(file_name):
@@ -181,10 +180,9 @@ class ChromeDriverHelper:
         :param file_name: str 置き換えたいファイル名
         :return: str 置き換え後のファイル名
         """
-        __file_name = copy.deepcopy(file_name)
-        __file_name = __file_name.replace(os.sep, '￥')
-        __file_name = __file_name.replace('/', '／')
-        return ChromeDriverHelper.fixed_path(__file_name)
+        file_name = file_name.replace(os.sep, '￥')
+        file_name = file_name.replace('/', '／')
+        return ChromeDriverHelper.fixed_path(file_name)
 
     def scraping(self, selectors):
         """現在表示のURLにスクレイピングする"""
@@ -305,6 +303,7 @@ class ChromeDriverHelper:
         :param selector_list: list[tuple(by, selector, action)] スクレイピングの規則
         :return: list[str] スクレイピング結果をlistに入れて返す
         """
+        selector_list = copy.deepcopy(selector_list)
         while selector_list:
             by, selector, action = selector_list.pop(0)
             ret_list = self.__get_scraping_selector(by, selector, action)
