@@ -221,6 +221,8 @@ class Crawling:
         if 'exclusion_urls' in crawling_items:
             if url not in crawling_items['exclusion_urls']:
                 crawling_items['exclusion_urls'].append(url)
+        else:
+            crawling_items['exclusion_urls'] = [url]
         if 'page_urls' in crawling_items:
             if url in crawling_items['page_urls']:
                 crawling_items['page_urls'].remove(url)
