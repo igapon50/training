@@ -7,11 +7,11 @@ from crawling import *
 
 # 検証コード
 if __name__ == '__main__':  # インポート時には動かない
-    site_url = ''
+    # site_url_list = []
     site_selectors = {
         'page_urls': [
             (By.XPATH,
-             '//body/div[2]/div[2]/div/a',
+             '//body/div[2]/div/div/a',
              lambda el: el.get_attribute("href")
              ),
         ]
@@ -46,7 +46,9 @@ if __name__ == '__main__':  # インポート時には動かない
         #                 lambda el: el.get_attribute("src")),
         #                ],
     }
-    crawling = Crawling(site_url, site_selectors)
+    crawling = None
+    for site_url in site_url_list:
+        crawling = Crawling(site_url, site_selectors)
     crawling_items = crawling.get_crawling_items()
     page_urls = []
     if 'page_urls' in crawling_items:
@@ -109,3 +111,4 @@ if __name__ == '__main__':  # インポート時には動かない
         # page_urlsからexclusion_urlsにURLを移して保存する
         crawling.move_url_from_page_urls_to_exclusion_urls(page_url)
         crawling.save_text()
+    print('crawling-end')
