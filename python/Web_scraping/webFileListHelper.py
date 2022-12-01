@@ -50,8 +50,10 @@ class WebFileListHelper:
                 value_object = copy.deepcopy(value_object)
                 if folder_path:
                     web_file_list = []
-                    for url in value_object:
-                        web_file_list.append(WebFileHelper(url, folder_path))
+                    # TODO: urlには、DataURIやURLが混ざってくる。URLには、ファイル名がない場合もある
+                    for index, url in enumerate(value_object):
+                        web_file = WebFileHelper(url, folder_path, '{:04d}'.format(index))
+                        web_file_list.append(web_file)
                     self.value_object = WebFileListHelperValue(web_file_list)
                 else:
                     raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"

@@ -12,6 +12,7 @@ import pyperclip  # クリップボード
 from urllib.parse import *  # URLパーサー
 from dataclasses import dataclass
 import shutil
+from datauri import DataURI
 
 from const import *
 
@@ -20,26 +21,48 @@ from const import *
 class WebFileHelperValue:
     """webファイルヘルパー値オブジェクト
     """
-    url: str
+    url: str = None
     folder_path: str = os.path.join(os.path.dirname(os.path.abspath(__file__)), OUTPUT_FOLDER_PATH).replace(os.sep, '/')
+    download_file_name: str = None
 
-    def __init__(self, url, folder_path=folder_path):
+    def __init__(self, url, folder_path=folder_path, download_file_name=None):
         """完全コンストラクタパターン
         :param url: str webファイルのURL
         :param folder_path: str フォルダのフルパス(セパレータは、円マークでもスラッシュでもよい、内部ではスラッシュで持つ)
+        :param download_file_name: str URLがData URIのimage/jpeg、base64の時、ファイル名が作れないので指定する
         """
         if not url:
-            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}引数エラー:url=None")
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:url=None")
         if not self.is_url_only(url):
-            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}引数エラー:urlがURLではない[{url}]")
-        object.__setattr__(self, "url", url)
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:urlがURLではない[{url}]")
+        if self.is_jpeg_data_uri(url):
+            if download_file_name is None:
+                raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                                 f"引数エラー:urlがURLではない[{url}]")
         if not folder_path:
-            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}引数エラー:file_path=None")
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:file_path=None")
+        object.__setattr__(self, "url", url)
         object.__setattr__(self, "folder_path", folder_path.replace(os.sep, '/'))
+        object.__setattr__(self, "download_file_name", download_file_name)
 
     @staticmethod
     def is_url_only(string: str) -> bool:
         return len(urlparse(string).scheme) > 0
+
+    @staticmethod
+    def is_jpeg_data_uri(url: str) -> bool:
+        """Data URIのjpeg画像かつbase64であればTrue
+        :return: bool
+        """
+        if urlparse(url).scheme == 'data':
+            uri = DataURI(url)
+            if uri.mimetype in ['image/jpeg']:  # 'image/png']:
+                if uri.is_base64:
+                    return True
+        return False
 
 
 class WebFileHelper:
@@ -47,12 +70,15 @@ class WebFileHelper:
     """
     value_object: WebFileHelperValue = None
     folder_path: str = WebFileHelperValue.folder_path
-    # TODO: ext_list増やすなら、優先度順にrename_url_ext_shiftが働くようにしたい
     # ext_list = ['.jpg', '.png', '.jpeg', '.webp', '.svg', '.svgz', '.gif', '.tif', '.tiff', '.psd', '.bmp']
     ext_list: list = ['.jpg', '.png', '.gif']  # これを画像とする
-    dst_filename: str = None
+    ext_dict: dict = {ext_list[0]: ext_list,
+                      ext_list[1]: [ext_list[1], ext_list[0], ext_list[2]],
+                      ext_list[2]: [ext_list[2], ext_list[0], ext_list[1]],
+                      }
+    dst_file_name: str = None
 
-    def __init__(self, value_object=None, folder_path=folder_path):
+    def __init__(self, value_object=None, folder_path=folder_path, download_file_name=None):
         """コンストラクタ
         値オブジェクトからの復元、
         または、urlとfolder_pathより、値オブジェクトを作成する
@@ -63,12 +89,19 @@ class WebFileHelper:
             if isinstance(value_object, WebFileHelperValue):
                 value_object = copy.deepcopy(value_object)
                 self.value_object = value_object
-                self.dst_filename = self.get_filename()
+                self.dst_file_name = self.get_filename()
             elif isinstance(value_object, str):
                 if folder_path:
                     url = value_object
-                    self.value_object = WebFileHelperValue(url, folder_path)
-                    self.dst_filename = self.get_filename()
+                    if self.is_jpeg_data_uri(url) and download_file_name is None:
+                        raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                                         f"引数エラー:download_file_name=None")
+                    else:
+                        self.value_object = WebFileHelperValue(url, folder_path, download_file_name)
+                        self.dst_file_name = self.get_filename()
+                else:
+                    raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                                     f"引数エラー:folder_path=None")
             else:
                 raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
                                  f"引数エラー:value_objectの型")
@@ -77,7 +110,7 @@ class WebFileHelper:
                              f"引数エラー:value_object=None")
 
     @staticmethod
-    def fixed_path(file_path):
+    def fixed_path(file_path: str) -> str:
         """フォルダ名の禁止文字を全角文字に置き換える
         :param file_path: str 置き換えたいフォルダパス
         :return: str 置き換え後のフォルダパス
@@ -93,7 +126,7 @@ class WebFileHelper:
         return __file_path
 
     @staticmethod
-    def fixed_file_name(file_name):
+    def fixed_file_name(file_name: str) -> str:
         """ファイル名の禁止文字を全角文字に置き換える
         :param file_name: str 置き換えたいファイル名
         :return: str 置き換え後のファイル名
@@ -102,6 +135,18 @@ class WebFileHelper:
         __file_name = __file_name.replace(os.sep, '￥')
         __file_name = __file_name.replace('/', '／')
         return WebFileHelper.fixed_path(__file_name)
+
+    @staticmethod
+    def is_jpeg_data_uri(url):
+        """Data URIのjpeg画像かつbase64であればTrue
+        :return: bool
+        """
+        if urlparse(url).scheme == 'data':
+            uri = DataURI(url)
+            if uri.mimetype in ['image/jpeg']:  # 'image/png']:
+                if uri.is_base64:
+                    return True
+        return False
 
     def is_image(self):
         """画像か判定する(ext_listにある拡張子か調べる)
@@ -144,22 +189,30 @@ class WebFileHelper:
         """ファイル名を得る
         :return: str ファイル名(拡張子除く)
         """
-        if self.dst_filename:
-            return copy.deepcopy(self.dst_filename)
+        if self.dst_file_name:
+            return copy.deepcopy(self.dst_file_name)
         else:
-            __parse = urlparse(self.get_url())
-            __path_after_name = __parse.path[__parse.path.rfind('/') + 1:]
-            __base_name = __path_after_name[:__path_after_name.rfind('.')]
-            return copy.deepcopy(__base_name)
+            if self.is_jpeg_data_uri(self.get_url()):
+                return copy.deepcopy(self.value_object.download_file_name)
+            else:
+                # TODO: URLにファイル名ない時があるかもしれない
+                __parse = urlparse(self.get_url())
+                __path_after_name = __parse.path[__parse.path.rfind('/') + 1:]
+                __base_name = __path_after_name[:__path_after_name.rfind('.')]
+                return copy.deepcopy(__base_name)
 
     def get_ext(self):
         """拡張子を得る
         :return: str ファイルの拡張子(ドットを含む)
         """
-        __parse = urlparse(self.get_url())
-        __path_after_name = __parse.path[__parse.path.rfind('/') + 1:]
-        __extend_name = __path_after_name[__path_after_name.rfind('.'):]
-        return copy.deepcopy(__extend_name)
+        if self.is_jpeg_data_uri(self.get_url()):
+            return '.jpg'
+        else:
+            # TODO: URLに拡張子ない時がある
+            __parse = urlparse(self.get_url())
+            __path_after_name = __parse.path[__parse.path.rfind('/') + 1:]
+            __extend_name = __path_after_name[__path_after_name.rfind('.'):]
+            return copy.deepcopy(__extend_name)
 
     def rename_url_ext_shift(self):
         """urlの画像拡張子を、ext_listの次の拡張子にシフトする
@@ -169,9 +222,9 @@ class WebFileHelper:
         if not self.is_image():
             print('画像じゃないので処理をスキップ')
         else:
-            __index = self.ext_list.index(self.get_ext())
-            __index = (__index + 1) % len(self.ext_list)
-            __ext = self.ext_list[__index]
+            __index = self.ext_dict[self.get_ext()].index(self.get_ext())
+            __index = (__index + 1) % len(self.ext_dict[self.get_ext()])
+            __ext = self.ext_dict[self.get_ext()][__index]
             __url = self.get_url()[::-1].replace(self.get_ext()[::-1], __ext[::-1])[::-1]
             self.value_object = WebFileHelperValue(__url, self.get_folder_path())
 
@@ -214,7 +267,8 @@ class WebFileHelper:
         return response.content
 
     def rename_filename(self, new_file_name):
-        """ローカルにあるファイルのファイル名を変更して、dst_filenameにも設定する
+        """dst_filenameに設定して、ローカルにあるファイルのファイル名も変更する
+        TODO: dst_file_nameにセットするときは、download_file_nameでvalue_objectを作り直すべきか
         :param new_file_name: str 変更する新しいファイル名
         :return: bool True/False=変更(した/しなかった)
         """
@@ -227,7 +281,7 @@ class WebFileHelper:
                 print(f'リネームファイル[{dst_path}]が存在しています')
                 return False
             os.rename(self.get_path(), dst_path)
-            self.dst_filename = new_file_name
+            self.dst_file_name = new_file_name
         return True
 
     def delete_local_file(self):
