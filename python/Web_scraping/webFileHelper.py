@@ -214,7 +214,7 @@ class WebFileHelper:
             __extend_name = __path_after_name[__path_after_name.rfind('.'):]
             return copy.deepcopy(__extend_name)
 
-    def rename_url_ext_shift(self):
+    def rename_url_ext_shift(self, ext='.jpg'):
         """urlの画像拡張子を、ext_listの次の拡張子にシフトする
         現在の拡張子はext_listの何番目か調べて、次の拡張子にurlを変更して、値オブジェクトを作り直す
         :return:
@@ -222,11 +222,11 @@ class WebFileHelper:
         if not self.is_image():
             print('画像じゃないので処理をスキップ')
         else:
-            __index = self.ext_dict[self.get_ext()].index(self.get_ext())
-            __index = (__index + 1) % len(self.ext_dict[self.get_ext()])
-            __ext = self.ext_dict[self.get_ext()][__index]
+            __index = self.ext_dict[ext].index(self.get_ext())
+            __index = (__index + 1) % len(self.ext_dict[ext])
+            __ext = self.ext_dict[ext][__index]
             __url = self.get_url()[::-1].replace(self.get_ext()[::-1], __ext[::-1])[::-1]
-            self.value_object = WebFileHelperValue(__url, self.get_folder_path())
+            self.value_object = WebFileHelperValue(__url, self.get_folder_path(), self.get_filename())
 
     def download_requests(self):
         """requestsを用いて、ファイルをダウンロードする
