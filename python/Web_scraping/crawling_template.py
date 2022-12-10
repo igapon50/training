@@ -7,7 +7,10 @@ from crawling import *
 
 # 検証コード
 if __name__ == '__main__':  # インポート時には動かない
-    # site_url_list = []
+    page_root_url = ''  # TODO: ページ番号を除いたURLを指定する
+    start_page_number = 1
+    end_page_number = 20
+    site_url_list = [page_root_url + str(x) for x in range(start_page_number, end_page_number + 1)]
     site_selectors = {
         'page_urls': [
             (By.XPATH,
