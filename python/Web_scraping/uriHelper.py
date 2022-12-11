@@ -16,7 +16,9 @@ class UriHelperValue:
     """Uriヘルパー値オブジェクト"""
     uri: str = None
 
-    def __init__(self, uri: str = uri):
+    def __init__(self,
+                 uri: str = uri,
+                 ):
         """完全コンストラクタパターン"""
         if not uri:
             raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
@@ -33,9 +35,11 @@ class UriHelperValue:
 
 class UriHelper:
     """Uriのヘルパー"""
-    value_object: UriHelperValue = None
+    value_object: UriHelperValue or str = None
 
-    def __init__(self, value_object: UriHelperValue or str = value_object):
+    def __init__(self,
+                 value_object: UriHelperValue or str = value_object,
+                 ):
         """値オブジェクトからの復元、
         または、uriより、値オブジェクトを作成する
         :param value_object: list 対象となるURI、または、値オブジェクト
