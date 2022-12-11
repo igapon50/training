@@ -2,7 +2,9 @@
 # -*- coding: utf-8 -*-
 """webファイルリストのヘルパー
 """
+import datetime
 import zipfile  # zipファイル
+from distutils.util import strtobool
 
 from irvineHelper import *
 from chromeDriverHelper import *
@@ -13,12 +15,17 @@ from webFileHelper import *
 class WebFileListHelperValue:
     """値オブジェクト"""
     web_file_list: list = None
-    folder_path: str = os.path.join(os.path.dirname(os.path.abspath(__file__)), OUTPUT_FOLDER_PATH).replace(os.sep, '/')
+    work_path: str = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                  'work').replace(os.sep, '/')
+    archive_path: str = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                     'archive').replace(os.sep, '/')
 
-    def __init__(self, web_file_list):
-        """完全コンストラクタパターン
-        :param web_file_list: list webファイルリスト
-        """
+    def __init__(self,
+                 web_file_list: list = None,
+                 work_path: str = work_path,
+                 archive_path: str = archive_path,
+                 ):
+        """完全コンストラクタパターン"""
         if not web_file_list:
             raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
                              f"引数エラー:web_file_list=None")
@@ -27,37 +34,74 @@ class WebFileListHelperValue:
                 raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
                                  f"引数エラー:web_file_listの{count}個目がWebFileHelperで無い")
         object.__setattr__(self, "web_file_list", web_file_list)
+        object.__setattr__(self, "work_path", work_path)
+        object.__setattr__(self, "archive_path", archive_path)
 
 
 class WebFileListHelper:
     """webファイルリスト"""
-    value_object: WebFileListHelperValue = None
-    folder_path: str = WebFileListHelperValue.folder_path
-    ext_list: list = WebFileHelper.ext_list
+    value_object: WebFileListHelperValue or list = None
+    start_ext: str = WebFileHelper.start_ext
+    download_path: str = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                      'download').replace(os.sep, '/')
+    work_path: str = WebFileListHelperValue.work_path
+    archive_path: str = WebFileListHelperValue.archive_path
 
-    def __init__(self, value_object=None, folder_path=folder_path):
-        """コンストラクタ
-        値オブジェクトからの復元、
-        または、urlリストとfolder_pathより、値オブジェクトを作成する
-        :param value_object: list 対象となるサイトURL、または、値オブジェクト
-        :param folder_path: str フォルダのフルパス
+    def __init__(self,
+                 value_object: WebFileListHelperValue or list = value_object,
+                 start_ext: str = start_ext,
+                 download_path: str = download_path,
+                 work_path: str = work_path,
+                 archive_path: str = archive_path,
+                 ):
+        """値オブジェクトからの復元、
+        または、Webファイルのヘルパー: list[WebFileHelper]と、ファイル名、拡張子名、各種pathより、値オブジェクトを作成する
+        または、url: list[str]と、ファイル名、拡張子名、各種pathより、値オブジェクトを作成する
         """
         if value_object:
             if isinstance(value_object, WebFileListHelperValue):
                 value_object = copy.deepcopy(value_object)
                 self.value_object = value_object
             elif isinstance(value_object, list):
+                if not download_path:
+                    raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                                     f"引数エラー:download_path=None")
+                if not work_path:
+                    raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                                     f"引数エラー:work_path=None")
+                if not archive_path:
+                    raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                                     f"引数エラー:archive_path=None")
                 value_object = copy.deepcopy(value_object)
-                if folder_path:
-                    web_file_list = []
-                    # TODO: urlには、DataURIやURLが混ざってくる。URLには、ファイル名がない場合もある
-                    for index, url in enumerate(value_object):
-                        web_file = WebFileHelper(url, folder_path, '{:04d}'.format(index))
-                        web_file_list.append(web_file)
-                    self.value_object = WebFileListHelperValue(web_file_list)
+                web_file_list = []
+                isinstance_list = [isinstance(val, WebFileHelper) for val in value_object]
+                isinstance_str = [isinstance(val, str) for val in value_object]
+                if sum(isinstance_list):
+                    if sum(isinstance_list) != len(isinstance_list):
+                        raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                                         f"引数エラー:value_objectの型list[WebFileHelper]ではない")
+                    else:
+                        web_file_list = value_object
+                elif sum(isinstance_str):
+                    if sum(isinstance_str) != len(isinstance_str):
+                        raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                                         f"引数エラー:value_objectの型list[str]ではない")
+                    else:
+                        # TODO: urlには、DataURIやURLが混ざってくる。URLには、ファイル名がない場合もある
+                        for index, url in enumerate(value_object):
+                            uri = UriHelper(url)
+                            download_file_name = '{:04d}'.format(index)
+                            __start_ext = start_ext
+                            if not __start_ext:
+                                __start_ext = uri.get_ext()
+                            web_file = WebFileHelper(uri, download_file_name, __start_ext, download_path)
+                            web_file_list.append(web_file)
                 else:
                     raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
-                                     f"引数エラー:folder_path=None")
+                                     f"引数エラー:value_objectの型")
+                self.value_object = WebFileListHelperValue(web_file_list,
+                                                           work_path,
+                                                           archive_path)
             else:
                 raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
                                  f"引数エラー:value_objectの型")
@@ -103,7 +147,7 @@ class WebFileListHelper:
         """ファイルリストの一つ目に登録されているフォルダーパスを得る
         :return: str
         """
-        return copy.deepcopy(self.get_web_file_list()[0].get_folder_path())
+        return copy.deepcopy(self.get_web_file_list()[0].get_download_path())
 
     def is_exist(self):
         """ファイルリストの全ファイルがローカルに存在する
