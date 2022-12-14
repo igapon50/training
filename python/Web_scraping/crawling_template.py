@@ -92,17 +92,15 @@ if __name__ == '__main__':  # インポート時には動かない
             url_list = fileDownloader.get_url_list()
             print(url_list)
 
-            irvine = IrvineHelper(url_list)
-            irvine.download()
-            for count in enumerate(fileDownloader.ext_list):
+            fileDownloader.download_irvine()
+            for count in enumerate(WebFileHelper.ext_list):
                 if fileDownloader.is_exist():
                     break
                 # ダウンロードに失敗しているときは、失敗しているファイルの拡張子を変えてダウンロードしなおす
                 fileDownloader.rename_url_ext_shift()
-                irvine = IrvineHelper(fileDownloader.get_only_url_of_file_not_exist())
-                irvine.download()
-            if not fileDownloader.rename_filenames():
-                sys.exit()
+                fileDownloader.download_irvine()
+            # if not fileDownloader.rename_filenames():
+            #     sys.exit()
             if not fileDownloader.make_zip_file():
                 sys.exit()
             if not fileDownloader.rename_zip_file(title):

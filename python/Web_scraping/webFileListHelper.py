@@ -133,6 +133,15 @@ class WebFileListHelper:
             __urls.append(__web_file.get_url())
         return copy.deepcopy(__urls)
 
+    def get_file_name_list(self):
+        """ファイル名のリストを得る
+        :return: list[str]
+        """
+        __file_name_list = []
+        for __web_file in self.get_web_file_list():
+            __file_name_list.append(__web_file.get_download_file_name() + __web_file.get_ext())
+        return copy.deepcopy(__file_name_list)
+
     def get_only_url_of_file_not_exist(self):
         """ローカルにファイルがないURLだけのリストを得る
         :return: list[str]
@@ -143,7 +152,17 @@ class WebFileListHelper:
                 __url_list.append(file.get_url())
         return copy.deepcopy(__url_list)
 
-    def get_folder_path_from_1st_element(self):
+    def get_only_file_name_of_file_not_exist(self):
+        """ローカルにファイルがないファイル名だけのリストを得る
+        :return: list[str]
+        """
+        __file_name_list = []
+        for file in self.value_object.web_file_list:
+            if not file.is_exist():
+                __file_name_list.append(file.get_download_file_name() + file.get_ext())
+        return copy.deepcopy(__file_name_list)
+
+    def get_download_path_from_1st_element(self):
         """ファイルリストの一つ目に登録されているフォルダーパスを得る
         :return: str
         """
@@ -169,7 +188,10 @@ class WebFileListHelper:
         """irvineを用いて、ファイルリストをダウンロードする
         :return:
         """
-        __irvine = IrvineHelper(self.get_url_list())
+        __irvine = IrvineHelper(self.get_only_url_of_file_not_exist(),
+                                self.get_download_path_from_1st_element(),
+                                self.get_only_file_name_of_file_not_exist(),
+                                )
         __irvine.download()
 
     def download_chrome_driver(self):
@@ -180,8 +202,13 @@ class WebFileListHelper:
         for __url in self.get_url_list():
             __driver.download_image(__url)
         downloads_path = os.path.join(os.getenv("HOMEDRIVE"), os.getenv("HOMEPATH"), "downloads")
-        __web_file_list = WebFileListHelper(self.get_url_list(), downloads_path)
-        __web_file_list.move(self.get_folder_path_from_1st_element())
+        __web_file_list = WebFileListHelper(self.get_url_list(),
+                                            self.start_ext,
+                                            downloads_path,
+                                            self.work_path,
+                                            self.archive_path,
+                                            )
+        __web_file_list.move(self.get_download_path_from_1st_element())
 
     def rename_url_ext_shift(self):
         """ファイルリストの各ファイルについて、ローカルに存在しないファイルの拡張子をシフトし、ファイルリストを更新する
@@ -208,7 +235,7 @@ class WebFileListHelper:
         """
         if not self.is_exist():
             return False
-        __zip_folder = self.get_folder_path_from_1st_element()
+        __zip_folder = self.get_download_path_from_1st_element()
         if os.path.isfile(__zip_folder + '.zip'):
             __now_str = datetime.datetime.now().strftime('_%Y%m%d_%H%M%S')
             os.rename(__zip_folder + '.zip', __zip_folder + f'{__now_str}.zip')
@@ -223,7 +250,7 @@ class WebFileListHelper:
         :param zip_filename: str 付け直すファイル名(禁則文字は削除される)
         :return: bool 成功/失敗=True/False
         """
-        __zip_folder = self.get_folder_path_from_1st_element()
+        __zip_folder = self.get_download_path_from_1st_element()
         new_zip_filename = WebFileHelper.fixed_file_name(zip_filename)
         src_zip_path = __zip_folder + '.zip'
         dst_zip_path = new_zip_filename + '.zip'
@@ -239,7 +266,7 @@ class WebFileListHelper:
         """ファイルリストのローカルファイルをフォルダごと削除する
         :return: None
         """
-        __zip_folder = self.get_folder_path_from_1st_element()
+        __zip_folder = self.get_download_path_from_1st_element()
         print('ファイル削除します(フォルダごと削除して、フォルダを作り直します)')
         shutil.rmtree(__zip_folder)
         if __zip_folder[len(__zip_folder) - 1] == '\\':
@@ -270,10 +297,18 @@ class WebFileListHelper:
             return False
         __web_file = self.get_web_file_list()[0]
         url_list = __web_file.get_deployment_url_list()
-        folder_path = self.get_folder_path_from_1st_element()
+        download_path = self.get_download_path_from_1st_element()
         __web_file_list = []
-        for __url in url_list:
-            __web_file_list.append(WebFileHelper(__url, folder_path))
-        self.value_object = WebFileListHelperValue(__web_file_list)
+        for index, url in enumerate(url_list):
+            uri = UriHelper(url)
+            download_file_name = '{:04d}'.format(index)
+            __start_ext = self.start_ext
+            if not __start_ext:
+                __start_ext = uri.get_ext()
+            web_file = WebFileHelper(uri, download_file_name, __start_ext, download_path)
+            __web_file_list.append(web_file)
+        self.value_object = WebFileListHelperValue(__web_file_list,
+                                                   self.value_object.work_path,
+                                                   self.value_object.archive_path)
         return True
 

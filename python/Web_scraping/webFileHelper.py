@@ -247,9 +247,9 @@ class WebFileHelper:
             __ext = self.ext_dict[self.get_start_ext()][__index]
             __url = self.get_url()[::-1].replace(self.get_ext()[::-1], __ext[::-1])[::-1]
             self.value_object = WebFileHelperValue(UriHelper(__url),
-                                                   self.get_download_path(),
                                                    self.get_filename(),
                                                    self.get_start_ext(),
+                                                   self.get_download_path(),
                                                    )
 
     def download_requests(self):

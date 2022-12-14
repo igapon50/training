@@ -144,10 +144,14 @@ class MyTestCase(unittest.TestCase):
             time.sleep(1)
         # NOTE: prefsオプションが機能しないので、downloadsフォルダで確認する
         downloads_path = os.path.join(os.getenv("HOMEDRIVE"), os.getenv("HOMEPATH"), "downloads")
-        __web_file_list = WebFileListHelper(self.image_url_list, downloads_path)
+        __web_file_list = WebFileListHelper(self.image_url_list,
+                                            '.png',
+                                            downloads_path,
+                                            )
         self.assertTrue(__web_file_list.is_exist())
         # 後処理
         __web_file_list.delete_local_files()
+        self.assertFalse(__web_file_list.is_exist())
 
     def test_download_image(self):
         """download_imageメソッドのテスト"""
@@ -157,10 +161,14 @@ class MyTestCase(unittest.TestCase):
             time.sleep(1)
         # NOTE: prefsオプションが機能しないので、downloadsフォルダで確認する
         downloads_path = os.path.join(os.getenv("HOMEDRIVE"), os.getenv("HOMEPATH"), "downloads")
-        __web_file_list = WebFileListHelper(self.image_url_list, downloads_path)
+        __web_file_list = WebFileListHelper(self.image_url_list,
+                                            '.png',
+                                            downloads_path,
+                                            )
         self.assertTrue(__web_file_list.is_exist())
         # 後処理
         __web_file_list.delete_local_files()
+        self.assertFalse(__web_file_list.is_exist())
 
 
 if __name__ == '__main__':
