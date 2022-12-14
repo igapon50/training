@@ -168,9 +168,18 @@ class WebFileHelper:
 
     def is_exist(self):
         """ファイルがローカルに存在すればTrueを返す
+        urlでダウンロードしたファイル、変名した後のファイルをチェックする
         :return: bool
         """
-        return os.path.isfile(self.get_path())
+        if os.path.isfile(self.get_path()):
+            # 変名後のファイルがある
+            return True
+        url = self.value_object.url
+        if url.is_enable_filename():
+            file_path = os.path.join(self.download_path, url.get_filename() + url.get_ext())
+            if os.path.isfile(file_path):
+                return True
+        return False
 
     def get_value_object(self):
         """valueオブジェクトを得る
@@ -225,7 +234,7 @@ class WebFileHelper:
         start_ext = self.value_object.url.get_ext()
         return copy.deepcopy(start_ext)
 
-    def rename_url_ext_shift(self, ext='.jpg'):
+    def rename_url_ext_shift(self):
         """urlの画像拡張子を、ext_listの次の拡張子にシフトする
         現在の拡張子はext_listの何番目か調べて、次の拡張子にurlを変更して、値オブジェクトを作り直す
         :return:
@@ -287,7 +296,7 @@ class WebFileHelper:
         :param new_file_name: str 変更する新しいファイル名
         :return: bool True/False=変更(した/しなかった)
         """
-        if not os.path.isfile(self.get_path()):
+        if not self.is_exist():
             print('ファイルがローカルにないので処理をスキップします')
             return False
         else:
@@ -310,6 +319,11 @@ class WebFileHelper:
         """
         if os.path.isfile(self.get_path()):
             os.remove(self.get_path())
+        url = self.value_object.url
+        if url.is_enable_filename():
+            file_path = os.path.join(self.download_path, url.get_filename() + url.get_ext())
+            if os.path.isfile(file_path):
+                os.remove(file_path)
 
     def move(self, new_path):
         """ファイルを移動する(get_download_path()は変わらない)

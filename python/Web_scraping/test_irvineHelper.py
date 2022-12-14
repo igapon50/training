@@ -74,6 +74,7 @@ class MyTestCase(unittest.TestCase):
         self.assertTrue(__test_target.is_exist())
         # 後処理
         __test_target.delete_local_files()
+        self.assertFalse(__test_target.is_exist())
 
     def test_download_02(self):
         """ダウンロード"""
@@ -83,6 +84,7 @@ class MyTestCase(unittest.TestCase):
         self.assertTrue(__test_target.is_exist())
         # 後処理
         __test_target.delete_local_files()
+        self.assertFalse(__test_target.is_exist())
 
 
 if __name__ == '__main__':
