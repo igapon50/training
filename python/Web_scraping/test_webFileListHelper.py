@@ -77,16 +77,16 @@ class MyTestCase(unittest.TestCase):
         self.assertTrue(test_target.is_exist())
         # 後処理
         test_target.delete_local_files()
+        self.assertFalse(test_target.is_exist())
 
     def test_download_irvine(self):
         """対象URLリストのファイルをirvineでダウンロードする"""
         test_target = WebFileListHelper(self.image_url_list)
-        # ↓ TODO: 指定のファイル名でダウンロードしていない
         test_target.download_irvine()
-        # ↓ TODO:
         self.assertTrue(test_target.is_exist())
         # 後処理
         test_target.delete_local_files()
+        self.assertFalse(test_target.is_exist())
 
     def test_download_chrome_driver(self):
         """対象URLリストのファイルをchromeDriverでダウンロードする"""
@@ -95,6 +95,7 @@ class MyTestCase(unittest.TestCase):
         self.assertTrue(test_target.is_exist())
         # 後処理
         test_target.delete_local_files()
+        self.assertFalse(test_target.is_exist())
 
 
 if __name__ == '__main__':
