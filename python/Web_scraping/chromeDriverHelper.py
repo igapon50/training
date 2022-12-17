@@ -52,13 +52,14 @@ from selenium.webdriver import ChromeOptions
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import NoSuchElementException
 from webdriver_manager.chrome import ChromeDriverManager
 from dataclasses import dataclass
 
 from const import *
 from webFileHelper import *
-# from webFileListHelper import *
+from webFileListHelper import *
 
 
 @dataclass(frozen=True)
@@ -108,6 +109,9 @@ class ChromeDriverHelper:
     """chromeドライバを操作する
     """
     value_object: ChromeDriverHelperValue = None
+    download_path: str = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                      'download').replace(os.sep, '/')
+
     __driver = None
     __source = None
     __start_window_handle = None
@@ -117,30 +121,30 @@ class ChromeDriverHelper:
     chrome_path = r'"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"'
     __options = ChromeOptions()
     __port = "9222"
-    __default_directory: str = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                            OUTPUT_FOLDER_PATH).replace(os.sep, '/')
-
     __chrome_add_argument = ['--blink-settings=imagesEnabled=false',  # 画像非表示
                              # '--incognito',  # シークレットモードで起動する
                              # '--headless',  # バックグラウンドで起動する
                              ]
     __chrome_add_experimental_option = [('debuggerAddress', f'127.0.0.1:{__port}'),
                                         # TODO: prefsはdebuggerAddressと同時に指定できない？
-                                        # ('prefs', {'download.default_directory': __default_directory}),
+                                        # ('prefs', {'download.default_directory': download_path}),
                                         ]
     profile_path = r'C:\Users\igapon\temp'
     __cmd = f'{chrome_path}' \
             f' -remote-debugging-port={__port}' \
             f' --user-data-dir="{profile_path}"'
 
-    def __init__(self, value_object=None, selectors=None):
+    def __init__(self, value_object=None, selectors=None, download_path=download_path):
         """コンストラクタ
         値オブジェクトからの復元、
         または、urlとselectorsより、値オブジェクトを作成する
         :param value_object: list 対象となるサイトURL、または、値オブジェクト
         :param selectors: dict スクレイピングする際のセレクタリスト
+        :param download_path: str ダウンロードフォルダのパス
         """
         self.__start()
+        if download_path:
+            self.download_path = download_path
         if value_object:
             if isinstance(value_object, ChromeDriverHelperValue):
                 value_object = copy.deepcopy(value_object)
@@ -191,6 +195,12 @@ class ChromeDriverHelper:
         for key, selector_list in selectors.items():
             items[key] = self.__get_scraping_selector_list(selector_list)
         return items
+
+    def scroll_element(self, element):
+        """elementまでスクロールする"""
+        actions = ActionChains(self.__driver)
+        actions.move_to_element(element)
+        actions.perform()
 
     def get_value_object(self):
         """値オブジェクトを取得する"""
@@ -339,6 +349,7 @@ class ChromeDriverHelper:
             for _ in range(count):
                 elements = self.__driver.find_elements(by=by, value=selector)
                 for elem in elements:
+                    self.scroll_element(elem)
                     text = action(elem)
                     ret_list.append(text)
                 self.close()
@@ -399,8 +410,9 @@ class ChromeDriverHelper:
         :param url: 画像のurl
         :return:
         """
+        uri = UriHelper(url)
         __handle = self.open_new_tab(url)
-        self.save_image()
+        self.save_image(uri.get_filename(), uri.get_ext())
         self.close(__handle)
 
     def open_current_tab(self, url):
@@ -457,14 +469,15 @@ class ChromeDriverHelper:
             print("ValueError 指定のwindow_handleがありません。")
             exit()
 
-    def save_image(self):
+    def save_image(self, download_file_name, download_ext='.jpg', wait_time=3):
         """(画面依存)表示されている画像を保存する
-        chromeのデフォルトダウンロードフォルダに保存される
+        chromeのデフォルトダウンロードフォルダに保存された後に、指定のフォルダに移動する
         ダウンロード実行用スクリプトを生成＆実行する
         :return:
         """
         __image_url = self.__driver.current_url
-        __web_file = WebFileHelper(__image_url)
+        downloads_path = os.path.join(os.getenv("HOMEDRIVE"), os.getenv("HOMEPATH"), "downloads")
+        __web_file = WebFileHelper(__image_url, download_file_name, download_ext, downloads_path)
         __filename = __web_file.get_filename() + __web_file.get_ext()
         script_str = """
         window.URL = window.URL || window.webkitURL;
@@ -483,3 +496,8 @@ class ChromeDriverHelper:
         xhr.send();
         """
         self.__driver.execute_script(script_str)
+        file_path = os.path.join(self.download_path, __filename)
+        start = time.time()
+        while ((time.time() - start) < wait_time) and not(os.path.isfile(__web_file.get_path())):
+            time.sleep(0.1)
+        __web_file.move(file_path)

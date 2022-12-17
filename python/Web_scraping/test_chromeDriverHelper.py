@@ -132,8 +132,9 @@ class MyTestCase(unittest.TestCase):
         """open_new_tabs/save_image/next_tab/previous_tab/closeメソッドのテスト"""
         __driver = ChromeDriverHelper()
         __driver.open_new_tabs(self.image_url_list)
-        for _ in self.image_url_list:
-            __driver.save_image()
+        for __url in self.image_url_list:
+            uri = UriHelper(__url)
+            __driver.save_image(uri.get_filename(), uri.get_ext())
             __driver.next_tab()
             time.sleep(1)
         for _ in self.image_url_list:
@@ -146,7 +147,7 @@ class MyTestCase(unittest.TestCase):
         downloads_path = os.path.join(os.getenv("HOMEDRIVE"), os.getenv("HOMEPATH"), "downloads")
         __web_file_list = WebFileListHelper(self.image_url_list,
                                             '.png',
-                                            downloads_path,
+                                            # downloads_path,
                                             )
         self.assertTrue(__web_file_list.is_exist())
         # 後処理
