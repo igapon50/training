@@ -4,6 +4,7 @@
 """
 import datetime
 import zipfile  # zipファイル
+import pathlib
 from distutils.util import strtobool
 
 from irvineHelper import *
@@ -163,7 +164,7 @@ class WebFileListHelper:
         return copy.deepcopy(__file_name_list)
 
     def get_download_path_from_1st_element(self):
-        """ファイルリストの一つ目に登録されているフォルダーパスを得る
+        """ファイルリストの一つ目に登録されているダウンロードパスを得る
         :return: str
         """
         return copy.deepcopy(self.get_web_file_list()[0].get_download_path())
@@ -235,12 +236,16 @@ class WebFileListHelper:
         """
         if not self.is_exist():
             return False
-        __zip_folder = self.get_download_path_from_1st_element()
-        if os.path.isfile(__zip_folder + '.zip'):
-            __now_str = datetime.datetime.now().strftime('_%Y%m%d_%H%M%S')
-            os.rename(__zip_folder + '.zip', __zip_folder + f'{__now_str}.zip')
-            print(f'圧縮ファイル{__zip_folder}.zipが既に存在したので{__zip_folder}{__now_str}.zipに変名しました')
-        with zipfile.ZipFile(__zip_folder + '.zip', 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        zip_file_name = pathlib.Path(self.get_download_path_from_1st_element()).with_suffix('.zip').name
+        archive_path = pathlib.Path(self.archive_path)
+        zip_path = pathlib.Path(os.path.join(archive_path, zip_file_name))
+        # フォルダがなかったらフォルダを作る
+        os.makedirs(archive_path, exist_ok=True)
+        if zip_path.is_file():
+            now_str = datetime.datetime.now().strftime('_%Y%m%d_%H%M%S')
+            os.rename(zip_path, zip_path.with_suffix(f'{now_str}.zip'))
+            print(f'圧縮ファイル{zip_path.name}が既に存在したので{zip_path.name}{now_str}.zipに変名しました')
+        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zip_file:
             for __web_file_helper in self.get_web_file_list():
                 zip_file.write(__web_file_helper.get_path())
         return True
@@ -250,16 +255,17 @@ class WebFileListHelper:
         :param zip_filename: str 付け直すファイル名(禁則文字は削除される)
         :return: bool 成功/失敗=True/False
         """
-        __zip_folder = self.get_download_path_from_1st_element()
-        new_zip_filename = WebFileHelper.fixed_file_name(zip_filename)
-        src_zip_path = __zip_folder + '.zip'
-        dst_zip_path = new_zip_filename + '.zip'
-        new_zip_path = os.path.join(__zip_folder, '..', dst_zip_path).replace(os.sep, '/')
-        if os.path.isfile(new_zip_path):
-            print(f'圧縮リネームファイル{new_zip_filename}.zipが既に存在しています')
-            return False
-        print(f'圧縮ファイル名を付け直します:{new_zip_filename}.zip')
-        os.rename(src_zip_path, dst_zip_path)
+        zip_file_name = pathlib.Path(self.get_download_path_from_1st_element()).with_suffix('.zip').name
+        archive_path = pathlib.Path(self.archive_path)
+        zip_path = pathlib.Path(os.path.join(archive_path, zip_file_name))
+        if zip_path.is_file():
+            new_zip_filename = WebFileHelper.fixed_file_name(zip_filename)
+            new_zip_path = zip_path.with_name(f'{new_zip_filename}.zip')
+            if os.path.isfile(new_zip_path):
+                print(f'圧縮リネームファイル{new_zip_filename}.zipが既に存在しています')
+                return False
+            print(f'圧縮ファイル名を付け直します:{new_zip_filename}.zip')
+            os.rename(zip_path, new_zip_path)
         return True
 
     def delete_local_folder(self):
