@@ -53,7 +53,7 @@ class WebFileHelper:
     download_path: str = WebFileHelperValue.download_path
 
     # ext_list: list = ['.jpg', '.png', '.jpeg', '.webp', '.svg', '.svgz', '.gif', '.tif', '.tiff', '.psd', '.bmp']
-    ext_list: list = [start_ext, '.png', '.gif']  # これを画像とする
+    ext_list: list = [WebFileHelperValue.start_ext, '.png', '.gif']  # これを画像とする
     ext_dict: dict = {ext_list[0]: ext_list,
                       ext_list[1]: [ext_list[1], ext_list[0], ext_list[2]],
                       ext_list[2]: [ext_list[2], ext_list[0], ext_list[1]],
