@@ -2,12 +2,9 @@
 # -*- coding: utf-8 -*-
 """
 クローリング
-    * 指定サイト(site_url)をセレクタ(site_selectors)でクローリングする
-    * クローリング結果を、ページリスト(crawling_file_pathのファイル)に登録する
-    * ページリスト(get_site_urls_from_local)に登録されている、それぞれのページをスクレイピングする
-    * スクレイピング結果を、ダウンロードリストに登録する
-    * ダウンロードリストに登録されている、それぞれのファイルをダウンロードする
-    * ダウンロードしたファイルを変名して圧縮する
+    * ChromeDriverHelperを使って、指定サイト(site_url)をセレクタ(site_selectors)でクローリングする
+    * 指定サイトのクローリング結果を、crawling_file_pathに保持する
+    * crawling_file_pathのpage_urlsに対して、スクレイピングして末尾画像URLの展開URLでダウンロードして、zipに保存する
 """
 import subprocess
 import json
@@ -92,6 +89,7 @@ class Crawling:
 
     @staticmethod
     def scraping(url, selectors):
+        """ChromeDriverHelperを使ってスクレイピングする"""
         selectors = copy.deepcopy(selectors)
         chrome_driver = ChromeDriverHelper(url, selectors)
         return chrome_driver.get_items()
@@ -111,6 +109,7 @@ class Crawling:
 
     @staticmethod
     def take_out(items, item_name):
+        """crawling_itemsから指定のitemを取り出す"""
         ret_value = None
         if item_name in items:
             ret_value = copy.deepcopy(items[item_name])
@@ -126,24 +125,28 @@ class Crawling:
                          f"オブジェクトエラー:value_object")
 
     def get_site_url(self):
+        """値オブジェクトのプロパティsite_url取得"""
         if self.get_value_object().site_url:
             return copy.deepcopy(self.get_value_object().site_url)
         raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
                          f"オブジェクトエラー:site_url")
 
     def get_site_selectors(self):
+        """値オブジェクトのプロパティsite_selectors取得"""
         if self.get_value_object().site_selectors:
             return copy.deepcopy(self.get_value_object().site_selectors)
         raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
                          f"オブジェクトエラー:site_selectors")
 
     def get_crawling_items(self):
+        """値オブジェクトのプロパティcrawling_items取得"""
         if self.get_value_object().crawling_items:
             return copy.deepcopy(self.get_value_object().crawling_items)
         raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
                          f"オブジェクトエラー:crawling_items")
 
     def get_crawling_file_path(self):
+        """値オブジェクトのプロパティcrawling_file_path取得"""
         if self.get_value_object().crawling_file_path:
             return copy.deepcopy(self.get_value_object().crawling_file_path)
         raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
@@ -207,6 +210,10 @@ class Crawling:
             return True
 
     def is_url_included_exclusion_list(self, url):
+        """除外リストに含まれるURLならTrueを返す
+        :param url:
+        :return:
+        """
         crawling_items = self.get_crawling_items()
         if 'exclusion_urls' in crawling_items:
             if url in crawling_items['exclusion_urls']:
@@ -214,6 +221,10 @@ class Crawling:
         return False
 
     def move_url_from_page_urls_to_exclusion_urls(self, url):
+        """ターゲットリスト(page_urls)から除外リスト(exclusion_urls)にURLを移動する
+        :param url:
+        :return:
+        """
         site_url = self.get_site_url()
         selectors = self.get_site_selectors()
         crawling_file_path = self.get_crawling_file_path()
@@ -229,6 +240,16 @@ class Crawling:
         self.value_object = CrawlingValue(site_url, selectors, crawling_items, crawling_file_path)
 
     def crawling_url_deployment(self, page_selectors, image_selectors):
+        """各ページをスクレイピングして、末尾画像のナンバーから、URLを予測して、画像ファイルをダウンロード＆圧縮する
+            # crawling_itemsに、page_urlsがあり、各page_urlをpage_selectorsでスクレイピングする
+            # タイトルとURLでダウンロード除外または済みかをチェックして、
+            # ダウンロードしない場合は、以降の処理をスキップする
+            # 各page_urlをimage_selectorsでスクレイピングしてダウンロードする画像URLリストを作る。
+            # 画像URLリストをirvineHelperでダウンロードして、zipファイルにする
+        :param page_selectors:
+        :param image_selectors:
+        :return:
+        """
         crawling_items = self.get_crawling_items()
         page_urls = []
         if 'page_urls' in crawling_items:
