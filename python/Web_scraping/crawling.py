@@ -228,6 +228,67 @@ class Crawling:
                 crawling_items['page_urls'].remove(url)
         self.value_object = CrawlingValue(site_url, selectors, crawling_items, crawling_file_path)
 
+    def crawling_url_deployment(self, page_selectors, image_selectors):
+        crawling_items = self.get_crawling_items()
+        page_urls = []
+        if 'page_urls' in crawling_items:
+            page_urls = crawling_items['page_urls']
+        for page_url in page_urls:
+            print(page_url)
+            if self.is_url_included_exclusion_list(page_url):
+                self.move_url_from_page_urls_to_exclusion_urls(page_url)
+                self.save_text()
+                continue
+            chrome_driver = ChromeDriverHelper(page_url, page_selectors)
+            items = chrome_driver.get_items()
+
+            title = self.take_out(items, 'title_jp')
+            title_sub = self.take_out(items, 'title_en')
+            languages = self.take_out(items, 'languages')
+            if not title:
+                if not title_sub:
+                    # タイトルが得られない時は、タイトルを日時文字列にする
+                    now = datetime.datetime.now()
+                    title = f'{now:%Y%m%d_%H%M%S}'
+                else:
+                    title = title_sub
+            title = chrome_driver.fixed_file_name(title)
+            url_title = chrome_driver.fixed_file_name(page_url)
+
+            target_file_name = f'{title}：{url_title}.html'
+            print(title, title_sub, languages)
+            if languages and languages == 'japanese' and not os.path.exists(target_file_name):
+                image_items = chrome_driver.scraping(image_selectors)
+                image_urls = self.take_out(image_items, 'image_urls')
+                last_image_url = self.take_out(image_items, 'image_url')
+                if not last_image_url:
+                    raise ValueError(f"エラー:last_image_urlが不正[{last_image_url}]")
+                print(last_image_url, image_urls)
+                web_file_list = WebFileListHelper([last_image_url])
+                # 末尾画像のナンバーから全ての画像URLを推測して展開する
+                web_file_list.update_value_object_by_deployment_url_list()
+                url_list = web_file_list.get_url_list()
+                print(url_list)
+
+                web_file_list.download_irvine()
+                for count in enumerate(WebFileHelper.ext_list):
+                    if web_file_list.is_exist():
+                        break
+                    # ダウンロードに失敗しているときは、失敗しているファイルの拡張子を変えてダウンロードしなおす
+                    web_file_list.rename_url_ext_shift()
+                    web_file_list.download_irvine()
+                if not web_file_list.make_zip_file():
+                    sys.exit()
+                if not web_file_list.rename_zip_file(title):
+                    if not web_file_list.rename_zip_file(f'{title}：{url_title}'):
+                        sys.exit()
+                web_file_list.delete_local_files()
+                # 成功したらチェック用ファイルを残す
+                chrome_driver.save_source(target_file_name)
+            # page_urlsからexclusion_urlsにURLを移して保存する
+            self.move_url_from_page_urls_to_exclusion_urls(page_url)
+            self.save_text()
+
 
 # 検証コード
 if __name__ == '__main__':  # インポート時には動かない
