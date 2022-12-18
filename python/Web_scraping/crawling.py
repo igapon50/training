@@ -114,7 +114,9 @@ class Crawling:
         if item_name in items:
             ret_value = copy.deepcopy(items[item_name])
         if ret_value and isinstance(ret_value, list):
-            ret_value = ret_value[0]
+            if len(ret_value) == 1:
+                # listの中身が一つしかない時
+                ret_value = ret_value[0]
         return ret_value
 
     def get_value_object(self):
