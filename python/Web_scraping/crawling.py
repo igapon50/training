@@ -278,7 +278,9 @@ class Crawling:
             title = chrome_driver.fixed_file_name(title)
             url_title = chrome_driver.fixed_file_name(page_url)
 
-            target_file_name = f'{title}：{url_title}.html'
+            # フォルダがなかったらフォルダを作る
+            os.makedirs(WebFileListHelper.work_path, exist_ok=True)
+            target_file_name = os.path.join(WebFileListHelper.work_path, f'{title}：{url_title}.html')
             print(title, title_sub, languages)
             if languages and languages == 'japanese' and not os.path.exists(target_file_name):
                 image_items = chrome_driver.scraping(image_selectors)
