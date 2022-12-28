@@ -119,6 +119,19 @@ class Crawling:
                 ret_value = ret_value[0]
         return ret_value
 
+    @staticmethod
+    def validate_title(items: dict, title: str, title_sub: str):
+        title = Crawling.take_out(items, title)
+        title_sub = Crawling.take_out(items, title_sub)
+        if not title:
+            if not title_sub:
+                # タイトルが得られない時は、タイトルを日時文字列にする
+                now = datetime.datetime.now()
+                title = f'{now:%Y%m%d_%H%M%S}'
+            else:
+                title = title_sub
+        return ChromeDriverHelper.fixed_file_name(title)
+
     def get_value_object(self):
         """値オブジェクトを取得する"""
         if self.value_object:
@@ -263,26 +276,14 @@ class Crawling:
                 self.save_text()
                 continue
             items = self.scraping(page_url, page_selectors)
-            # chrome_driver = ChromeDriverHelper(page_url, page_selectors)
-            # items = chrome_driver.get_items()
-
-            title = self.take_out(items, 'title_jp')
-            title_sub = self.take_out(items, 'title_en')
             languages = self.take_out(items, 'languages')
-            if not title:
-                if not title_sub:
-                    # タイトルが得られない時は、タイトルを日時文字列にする
-                    now = datetime.datetime.now()
-                    title = f'{now:%Y%m%d_%H%M%S}'
-                else:
-                    title = title_sub
-            title = ChromeDriverHelper.fixed_file_name(title)
+            title = Crawling.validate_title(items, 'title_jp', 'title_en')
             url_title = ChromeDriverHelper.fixed_file_name(page_url)
 
             # フォルダがなかったらフォルダを作る
             os.makedirs(WebFileListHelper.work_path, exist_ok=True)
             target_file_name = os.path.join(WebFileListHelper.work_path, f'{title}：{url_title}.html')
-            print(title, title_sub, languages)
+            print(title, languages)
             if languages and languages == 'japanese' and not os.path.exists(target_file_name):
                 image_items = self.scraping(page_url, image_selectors)
                 image_urls = self.take_out(image_items, 'image_urls')
