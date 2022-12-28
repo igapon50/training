@@ -262,8 +262,9 @@ class Crawling:
                 self.move_url_from_page_urls_to_exclusion_urls(page_url)
                 self.save_text()
                 continue
-            chrome_driver = ChromeDriverHelper(page_url, page_selectors)
-            items = chrome_driver.get_items()
+            items = self.scraping(page_url, page_selectors)
+            # chrome_driver = ChromeDriverHelper(page_url, page_selectors)
+            # items = chrome_driver.get_items()
 
             title = self.take_out(items, 'title_jp')
             title_sub = self.take_out(items, 'title_en')
@@ -275,15 +276,15 @@ class Crawling:
                     title = f'{now:%Y%m%d_%H%M%S}'
                 else:
                     title = title_sub
-            title = chrome_driver.fixed_file_name(title)
-            url_title = chrome_driver.fixed_file_name(page_url)
+            title = ChromeDriverHelper.fixed_file_name(title)
+            url_title = ChromeDriverHelper.fixed_file_name(page_url)
 
             # フォルダがなかったらフォルダを作る
             os.makedirs(WebFileListHelper.work_path, exist_ok=True)
             target_file_name = os.path.join(WebFileListHelper.work_path, f'{title}：{url_title}.html')
             print(title, title_sub, languages)
             if languages and languages == 'japanese' and not os.path.exists(target_file_name):
-                image_items = chrome_driver.scraping(image_selectors)
+                image_items = self.scraping(page_url, image_selectors)
                 image_urls = self.take_out(image_items, 'image_urls')
                 last_image_url = self.take_out(image_items, 'image_url')
                 if not last_image_url:
@@ -309,7 +310,7 @@ class Crawling:
                         sys.exit()
                 web_file_list.delete_local_files()
                 # 成功したらチェック用ファイルを残す
-                chrome_driver.save_source(target_file_name)
+                ChromeDriverHelper().save_source(target_file_name)
             # page_urlsからexclusion_urlsにURLを移して保存する
             self.move_url_from_page_urls_to_exclusion_urls(page_url)
             self.save_text()
