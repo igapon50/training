@@ -78,7 +78,19 @@ class UriHelper:
         """
         if urlparse(url).scheme == 'data':
             uri = DataURI(url)
-            if uri.mimetype in ['image/jpeg']:  # 'image/png']:
+            if uri.mimetype in ['image/jpeg']:
+                if uri.is_base64:
+                    return True
+        return False
+
+    @staticmethod
+    def is_png_data_uri(url: str) -> bool:
+        """Data URIのpng画像かつbase64であればTrue
+        :return: bool
+        """
+        if urlparse(url).scheme == 'data':
+            uri = DataURI(url)
+            if uri.mimetype in ['image/png']:
                 if uri.is_base64:
                     return True
         return False
@@ -131,7 +143,9 @@ class UriHelper:
         :return: str ファイルの拡張子(ドットを含む)
         """
         if self.is_jpeg_data_uri(self.get_uri()):
-            return None
+            return '.jpg'
+        if self.is_png_data_uri(self.get_uri()):
+            return '.png'
         else:
             # TODO: URIに拡張子ない時もある
             __parse = urlparse(self.get_uri())
