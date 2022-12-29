@@ -405,15 +405,19 @@ class ChromeDriverHelper:
             index = self.__window_handle_list.index(self.__driver.current_window_handle)
         self.__driver.switch_to.window(self.__window_handle_list[(index + step) % count])
 
-    def download_image(self, url):
+    def download_image(self, url, download_path=None):
         """(画面遷移有)urlの画像を保存する(open_new_tab → save_image → closeする)
         :param url: 画像のurl
+        :param download_path:
         :return:
         """
         uri = UriHelper(url)
-        __handle = self.open_new_tab(url)
-        self.save_image(uri.get_filename(), uri.get_ext())
-        self.close(__handle)
+        if uri.is_data_uri(url):
+            uri.save_data_uri(download_path)
+        else:
+            __handle = self.open_new_tab(url)
+            self.save_image(uri.get_filename(), uri.get_ext())
+            self.close(__handle)
 
     def open_current_tab(self, url):
         """(画面依存)現在表示されているタブでurlを開く
