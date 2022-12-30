@@ -173,7 +173,23 @@ pip install numpy
 
 
 # python/Web_scraping
-スクレイピングで、画像URLリストを作り、その画像をダウンロードして、ファイル名をナンバリングして、zipファイルにアーカイブする。
+クローリングして、スクレイピングして、画像URLリストを作り、その画像をまとめてダウンロードして、ファイル名をナンバリングして、zipファイルにアーカイブする。
+
+使い方はユニットテスト（例えば、test_crawling.py）を参照のこと
+
+- chromeDriverHelper: selenium chromeドライバーのヘルパークラス
+- crawling: クローリングヘルパークラス
+  - web巡回して、スクレイピングして、ファイルダウンロードして、zipファイルにまとめる
+- egoser_ziper: google 画像検索でエゴサーチして、20ファイルをzipにまとめる
+- irvineHelper: Irvineを操作するヘルパークラス
+- uriHelper: URLのヘルパークラス
+  - URLのパス、ファイル名、拡張子、DataURIのデータ、ファイルの存在確認など
+- webFileHelper: webファイルのヘルパークラス
+  - URLから、ダウンロードしたり、ファイル名変更したり、存在確認したり、削除したりする
+- webFileListHelper: webファイルリストのヘルパークラス
+  - URLリストから、webFileHelperのリストを作って、操作する。まとめてだウンロードしたり、zipファイルにする
+
+以下は古い
 
 - imgdl：クリップボードからURLを読み込み、urllib.requestでWeb情報を取得し、スクレイピングして、画像URLリストを作り、その画像をダウンロードして、ファイル名をナンバリングして、zipファイルに保存する
 - HTML2zip：画像のダウンロード処理だけ行わない他はimgdlと同じ(ダウンロードは外部ツールを使う)
