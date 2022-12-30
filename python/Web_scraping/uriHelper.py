@@ -1,6 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """uriのヘルパー
+https://pypi.org/project/python-datauri/
+https://github.com/fcurella/python-datauri/tree/py3
+
+参考：
+https://qiita.com/TsubasaSato/items/908d4f5c241091ecbf9b
 """
 import copy
 import sys
@@ -76,7 +81,19 @@ class UriHelper:
         """
         if urlparse(url).scheme == 'data':
             uri = DataURI(url)
-            if uri.mimetype in ['image/jpeg']:  # 'image/png']:
+            if uri.mimetype in ['image/jpeg']:
+                if uri.is_base64:
+                    return True
+        return False
+
+    @staticmethod
+    def is_png_data_uri(url: str) -> bool:
+        """Data URIのpng画像かつbase64であればTrue
+        :return: bool
+        """
+        if urlparse(url).scheme == 'data':
+            uri = DataURI(url)
+            if uri.mimetype in ['image/png']:
                 if uri.is_base64:
                     return True
         return False
@@ -86,6 +103,17 @@ class UriHelper:
         :return: str URI
         """
         return copy.deepcopy(self.value_object.uri)
+
+    def get_data_uri(self):
+        return DataURI(self.get_uri())
+
+    def get_data(self):
+        uri = self.get_data_uri()
+        return uri.data
+
+    def save_data_uri(self, target_file):
+        with open(target_file, "wb") as image_file:
+            image_file.write(self.get_data())
 
     def is_enable_filename(self):
         """ファイル名が使用可能ならTrue
@@ -118,7 +146,9 @@ class UriHelper:
         :return: str ファイルの拡張子(ドットを含む)
         """
         if self.is_jpeg_data_uri(self.get_uri()):
-            return None
+            return '.jpg'
+        if self.is_png_data_uri(self.get_uri()):
+            return '.png'
         else:
             # TODO: URIに拡張子ない時もある
             __parse = urlparse(self.get_uri())

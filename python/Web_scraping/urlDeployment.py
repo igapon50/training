@@ -203,25 +203,21 @@ if __name__ == '__main__':  # インポート時には動かない
 
     # スクレイピングして末尾画像のナンバーから全ての画像URLを推測して展開する
     url_deployment = UrlDeployment(paste_str, SELECTORS)
+    title = url_deployment.get_title()
+    url_title = ChromeDriverHelper.fixed_file_name(paste_str)
     url_list = url_deployment.get_image_urls()
     print(url_list)
-
-    # irvineを起動して、ダウンロードする
-    irvine = IrvineHelper(url_list)
-    irvine.download()
-    fileDownloader = WebFileListHelper(url_list, folder_path)
-    for count in enumerate(fileDownloader.ext_list):
-        if fileDownloader.is_exist():
+    web_file_list = WebFileListHelper(url_list)
+    web_file_list.download_irvine()
+    for count in enumerate(WebFileHelper.ext_list):
+        if web_file_list.is_exist():
             break
         # ダウンロードに失敗しているときは、失敗しているファイルの拡張子を変えてダウンロードしなおす
-        fileDownloader.rename_url_ext_shift()
-        irvine = IrvineHelper(fileDownloader.get_only_url_of_file_not_exist())
-        irvine.download()
-    if not fileDownloader.rename_filenames():
+        web_file_list.rename_url_ext_shift()
+        web_file_list.download_irvine()
+    if not web_file_list.make_zip_file():
         sys.exit()
-    if not fileDownloader.make_zip_file():
-        sys.exit()
-    if not fileDownloader.rename_zip_file(url_deployment.get_title()):
-        if not fileDownloader.rename_zip_file(url_deployment.get_title() + '：' + url_deployment.value_object.url):
+    if not web_file_list.rename_zip_file(title):
+        if not web_file_list.rename_zip_file(f'{title}：{url_title}'):
             sys.exit()
-    fileDownloader.delete_local_files()
+    web_file_list.delete_local_files()

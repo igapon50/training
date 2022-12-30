@@ -19,10 +19,16 @@ class MyTestCase(unittest.TestCase):
             'NMEk02WcUBEVBDsEJpCxTN6T0NmqG20qwCNcBGAsYHQ/'
             's180-c/kesyou_jirai_make.png',
         ]
+        self.download_file_name = [
+            '0000.png',
+            '0001.png',
+            '0002.png',
+        ]
 
     def tearDown(self):
         print("tearDown")
         del self.image_url_list
+        del self.download_file_name
 
     def test___init___01(self):
         """引数無コンストラクタ"""
@@ -60,7 +66,7 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(IrvineHelper.list_path, test_target.value_object.list_path)
         self.assertEqual(IrvineHelperValue.exe_path, test_target.value_object.exe_path)
 
-    def test_download(self):
+    def test_download_01(self):
         """ダウンロード"""
         test_target = IrvineHelper(self.image_url_list)
         test_target.download()
@@ -68,6 +74,17 @@ class MyTestCase(unittest.TestCase):
         self.assertTrue(__test_target.is_exist())
         # 後処理
         __test_target.delete_local_files()
+        self.assertFalse(__test_target.is_exist())
+
+    def test_download_02(self):
+        """ダウンロード"""
+        test_target = IrvineHelper(self.image_url_list, None, self.download_file_name)
+        test_target.download()
+        __test_target = WebFileListHelper(self.image_url_list)
+        self.assertTrue(__test_target.is_exist())
+        # 後処理
+        __test_target.delete_local_files()
+        self.assertFalse(__test_target.is_exist())
 
 
 if __name__ == '__main__':

@@ -3,105 +3,112 @@
 """webファイルのヘルパー
 """
 import os
-import copy
-import sys
 
 # 3rd party packages
 import requests  # HTTP通信
-import pyperclip  # クリップボード
-from urllib.parse import *  # URLパーサー
-from dataclasses import dataclass
 import shutil
-from datauri import DataURI
 
-from const import *
+from uriHelper import *
 
 
 @dataclass(frozen=True)
 class WebFileHelperValue:
-    """webファイルヘルパー値オブジェクト
-    """
-    url: str = None
-    folder_path: str = os.path.join(os.path.dirname(os.path.abspath(__file__)), OUTPUT_FOLDER_PATH).replace(os.sep, '/')
+    """webファイルヘルパー値オブジェクト"""
+    url: UriHelper = None
     download_file_name: str = None
+    start_ext: str = '.jpg'
+    download_path: str = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                      'download').replace(os.sep, '/')
 
-    def __init__(self, url, folder_path=folder_path, download_file_name=None):
-        """完全コンストラクタパターン
-        :param url: str webファイルのURL
-        :param folder_path: str フォルダのフルパス(セパレータは、円マークでもスラッシュでもよい、内部ではスラッシュで持つ)
-        :param download_file_name: str URLがData URIのimage/jpeg、base64の時、ファイル名が作れないので指定する
-        """
+    def __init__(self,
+                 url: UriHelper = url,
+                 download_file_name: str = download_file_name,
+                 start_ext: str = start_ext,
+                 download_path: str = download_path,
+                 ):
+        """完全コンストラクタパターン"""
         if not url:
             raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
                              f"引数エラー:url=None")
-        if not self.is_url_only(url):
+        if not download_file_name:
             raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
-                             f"引数エラー:urlがURLではない[{url}]")
-        if self.is_jpeg_data_uri(url):
-            if download_file_name is None:
-                raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
-                                 f"引数エラー:urlがURLではない[{url}]")
-        if not folder_path:
+                             f"引数エラー:download_file_name=None")
+        if not start_ext:
             raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
-                             f"引数エラー:file_path=None")
+                             f"引数エラー:start_ext=None")
+        if not download_path:
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:download_path=None")
         object.__setattr__(self, "url", url)
-        object.__setattr__(self, "folder_path", folder_path.replace(os.sep, '/'))
         object.__setattr__(self, "download_file_name", download_file_name)
-
-    @staticmethod
-    def is_url_only(string: str) -> bool:
-        return len(urlparse(string).scheme) > 0
-
-    @staticmethod
-    def is_jpeg_data_uri(url: str) -> bool:
-        """Data URIのjpeg画像かつbase64であればTrue
-        :return: bool
-        """
-        if urlparse(url).scheme == 'data':
-            uri = DataURI(url)
-            if uri.mimetype in ['image/jpeg']:  # 'image/png']:
-                if uri.is_base64:
-                    return True
-        return False
+        object.__setattr__(self, "start_ext", start_ext)
+        object.__setattr__(self, "download_path", download_path.replace(os.sep, '/'))
 
 
 class WebFileHelper:
-    """webファイルのヘルパー
-    """
-    value_object: WebFileHelperValue = None
-    folder_path: str = WebFileHelperValue.folder_path
-    # ext_list = ['.jpg', '.png', '.jpeg', '.webp', '.svg', '.svgz', '.gif', '.tif', '.tiff', '.psd', '.bmp']
-    ext_list: list = ['.jpg', '.png', '.gif']  # これを画像とする
+    """webファイルのヘルパー"""
+    value_object: WebFileHelperValue or UriHelper or str = None
+    download_file_name: str = None
+    start_ext: str = WebFileHelperValue.start_ext
+    download_path: str = WebFileHelperValue.download_path
+
+    # ext_list: list = ['.jpg', '.png', '.jpeg', '.webp', '.svg', '.svgz', '.gif', '.tif', '.tiff', '.psd', '.bmp']
+    ext_list: list = [WebFileHelperValue.start_ext, '.png', '.gif']  # これを画像とする
     ext_dict: dict = {ext_list[0]: ext_list,
                       ext_list[1]: [ext_list[1], ext_list[0], ext_list[2]],
                       ext_list[2]: [ext_list[2], ext_list[0], ext_list[1]],
                       }
-    dst_file_name: str = None
 
-    def __init__(self, value_object=None, folder_path=folder_path, download_file_name=None):
-        """コンストラクタ
-        値オブジェクトからの復元、
+    def __init__(self,
+                 value_object: WebFileHelperValue or UriHelper or str = value_object,
+                 download_file_name: str = download_file_name,
+                 start_ext: str = start_ext,
+                 download_path: str = download_path,
+                 ):
+        """値オブジェクトからの復元、
         または、urlとfolder_pathより、値オブジェクトを作成する
-        :param value_object: list 対象となるサイトURL、または、値オブジェクト
-        :param folder_path: str フォルダのフルパス
         """
         if value_object:
             if isinstance(value_object, WebFileHelperValue):
                 value_object = copy.deepcopy(value_object)
                 self.value_object = value_object
-                self.dst_file_name = self.get_filename()
-            elif isinstance(value_object, str):
-                if folder_path:
-                    url = value_object
-                    if self.is_jpeg_data_uri(url) and download_file_name is None:
+            elif isinstance(value_object, UriHelper):
+                uri = copy.deepcopy(value_object)
+                if not download_file_name:
+                    if uri.is_enable_filename():
+                        download_file_name = uri.get_filename()
+                    else:
                         raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
                                          f"引数エラー:download_file_name=None")
+                if not start_ext:
+                    if uri.is_enable_filename():
+                        start_ext = uri.get_ext()
                     else:
-                        self.value_object = WebFileHelperValue(url, folder_path, download_file_name)
-                        self.dst_file_name = self.get_filename()
-                else:
+                        raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                                         f"引数エラー:start_ext=None")
+                if not download_path:
                     raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
-                                     f"引数エラー:folder_path=None")
+                                     f"引数エラー:download_path=None")
+                self.value_object = WebFileHelperValue(uri, download_file_name, start_ext, download_path)
+            elif isinstance(value_object, str):
+                url = value_object
+                uri = UriHelper(url)
+                if not download_file_name:
+                    if uri.is_enable_filename():
+                        download_file_name = uri.get_filename()
+                    else:
+                        raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                                         f"引数エラー:download_file_name=None")
+                if not start_ext:
+                    if uri.is_enable_filename():
+                        start_ext = uri.get_ext()
+                    else:
+                        raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                                         f"引数エラー:start_ext=None")
+                if not download_path:
+                    raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                                     f"引数エラー:download_path=None")
+                self.value_object = WebFileHelperValue(uri, download_file_name, start_ext, download_path)
             else:
                 raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
                                  f"引数エラー:value_objectの型")
@@ -161,60 +168,73 @@ class WebFileHelper:
 
     def is_exist(self):
         """ファイルがローカルに存在すればTrueを返す
+        urlでダウンロードしたファイル、変名した後のファイルをチェックする
         :return: bool
         """
-        return os.path.isfile(self.get_path())
+        if os.path.isfile(self.get_path()):
+            # 変名後のファイルがある
+            return True
+        url = self.value_object.url
+        if url.is_enable_filename():
+            file_path = os.path.join(self.download_path, url.get_filename() + url.get_ext())
+            if os.path.isfile(file_path):
+                return True
+        return False
+
+    def get_value_object(self):
+        """valueオブジェクトを得る
+        """
+        return copy.deepcopy(self.value_object)
 
     def get_url(self):
         """URLを得る
         :return: str URL
         """
-        return copy.deepcopy(self.value_object.url)
+        return copy.deepcopy(self.value_object.url.get_uri())
+
+    def get_download_path(self):
+        """ダウンロードパスを得る
+        :return: str download_path
+        """
+        return copy.deepcopy(self.value_object.download_path)
+
+    def get_download_file_name(self):
+        """ダウンロードファイル名を得る
+        :return: str download_file_name
+        """
+        return copy.deepcopy(self.value_object.download_file_name)
+
+    def get_start_ext(self):
+        """開始時の拡張子を得る
+        :return: str ファイルの拡張子(ドットを含む)
+        """
+        return copy.deepcopy(self.value_object.start_ext)
 
     def get_path(self):
-        """ファイルのフルパスを得る
+        """現在のフルパスを得る
         :return: str ファイルのフルパス(セパレータはスラッシュ)
         """
-        return copy.deepcopy(os.path.join(self.get_folder_path(),
+        return copy.deepcopy(os.path.join(self.get_download_path(),
                                           self.get_filename() + self.get_ext(),
                                           ).replace(os.sep, '/'))
 
-    def get_folder_path(self):
-        """フォルダーパスを得る
-        :return: str folder_path
-        """
-        return copy.deepcopy(self.value_object.folder_path)
-
     def get_filename(self):
-        """ファイル名を得る
+        """現在のファイル名を得る
         :return: str ファイル名(拡張子除く)
         """
-        if self.dst_file_name:
-            return copy.deepcopy(self.dst_file_name)
-        else:
-            if self.is_jpeg_data_uri(self.get_url()):
-                return copy.deepcopy(self.value_object.download_file_name)
-            else:
-                # TODO: URLにファイル名ない時があるかもしれない
-                __parse = urlparse(self.get_url())
-                __path_after_name = __parse.path[__parse.path.rfind('/') + 1:]
-                __base_name = __path_after_name[:__path_after_name.rfind('.')]
-                return copy.deepcopy(__base_name)
+        download_file_name = self.get_download_file_name()
+        if not download_file_name:
+            download_file_name = self.value_object.url.get_filename()
+        return copy.deepcopy(download_file_name)
 
     def get_ext(self):
-        """拡張子を得る
+        """現在の拡張子を得る
         :return: str ファイルの拡張子(ドットを含む)
         """
-        if self.is_jpeg_data_uri(self.get_url()):
-            return '.jpg'
-        else:
-            # TODO: URLに拡張子ない時がある
-            __parse = urlparse(self.get_url())
-            __path_after_name = __parse.path[__parse.path.rfind('/') + 1:]
-            __extend_name = __path_after_name[__path_after_name.rfind('.'):]
-            return copy.deepcopy(__extend_name)
+        start_ext = self.value_object.url.get_ext()
+        return copy.deepcopy(start_ext)
 
-    def rename_url_ext_shift(self, ext='.jpg'):
+    def rename_url_ext_shift(self):
         """urlの画像拡張子を、ext_listの次の拡張子にシフトする
         現在の拡張子はext_listの何番目か調べて、次の拡張子にurlを変更して、値オブジェクトを作り直す
         :return:
@@ -222,19 +242,23 @@ class WebFileHelper:
         if not self.is_image():
             print('画像じゃないので処理をスキップ')
         else:
-            __index = self.ext_dict[ext].index(self.get_ext())
-            __index = (__index + 1) % len(self.ext_dict[ext])
-            __ext = self.ext_dict[ext][__index]
+            __index = self.ext_dict[self.get_start_ext()].index(self.get_ext())
+            __index = (__index + 1) % len(self.ext_dict[self.get_start_ext()])
+            __ext = self.ext_dict[self.get_start_ext()][__index]
             __url = self.get_url()[::-1].replace(self.get_ext()[::-1], __ext[::-1])[::-1]
-            self.value_object = WebFileHelperValue(__url, self.get_folder_path(), self.get_filename())
+            self.value_object = WebFileHelperValue(UriHelper(__url),
+                                                   self.get_filename(),
+                                                   self.get_start_ext(),
+                                                   self.get_download_path(),
+                                                   )
 
     def download_requests(self):
         """requestsを用いて、ファイルをダウンロードする
         :return: bool 成功/失敗=True/False
         """
         # フォルダーがなければ作成する
-        if not os.path.isdir(self.get_folder_path()):
-            os.makedirs(self.get_folder_path())
+        if not os.path.isdir(self.get_download_path()):
+            os.makedirs(self.get_download_path())
         try:
             if not self.is_exist():
                 images = self.get_image_content_by_requests()
@@ -272,16 +296,21 @@ class WebFileHelper:
         :param new_file_name: str 変更する新しいファイル名
         :return: bool True/False=変更(した/しなかった)
         """
-        if not os.path.isfile(self.get_path()):
+        if not self.is_exist():
             print('ファイルがローカルにないので処理をスキップします')
             return False
         else:
-            dst_path = os.path.join(self.get_folder_path(), new_file_name + self.get_ext())
+            dst_path = os.path.join(self.get_download_path(), new_file_name + self.get_ext())
             if os.path.isfile(dst_path):
                 print(f'リネームファイル[{dst_path}]が存在しています')
                 return False
             os.rename(self.get_path(), dst_path)
-            self.dst_file_name = new_file_name
+            self.download_file_name = new_file_name
+            self.value_object = WebFileHelperValue(UriHelper(self.get_url()),
+                                                   self.get_filename(),
+                                                   self.get_start_ext(),
+                                                   self.get_download_path(),
+                                                   )
         return True
 
     def delete_local_file(self):
@@ -290,9 +319,14 @@ class WebFileHelper:
         """
         if os.path.isfile(self.get_path()):
             os.remove(self.get_path())
+        url = self.value_object.url
+        if url.is_enable_filename():
+            file_path = os.path.join(self.download_path, url.get_filename() + url.get_ext())
+            if os.path.isfile(file_path):
+                os.remove(file_path)
 
     def move(self, new_path):
-        """ファイルを移動する(get_folder_path()は変わらない)
+        """ファイルを移動する(get_download_path()は変わらない)
         :param new_path: 移動先のフォルダーパス
         :return:
         """
