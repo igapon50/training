@@ -98,7 +98,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_get_ext_02(self):
         test_target = UriHelper(self.data_uri)
-        self.assertEqual(test_target.get_ext(), None)
+        self.assertEqual(test_target.get_ext(), '.jpg')
 
 
 if __name__ == '__main__':

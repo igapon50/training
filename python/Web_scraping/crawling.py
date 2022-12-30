@@ -10,7 +10,6 @@ import subprocess
 import json
 from chromeDriverHelper import *
 from webFileListHelper import *
-from downloading import *
 
 
 @dataclass(frozen=True)

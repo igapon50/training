@@ -199,17 +199,9 @@ class WebFileListHelper:
         """selenium chromeDriverを用いて、画像をデフォルトダウンロードフォルダにダウンロードして、指定のフォルダに移動する
         :return:
         """
-        __driver = ChromeDriverHelper()
-        for __url in self.get_url_list():
-            __driver.download_image(__url)
-        downloads_path = os.path.join(os.getenv("HOMEDRIVE"), os.getenv("HOMEPATH"), "downloads")
-        __web_file_list = WebFileListHelper(self.get_url_list(),
-                                            self.start_ext,
-                                            downloads_path,
-                                            self.work_path,
-                                            self.archive_path,
-                                            )
-        __web_file_list.move(self.get_download_path_from_1st_element())
+        chromedriver = ChromeDriverHelper()
+        for url, web_file in zip(self.get_url_list(), self.get_web_file_list()):
+            chromedriver.download_image(url, web_file.get_path())
 
     def rename_url_ext_shift(self):
         """ファイルリストの各ファイルについて、ローカルに存在しないファイルの拡張子をシフトし、ファイルリストを更新する

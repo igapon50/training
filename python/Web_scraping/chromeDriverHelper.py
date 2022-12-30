@@ -29,6 +29,7 @@ https://note.nkmk.me/python/
 https://maku77.github.io/python/
 https://nikkie-ftnext.hatenablog.com/entry/value-object-python-dataclass
 https://blog.wotakky.net/2018/08/12/post-4829/
+https://www.zacoding.com/post/selenium-custom-wait/
 参考リファレンス
 https://selenium-python.readthedocs.io/
 https://www.seleniumqref.com/api/webdriver_gyaku.html
@@ -53,6 +54,8 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 from webdriver_manager.chrome import ChromeDriverManager
 from dataclasses import dataclass
@@ -113,6 +116,7 @@ class ChromeDriverHelper:
                                       'download').replace(os.sep, '/')
 
     __driver = None
+    __wait = None
     __source = None
     __start_window_handle = None
     __window_handle_list = []
@@ -425,6 +429,9 @@ class ChromeDriverHelper:
         :return: なし
         """
         self.__driver.get(url)
+        # ページが読み込まれるまで待機
+        self.__wait = WebDriverWait(self.__driver, 30)
+        self.__wait.until(EC.presence_of_all_elements_located)
 
     def open_new_tab(self, url):
         """(画面遷移有)新しいタブでurlを開く
