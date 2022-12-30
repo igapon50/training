@@ -3,7 +3,7 @@
 """
 ダウンロードユーティリティ
     * URLリストと、保存フォルダを指定して、ダウンロードする
-        * URLリストのファイルをダウンロードする
+        * 保存フォルダにURLリストのファイルをダウンロードする
         * ダウンロードしたファイルの名前を、ナンバリングした名前に付けなおす
         * 保存フォルダを圧縮する
         * 保存フォルダ内のファイルを削除する
@@ -11,11 +11,11 @@
 # standard library
 import sys  # 終了時のエラー有無
 import re  # 正規表現モジュール
-import zipfile  # zipファイル
 import os  # ファイルパス分解
 import shutil  # 高水準のファイル操作
 from urllib.parse import urlparse  # URLパーサー
 from urllib.parse import urljoin  # URL結合
+import datetime
 
 # 3rd party packages
 import requests  # HTTP通信
@@ -49,7 +49,7 @@ class DownloadingValue:
         :param image_list: list ダウンロードするURLのリスト
         :param save_path: str ダウンロード後に保存するフォルダパス
         """
-        if 0 < len(image_list):
+        if image_list:
             object.__setattr__(self, "image_list", image_list)
         if save_path is not None:
             object.__setattr__(self, "save_path", save_path)
@@ -103,47 +103,20 @@ class Downloading:
         """
         return copy.deepcopy(self.value_object)
 
-    def get_image_list(self):
-        """
-        画像URLリストを取得する
-
-        :return: list 画像URLリスト
-        """
-        return copy.deepcopy(self.value_object.image_list)
-
-    def get_src_file_list(self):
-        """
-        リネーム前の、保存ファイルパスリストを取得する
-
-        :return: list ダウンロードファイルパスリスト
-        """
-        return copy.deepcopy(self.src_file_list)
-
-    def get_dst_file_list(self):
-        """
-        リネーム後の、保存ファイルパスリストを取得する
-
-        :return: list リネームファイルパスリスト
-        """
-        return copy.deepcopy(self.dst_file_list)
-
-    def get_dic_file_list(self):
-        """
-        リネームファイルパス辞書を取得する
-
-        :return: dict リネームファイルパス辞書
-        """
-        return copy.deepcopy(self.rename_file_dic)
-
     def initialize(self):
         """
         初期化
-            * 画像URLリストと保存ファイルパスから、保存ファイルパスリストを作る
-            * 辞書も作る
-            * フォルダがなければフォルダも作る
+            * Input：
+            *   画像URLリスト(image_list)
+            *   保存ファイルパス(save_path)
+            * Output：
+            *   保存ファイルパスリスト(src_file_list)
+            *   辞書(rename_file_dic)
 
         :return: None
         """
+        self.src_file_list = []
+        self.rename_file_dic = {}
         dst_file_namelist = []
         for image_url in self.image_list:
             temp_img_filename = image_url.rsplit('/', 1)[1].replace('?', '_')  # 禁則文字の変換
@@ -203,100 +176,3 @@ class Downloading:
             e = Exception("Content-Type: " + content_type)  # + " " + file_url + " " + response.url)
             raise e
         return response.content
-
-    def rename_images(self):
-        """
-        指定したファイルパスリストから、ファイル名部分をナンバリングし直したファイルパスリストを作る
-
-        :return: bool 成功/失敗=True/False
-        """
-        # ファイルの存在確認
-        for src_file_path in self.src_file_list:
-            if not os.path.isfile(src_file_path):
-                print('ファイル[' + src_file_path + ']が存在しません。')
-                print(msg_error_exit)
-                return False
-        count = 0
-        for src_file_path in self.src_file_list:
-            print(src_file_path)
-            count += 1
-            root, ext = os.path.splitext(src_file_path)
-            path, file = os.path.split(src_file_path)
-            dst_img_path = path + '\\' + '{:03d}'.format(count) + ext
-            print(dst_img_path)
-            self.dst_file_list.append(dst_img_path)
-            os.rename(src_file_path, dst_img_path)
-        return True
-
-    def make_zip_file(self):
-        """
-        リネーム後のダウンロードファイルを、一つの圧縮ファイルにする
-
-        :return: None
-        """
-        with zipfile.ZipFile(self.save_path + '.zip', 'w', zipfile.ZIP_DEFLATED) as zip_file:
-            for img_path in self.dst_file_list:
-                zip_file.write(img_path)
-
-    def download_file_clear(self):
-        """
-        保存フォルダからダウンロードファイルを削除する
-
-        :return: None
-        """
-        print('ファイル削除します(フォルダごと削除して、フォルダを作り直します)')
-        shutil.rmtree(self.save_path)
-        if self.save_path[len(self.save_path) - 1] == '\\':
-            os.mkdir(self.save_path)
-        else:
-            os.mkdir(self.save_path + '\\')
-
-    def rename_zip_file(self, title):
-        """
-        圧縮ファイルの名前を付けなおす
-
-        :param title: str 付け直すファイル名(禁則文字は削除される)
-        :return: None
-        """
-        # 禁則文字を削除する
-        zip_file_new_name = '.\\' + re.sub(r'[\\/:*?"<>|]+', '', title)
-        print(f'圧縮ファイル名を付け直します:{zip_file_new_name}.zip')
-        os.rename(self.save_path + '.zip', zip_file_new_name + '.zip')
-
-
-# 検証コード
-if __name__ == '__main__':  # インポート時には動かない
-    imglist_filepath = RESULT_FILE_PATH
-    target_url = DEFAULT_TARGET_URL
-    folder_path = OUTPUT_FOLDER_PATH
-    # 引数チェック
-    if 2 == len(sys.argv):
-        # Pythonに以下の2つ引数を渡す想定
-        # 0は固定でスクリプト名
-        # 1.対象のURL
-        target_url = sys.argv[1]
-    elif 1 == len(sys.argv):
-        # 引数がなければ、クリップボードからURLを得る
-        paste_str = pyperclip.paste()
-        if 0 < len(paste_str):
-            parse = urlparse(paste_str)
-            if 0 < len(parse.scheme):
-                target_url = paste_str
-    # クリップボードが空なら、デフォルトURLを用いる
-    else:
-        print('引数が不正です。')
-        print(msg_error_exit)
-        sys.exit()
-    print(target_url)
-
-    # テスト　若者 | かわいいフリー素材集 いらすとや
-    image_url_list = [
-        'https://1.bp.blogspot.com/-tzoOQwlaRac/X1LskKZtKEI/AAAAAAABa_M/89phuGIVDkYGY_uNKvFB6ZiNHxR7bQYcgCNcBGAsYHQ/s180-c/fashion_dekora.png',
-        'https://1.bp.blogspot.com/-gTf4sWnRdDw/X0B4RSQQLrI/AAAAAAABarI/MJ9DW90dSVwtMjuUoErxemnN4nPXBnXUwCNcBGAsYHQ/s180-c/otaku_girl_fashion.png',
-    ]
-    fileDownloader = Downloading(image_url_list, folder_path)
-    fileDownloader.download()
-    fileDownloader.rename_images()
-    fileDownloader.make_zip_file()
-    fileDownloader.rename_zip_file('若者 | かわいいフリー素材集 いらすとや')
-    fileDownloader.download_file_clear()

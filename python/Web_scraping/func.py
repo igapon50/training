@@ -136,3 +136,42 @@ def downloadfileclear(save_path):
         os.mkdir(save_path)
     else:
         os.mkdir(save_path + '\\')
+
+
+def rename_type0(pattern1, pattern2=None):
+    """「*特定の文字列*.zip」　→　「**.zip」
+    pattern1 = '.*\s*検索文字列$', pattern2 = '\s*削除文字列$'
+    pattern1 = '^\[削除文字列\]'
+
+    :param pattern1:
+    :param pattern2:
+    :return:
+    """
+    # path_list = glob.glob(os.path.join('./', '(*) *.*'))
+    path_list = glob.glob('C:/Users/igapon/Downloads/folder01/other/*.zip')
+    for index, path in enumerate(path_list):
+        directory, file_and_ext = os.path.split(path)
+        file, ext = os.path.splitext(file_and_ext)
+        if re.match(pattern1, file):
+            if pattern2:
+                new_file = re.sub(pattern2, '', file)
+            else:
+                new_file = re.sub(pattern1, '', file)
+            new_file_name = new_file + ext
+            print(index, new_file)
+            new_path = os.path.join(directory, new_file_name)
+            if os.path.exists(new_path):
+                print(f'リネームするファイル「{new_path}」が存在しています。スキップします。')
+                continue
+            os.rename(path, new_path)
+
+
+# 「(*1) [*2] *.zip」　→　「[*2」 *.zip」
+# rename_type0('^\(.*?\)\s\[.*?\].*', '^\(.*?\)\s')
+# 「[*1][*2] *.zip」　→　「[*2」 *.zip」
+# rename_type0('^\[.*?\]\[.*?\].*', '^\[.*?\]')
+# 「[*1](*2) [*3] *.zip」　→　「[*3」 *.zip」
+# rename_type0('^\[.*?\]\(.*?\)\s\[.*?\].*', '^\[.*?\]\(.*?\)\s')
+# 「['*'].zip」　→　「*.zip」
+# rename_type0('^\[\'.*\'\]$', '\'\]$')
+# rename_type0('^\[\'.*\'\]$', '^\[\'')

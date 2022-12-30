@@ -1,0 +1,16 @@
+/*
+スクリプト初期化データ
+guid={3FD7CA4D-BB58-4E4E-B1EF-E66AA72E9685}
+caption=全て終了時にIrvineを終了
+version=0
+hint=
+event=OnDeactivateQueue
+match=
+author=
+synchronize=0
+*/
+
+function OnDeactivateQueue(irvine){
+//すべてのダウンロード終了イベント
+irvine.ExecuteAction('actFileClose');
+}
