@@ -11,7 +11,6 @@
 # standard library
 import sys  # 終了時のエラー有無
 import re  # 正規表現モジュール
-import zipfile  # zipファイル
 import os  # ファイルパス分解
 import shutil  # 高水準のファイル操作
 from urllib.parse import urlparse  # URLパーサー
@@ -50,7 +49,7 @@ class DownloadingValue:
         :param image_list: list ダウンロードするURLのリスト
         :param save_path: str ダウンロード後に保存するフォルダパス
         """
-        if 0 < len(image_list):
+        if image_list:
             object.__setattr__(self, "image_list", image_list)
         if save_path is not None:
             object.__setattr__(self, "save_path", save_path)
@@ -103,38 +102,6 @@ class Downloading:
         :return: ScrapingValue 値オブジェクト
         """
         return copy.deepcopy(self.value_object)
-
-    def get_image_list(self):
-        """
-        画像URLリストを取得する
-
-        :return: list 画像URLリスト
-        """
-        return copy.deepcopy(self.value_object.image_list)
-
-    def get_src_file_list(self):
-        """
-        リネーム前の、保存ファイルパスリストを取得する
-
-        :return: list ダウンロードファイルパスリスト
-        """
-        return copy.deepcopy(self.src_file_list)
-
-    def get_dst_file_list(self):
-        """
-        リネーム後の、保存ファイルパスリストを取得する
-
-        :return: list リネームファイルパスリスト
-        """
-        return copy.deepcopy(self.dst_file_list)
-
-    def get_dic_file_list(self):
-        """
-        リネームファイルパス辞書を取得する
-
-        :return: dict リネームファイルパス辞書
-        """
-        return copy.deepcopy(self.rename_file_dic)
 
     def initialize(self):
         """
@@ -209,184 +176,3 @@ class Downloading:
             e = Exception("Content-Type: " + content_type)  # + " " + file_url + " " + response.url)
             raise e
         return response.content
-
-    def is_src_exist(self):
-        """
-        ローカルにファイルが全て存在するか調べる
-        :return: bool 存在する/存在しない=True/False
-        """
-        for img_path in self.src_file_list:
-            if not os.path.isfile(img_path):
-                print('ファイル[' + img_path + ']が存在しません。')
-                print(msg_error_exit)
-                return False
-        return True
-
-    def is_dst_exist(self):
-        """
-        ローカルにファイルが全て存在するか調べる
-        :return: bool 存在する/存在しない=True/False
-        """
-        for img_path in self.dst_file_list:
-            if not os.path.isfile(img_path):
-                print('ファイル[' + img_path + ']が存在しません。')
-                print(msg_error_exit)
-                return False
-        return True
-
-    def rename_images(self):
-        """
-        指定したファイルパスリストから、ファイル名部分をナンバリングし直したファイルパスリストを作る
-        9999ファイルまで対応
-
-        :return: bool 成功/失敗=True/False
-        """
-        # ファイルの存在確認
-        if not self.is_src_exist():
-            return False
-        count = 0
-        for src_file_path in self.src_file_list:
-            print(src_file_path)
-            count += 1
-            root, ext = os.path.splitext(src_file_path)
-            path, file = os.path.split(src_file_path)
-            dst_img_path = path + '\\' + '{:04d}'.format(count) + ext
-            print(dst_img_path)
-            self.dst_file_list.append(dst_img_path)
-            if dst_img_path != src_file_path:
-                if os.path.isfile(dst_img_path):
-                    print(f'リネームファイル{dst_img_path}が存在しています')
-                    return False
-                os.rename(src_file_path, dst_img_path)
-        return True
-
-    def rename_ext(self, ext='.png'):
-        """
-        ダウンロードできていないファイルの拡張子をまとめて変更する
-        :param ext: str 変更する拡張子 
-        :return:
-        """
-        for i, image_url in enumerate(self.image_list):
-            if not os.path.isfile(self.rename_file_dic[image_url]):
-                parse_path = urlparse(image_url)
-                image_url = urljoin(parse_path.scheme, image_url)
-                root, _ = os.path.splitext(os.path.basename(self.rename_file_dic[image_url]))
-                self.image_list[i] = urljoin(image_url, root + ext)
-        self.initialize()
-
-    def rename_ext_shift(self):
-        """
-        ダウンロードできていないファイルの拡張子を変更する
-        :return:
-        """
-        for i, image_url in enumerate(self.image_list):
-            if not os.path.isfile(self.rename_file_dic[image_url]):
-                _, ext = os.path.splitext(self.rename_file_dic[image_url])
-                if ext == '.jpg':
-                    ext = '.png'
-                elif ext == '.png':
-                    ext = '.jpg'
-                else:
-                    print(f'対象外の拡張子です:{ext}')
-                    exit()
-                parse_path = urlparse(image_url)
-                image_url = urljoin(parse_path.scheme, image_url)
-                root, _ = os.path.splitext(os.path.basename(self.rename_file_dic[image_url]))
-                self.image_list[i] = urljoin(image_url, root + ext)
-        self.initialize()
-
-    def make_zip_file(self):
-        """
-        リネーム後のダウンロードファイルを、一つの圧縮ファイルにする
-        圧縮ファイルが既に存在する場合は変名してから圧縮する
-        :return: bool 成功/失敗=True/False
-        """
-        if not self.is_dst_exist():
-            return False
-        if os.path.isfile(self.save_path + '.zip'):
-            now_str = datetime.datetime.now().strftime('_%Y%m%d_%H%M%S')
-            os.rename(self.save_path + '.zip', self.save_path + f'{now_str}.zip')
-            print(f'圧縮ファイル{self.save_path}.zipが既に存在したので{self.save_path}{now_str}.zipに変名しました')
-        with zipfile.ZipFile(self.save_path + '.zip', 'w', zipfile.ZIP_DEFLATED) as zip_file:
-            for img_path in self.dst_file_list:
-                zip_file.write(img_path)
-        return True
-
-    def download_file_clear(self):
-        """
-        保存フォルダからダウンロードファイルを削除する
-
-        :return: None
-        """
-        print('ファイル削除します(フォルダごと削除して、フォルダを作り直します)')
-        shutil.rmtree(self.save_path)
-        if self.save_path[len(self.save_path) - 1] == '\\':
-            os.mkdir(self.save_path)
-        else:
-            os.mkdir(self.save_path + '\\')
-
-    def rename_zip_file(self, title):
-        """
-        圧縮ファイルの名前を付けなおす
-
-        :param title: str 付け直すファイル名(禁則文字は削除される)
-        :return: bool 成功/失敗=True/False
-        """
-        # 禁則文字を削除する
-        zip_file_new_name = '.\\' + re.sub(r'[\\/:*?"<>|]+', '', title)
-        print(f'圧縮ファイル名を付け直します:{zip_file_new_name}.zip')
-        if os.path.isfile(zip_file_new_name + '.zip'):
-            print(f'圧縮リネームファイル{zip_file_new_name}.zipが既に存在しています')
-            return False
-        os.rename(self.save_path + '.zip', zip_file_new_name + '.zip')
-        return True
-
-
-# 検証コード
-if __name__ == '__main__':  # インポート時には動かない
-    imglist_filepath = RESULT_FILE_PATH
-    target_url = DEFAULT_TARGET_URL
-    folder_path = OUTPUT_FOLDER_PATH
-    # 引数チェック
-    if 2 == len(sys.argv):
-        # Pythonに以下の2つ引数を渡す想定
-        # 0は固定でスクリプト名
-        # 1.対象のURL
-        target_url = sys.argv[1]
-    elif 1 == len(sys.argv):
-        # 引数がなければ、クリップボードを見る
-        paste_str = pyperclip.paste()
-        if 0 < len(paste_str):
-            # URLかチェックする
-            parse = urlparse(paste_str)
-            if 0 < len(parse.scheme):
-                target_url = paste_str
-    # クリップボードが空なら、デフォルトURLを用いる
-    else:
-        print('引数が不正です。')
-        print(msg_error_exit)
-        sys.exit()
-    print(target_url)
-
-    # テスト　若者 | かわいいフリー素材集 いらすとや
-    image_url_list = [
-        'https://1.bp.blogspot.com/-tzoOQwlaRac/X1LskKZtKEI/AAAAAAABa_M/89phuGIVDkYGY_uNKvFB6ZiNHxR7bQYcgCNcBGAsYHQ/'
-        's180-c/fashion_dekora.png',
-        'https://1.bp.blogspot.com/-gTf4sWnRdDw/X0B4RSQQLrI/AAAAAAABarI/MJ9DW90dSVwtMjuUoErxemnN4nPXBnXUwCNcBGAsYHQ/'
-        's180-c/otaku_girl_fashion.png',
-    ]
-    fileDownloader = Downloading(image_url_list, folder_path)
-    ret = fileDownloader.download()
-    if not ret:
-        sys.exit()
-    ret = fileDownloader.rename_images()
-    if not ret:
-        sys.exit()
-    ret = fileDownloader.make_zip_file()
-    if not ret:
-        sys.exit()
-    fileDownloader.rename_zip_file('若者 | かわいいフリー素材集 いらすとや')
-    fileDownloader.download_file_clear()
-    # 拡張子をjpgに変更する
-    fileDownloader.rename_ext('.jpg')
-    print(fileDownloader.image_list)
