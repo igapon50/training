@@ -72,6 +72,14 @@ class Scraping:
         """値オブジェクトを取得する"""
         return copy.deepcopy(self.value_object)
 
+    def scraping_chrome_driver(self):
+        """ TODO: ChromeDriverHelperから、dictでスクレイピング結果を受け取りたい
+        :return:
+        """
+        __value_object = self.get_value_object()
+        __chrome_driver = ChromeDriverHelper(__value_object.site_url, __value_object.selectors)
+        return {'title': __chrome_driver.get_title(), 'last_image_url': __chrome_driver.get_last_image_url()}
+
     def create_save_text(self):
         """保存用文字列の作成
         :return: str 保存用文字列の作成
