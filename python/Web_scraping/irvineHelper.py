@@ -15,6 +15,13 @@
     - [オプション設定]-[イベント]-[OnDeactivateQueue]に新規作成で以下のスクリプトを書き込む
     - [全て終了時にIrvineを終了]をチェックする
 
+## list_pathのファイルフォーマット
+- タブ区切りフォーマット
+    - URL
+    - 保存フォルダ
+    - 別名で保存
+    - 以降不明(17フィールド)
+
 doneclose.dms:
 ```
 /*
@@ -52,7 +59,9 @@ irvine.ExecuteAction('actFileClose');
 # standard library
 import sys  # 終了時のエラー有無
 import os  # ファイルパス分解
+import copy
 import subprocess
+from itertools import zip_longest
 
 # 3rd party packages
 from dataclasses import dataclass
@@ -65,64 +74,76 @@ sys.setrecursionlimit(10000)
 
 @dataclass(frozen=True)
 class IrvineHelperValue:
-    """
-    Irvineのヘルパーオブジェクト
-    """
+    """Irvineのヘルパーオブジェクト"""
     exe_path: str = r'c:\Program1\irvine1_3_0\irvine.exe'.replace(os.sep, '/')
     list_path: str = r'./irvine_download_list.txt'
 
-    def __init__(self, list_path=list_path, exe_path=exe_path):
-        """
-        完全コンストラクタパターン
-        :param list_path: str Irvineでダウンロードするファイルリストのファイルパス
+    def __init__(self, exe_path=exe_path, list_path=list_path):
+        """完全コンストラクタパターン
         :param exe_path: str Irvine.exeのパス
+        :param list_path: str Irvineでダウンロードするファイルリストのファイルパス
         """
-        if list_path:
-            object.__setattr__(self, "list_path", list_path)
+        if not exe_path or not os.path.isfile(exe_path):
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:exe_path=[{exe_path}]")
+        if not list_path or not os.path.isfile(list_path):
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:list_path=[{list_path}]")
         if exe_path:
             object.__setattr__(self, "exe_path", exe_path.replace(os.sep, '/'))
+        if list_path:
+            object.__setattr__(self, "list_path", list_path)
 
 
 class IrvineHelper:
-    """
-    Irvineのヘルパー
-    """
+    """Irvineのヘルパー"""
+    value_object: IrvineHelperValue or list = None
+    download_path: str = None
+    download_file_name_list: list = ['']
+    exe_path: str = IrvineHelperValue.exe_path
     list_path: str = IrvineHelperValue.list_path
-    value_object: IrvineHelperValue = None
     running: bool = False
 
-    def __init__(self, value_object=list_path, exe_path=None):
-        """
-        コンストラクタ
+    def __init__(self,
+                 value_object: IrvineHelperValue or list = value_object,
+                 download_path: str = download_path,
+                 download_file_name_list: list = None,
+                 exe_path: str = exe_path,
+                 list_path: str = list_path,
+                 ):
+        """コンストラクタ
         :param value_object:
             IrvineHelperValue 値オブジェクト
-            または、str IrvineでダウンロードするURLリストが列挙されたファイルへのパス
             または、list IrvineでダウンロードするURLリスト
+        :param download_path: str ダウンロードするフォルダパス
+        :param download_file_name_list: list 保存するファイル名リスト
         :param exe_path: str Irvine.exeのパス
+        :param list_path: str IrvineでダウンロードするURLリストが列挙されたファイルへのパス
         """
+        if download_file_name_list is None:
+            download_file_name_list = self.download_file_name_list
         if isinstance(value_object, IrvineHelperValue):
+            value_object = copy.deepcopy(value_object)
             self.value_object = value_object
-        elif isinstance(value_object, str):
-            if exe_path:
-                self.value_object = IrvineHelperValue(value_object, exe_path.replace(os.sep, '/'))
-            else:
-                self.value_object = IrvineHelperValue(value_object)
         elif isinstance(value_object, list):
-            with open(self.list_path, 'w', encoding='utf-8') as work_file:
+            value_object = copy.deepcopy(value_object)
+            download_file_name_list = copy.deepcopy(download_file_name_list)
+            with open(list_path, 'w', encoding='utf-8') as work_file:
                 buff = ''
-                for absolute_path in value_object:
-                    buff += absolute_path + '\n'
+                for absolute_path, file_name in zip_longest(value_object, download_file_name_list):
+                    buff += absolute_path + '\t'
+                    if download_path:
+                        buff += download_path
+                    buff += '\t'
+                    if file_name:
+                        buff += file_name
+                    buff += '\t' * 17
+                    buff += '\n'
                 work_file.write(buff)
-            if exe_path:
-                self.value_object = IrvineHelperValue(self.list_path, exe_path.replace(os.sep, '/'))
-            else:
-                self.value_object = IrvineHelperValue(self.list_path)
+            self.value_object = IrvineHelperValue(exe_path, list_path)
         else:
-            raise ValueError(f"{self.__class__}引数エラー:value_object=[{self.value_object}]")
-        if not os.path.isfile(self.value_object.exe_path):
-            raise ValueError(f"{self.__class__}引数エラー:exe_path=[{self.value_object.exe_path}]")
-        if not os.path.isfile(self.value_object.list_path):
-            raise ValueError(f"{self.__class__}引数エラー:list_path=[{self.value_object.list_path}]")
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:value_object=[{self.value_object}]")
 
     def download(self):
         """
@@ -136,19 +157,3 @@ class IrvineHelper:
         self.running = True
         proc.wait()
         self.running = False
-
-
-if __name__ == '__main__':  # インポート時には動かない
-    # テスト　若者 | かわいいフリー素材集 いらすとや
-    image_url_list = [
-        'https://1.bp.blogspot.com/-tzoOQwlaRac/X1LskKZtKEI/AAAAAAABa_M/89phuGIVDkYGY_uNKvFB6ZiNHxR7bQYcgCNcBGAsYHQ/'
-        's180-c/fashion_dekora.png',
-        'https://1.bp.blogspot.com/-gTf4sWnRdDw/X0B4RSQQLrI/AAAAAAABarI/MJ9DW90dSVwtMjuUoErxemnN4nPXBnXUwCNcBGAsYHQ/'
-        's180-c/otaku_girl_fashion.png',
-    ]
-    irvine = IrvineHelper(image_url_list)
-    irvine.download()
-    print(irvine.list_path)
-    print(irvine.running)
-    print(irvine.value_object.list_path)
-    print(irvine.value_object.exe_path)

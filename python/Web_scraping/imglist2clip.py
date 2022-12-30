@@ -6,7 +6,7 @@ imglistファイルを読み込んでクリップボードにコピーする
 # local source
 from const import *
 from func import *
-from scraping import *
+from scraping_requests import *
 
 if __name__ == '__main__':  # インポート時には動かない
     imglist_filepath = RESULT_FILE_PATH
@@ -31,12 +31,12 @@ if __name__ == '__main__':  # インポート時には動かない
     print(imglist_filepath)
 
     # ファイルのURLリストを作成
-    scraping = Scraping()
-    if not scraping:
+    scraping_requests = ScrapingRequests()
+    if not scraping_requests:
         print(msg_error_exit)
-        sys.exit(scraping)
-    scraping.load_text(RESULT_FILE_PATH + '1.txt')
-    scraping.clip_copy()
+        sys.exit(scraping_requests)
+    scraping_requests.load_text(RESULT_FILE_PATH + '1.txt')
+    scraping_requests.clip_copy()
 
     # ファイルのダウンロード
     print('タイトルとURLリストをクリップボードにコピーしました。')

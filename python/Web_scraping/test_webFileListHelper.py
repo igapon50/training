@@ -42,8 +42,12 @@ class MyTestCase(unittest.TestCase):
         test_target = WebFileListHelper(self.image_url_list)
         self.assertTrue(isinstance(test_target, WebFileListHelper))
         self.assertTrue(isinstance(test_target.value_object, WebFileListHelperValue))
+        self.assertEqual(WebFileListHelper.value_object, None)
         self.assertNotEqual(WebFileListHelper.value_object, test_target.value_object)
-        self.assertEqual(WebFileListHelper.folder_path, test_target.folder_path)
+        self.assertNotEqual(WebFileListHelper.download_path, None)
+        self.assertEqual(WebFileListHelper.download_path, test_target.download_path)
+        self.assertNotEqual(WebFileListHelper.start_ext, None)
+        self.assertEqual(WebFileListHelper.start_ext, test_target.start_ext)
 
     def test___init___04(self):
         """引数有コンストラクタ"""
@@ -52,7 +56,7 @@ class MyTestCase(unittest.TestCase):
         self.assertTrue(isinstance(test_target, WebFileListHelper))
         self.assertTrue(isinstance(test_target.value_object, WebFileListHelperValue))
         self.assertNotEqual(WebFileListHelper.value_object, test_target.value_object)
-        self.assertEqual(WebFileListHelper.folder_path, test_target.folder_path)
+        self.assertEqual(WebFileListHelper.download_path, test_target.download_path)
 
     def test_get_web_file_list(self):
         """ファイルリストを得る"""
@@ -64,6 +68,33 @@ class MyTestCase(unittest.TestCase):
     def test_is_exist(self):
         """対象URLのファイルはローカルに存在する"""
         test_target = WebFileListHelper(self.image_url_list)
+        self.assertFalse(test_target.is_exist())
+
+    def test_download_requests(self):
+        """対象URLリストのファイルをrequestsでダウンロードする"""
+        test_target = WebFileListHelper(self.image_url_list)
+        test_target.download_requests()
+        self.assertTrue(test_target.is_exist())
+        # 後処理
+        test_target.delete_local_files()
+        self.assertFalse(test_target.is_exist())
+
+    def test_download_irvine(self):
+        """対象URLリストのファイルをirvineでダウンロードする"""
+        test_target = WebFileListHelper(self.image_url_list)
+        test_target.download_irvine()
+        self.assertTrue(test_target.is_exist())
+        # 後処理
+        test_target.delete_local_files()
+        self.assertFalse(test_target.is_exist())
+
+    def test_download_chrome_driver(self):
+        """対象URLリストのファイルをchromeDriverでダウンロードする"""
+        test_target = WebFileListHelper(self.image_url_list)
+        test_target.download_chrome_driver()
+        self.assertTrue(test_target.is_exist())
+        # 後処理
+        test_target.delete_local_files()
         self.assertFalse(test_target.is_exist())
 
 
