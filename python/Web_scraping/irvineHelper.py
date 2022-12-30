@@ -52,6 +52,7 @@ irvine.ExecuteAction('actFileClose');
 # standard library
 import sys  # 終了時のエラー有無
 import os  # ファイルパス分解
+import copy
 import subprocess
 
 # 3rd party packages
@@ -101,6 +102,7 @@ class IrvineHelper:
         :param exe_path: str Irvine.exeのパス
         """
         if isinstance(value_object, IrvineHelperValue):
+            value_object = copy.deepcopy(value_object)
             self.value_object = value_object
         elif isinstance(value_object, str):
             if exe_path:
@@ -108,6 +110,7 @@ class IrvineHelper:
             else:
                 self.value_object = IrvineHelperValue(value_object)
         elif isinstance(value_object, list):
+            value_object = copy.deepcopy(value_object)
             with open(self.list_path, 'w', encoding='utf-8') as work_file:
                 buff = ''
                 for absolute_path in value_object:
@@ -118,11 +121,14 @@ class IrvineHelper:
             else:
                 self.value_object = IrvineHelperValue(self.list_path)
         else:
-            raise ValueError(f"{self.__class__}引数エラー:value_object=[{self.value_object}]")
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:value_object=[{self.value_object}]")
         if not os.path.isfile(self.value_object.exe_path):
-            raise ValueError(f"{self.__class__}引数エラー:exe_path=[{self.value_object.exe_path}]")
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:exe_path=[{self.value_object.exe_path}]")
         if not os.path.isfile(self.value_object.list_path):
-            raise ValueError(f"{self.__class__}引数エラー:list_path=[{self.value_object.list_path}]")
+            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                             f"引数エラー:list_path=[{self.value_object.list_path}]")
 
     def download(self):
         """
@@ -136,19 +142,3 @@ class IrvineHelper:
         self.running = True
         proc.wait()
         self.running = False
-
-
-if __name__ == '__main__':  # インポート時には動かない
-    # テスト　若者 | かわいいフリー素材集 いらすとや
-    image_url_list = [
-        'https://1.bp.blogspot.com/-tzoOQwlaRac/X1LskKZtKEI/AAAAAAABa_M/89phuGIVDkYGY_uNKvFB6ZiNHxR7bQYcgCNcBGAsYHQ/'
-        's180-c/fashion_dekora.png',
-        'https://1.bp.blogspot.com/-gTf4sWnRdDw/X0B4RSQQLrI/AAAAAAABarI/MJ9DW90dSVwtMjuUoErxemnN4nPXBnXUwCNcBGAsYHQ/'
-        's180-c/otaku_girl_fashion.png',
-    ]
-    irvine = IrvineHelper(image_url_list)
-    irvine.download()
-    print(irvine.list_path)
-    print(irvine.running)
-    print(irvine.value_object.list_path)
-    print(irvine.value_object.exe_path)

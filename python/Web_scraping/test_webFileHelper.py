@@ -41,7 +41,7 @@ class MyTestCase(unittest.TestCase):
         """引数有コンストラクタ"""
         test_target = WebFileHelper(self.image_url)
         self.assertTrue(isinstance(test_target, WebFileHelper))
-        self.assertNotEqual(WebFileHelper.dst_filename, test_target.dst_filename)
+        self.assertNotEqual(WebFileHelper.dst_file_name, test_target.dst_file_name)
         self.assertEqual(WebFileHelper.ext_list, test_target.ext_list)
         self.assertNotEqual(WebFileHelper.value_object, test_target.value_object)
         self.assertEqual(WebFileHelper.folder_path, test_target.folder_path)
@@ -53,7 +53,7 @@ class MyTestCase(unittest.TestCase):
         __web_file_helper = WebFileHelper(self.image_url)
         test_target = WebFileHelper(__web_file_helper.value_object)
         self.assertTrue(isinstance(test_target, WebFileHelper))
-        self.assertNotEqual(WebFileHelper.dst_filename, test_target.dst_filename)
+        self.assertNotEqual(WebFileHelper.dst_file_name, test_target.dst_file_name)
         self.assertEqual(WebFileHelper.ext_list, test_target.ext_list)
         self.assertNotEqual(WebFileHelper.value_object, test_target.value_object)
         self.assertEqual(WebFileHelper.folder_path, test_target.folder_path)
@@ -86,6 +86,14 @@ class MyTestCase(unittest.TestCase):
         """フォルダーパスを得る"""
         test_target = WebFileHelper(self.image_url)
         self.assertEqual(test_target.get_folder_path(), test_target.value_object.folder_path)
+
+    def test_download_requests(self):
+        """フォルダーパスを得る"""
+        test_target = WebFileHelper(self.image_url)
+        test_target.download_requests()
+        self.assertTrue(test_target.is_exist())
+        # 後処理
+        test_target.delete_local_file()
 
 
 if __name__ == '__main__':

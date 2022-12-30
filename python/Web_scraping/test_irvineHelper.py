@@ -67,7 +67,7 @@ class MyTestCase(unittest.TestCase):
         __test_target = WebFileListHelper(self.image_url_list)
         self.assertTrue(__test_target.is_exist())
         # 後処理
-        __test_target.delete_images()
+        __test_target.delete_local_files()
 
 
 if __name__ == '__main__':

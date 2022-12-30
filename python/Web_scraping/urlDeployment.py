@@ -12,12 +12,11 @@ irvineが終了したらダウンロードファイルをチェックする。
 成功している時は、リネームしてzipして削除する。
 """
 import urllib.parse
-from downloading import *
-from chromeDriverHelper import *
-from irvineHelper import *
-from webFileListHelper import *
-
 from dataclasses import dataclass
+
+from irvineHelper import *
+from chromeDriverHelper import *
+from webFileListHelper import *
 
 
 @dataclass(frozen=True)
@@ -38,7 +37,8 @@ class UrlDeploymentValue:
         """
         if url is not None:
             if not self.is_url_only(url):
-                raise ValueError(f"不正:引数urlがURLではない[{url}]")
+                raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                                 f"不正:引数urlがURLではない[{url}]")
             object.__setattr__(self, "url", url)
         if selectors is not None:
             object.__setattr__(self, "selectors", selectors)
@@ -47,7 +47,8 @@ class UrlDeploymentValue:
         if image_urls is not None:
             for image_url in image_urls:
                 if not self.is_url_only(image_url):
-                    raise ValueError(f"不正:引数last_image_urlがurlではない[{image_url}]")
+                    raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                                     f"不正:引数last_image_urlがurlではない[{image_url}]")
             object.__setattr__(self, "image_urls", image_urls)
 
     @staticmethod
@@ -80,9 +81,45 @@ class UrlDeployment:
                     __selectors = None
                 else:
                     __selectors = selectors_or_title
+                    page_url = value_object
                     __driver = ChromeDriverHelper(value_object, __selectors)
-                    __title = __driver.get_title()
-                    __image_url = __driver.get_last_image_url()
+                    items = __driver.get_items()
+
+                    title = None
+                    if 'title_jp' in items:
+                        title = items['title_jp']
+                    title_sub = None
+                    if 'title_en' in items:
+                        title_sub = items['title_en']
+                    image_urls = None
+                    if 'image_urls' in items:
+                        image_urls = items['image_urls']
+                    last_image_url = None
+                    if 'image_url' in items:
+                        last_image_url = items['image_url']
+                    print(title, title_sub, last_image_url, image_urls)
+                    if title and isinstance(title, list):
+                        title = title[0]
+                    if title_sub and isinstance(title_sub, list):
+                        title_sub = title_sub[0]
+                    if last_image_url and isinstance(last_image_url, list):
+                        last_image_url = last_image_url[0]
+                    if image_urls and image_urls[0]:
+                        last_image_url = image_urls[0]
+                    if not last_image_url:
+                        raise ValueError(f"エラー:last_image_urlが不正[{last_image_url}]")
+                    if not title:
+                        if not title_sub:
+                            # タイトルが得られない時は、タイトルを日時文字列にする
+                            now = datetime.datetime.now()
+                            title = f'{now:%Y%m%d_%H%M%S}'
+                        else:
+                            title = title_sub
+                    __title = __driver.fixed_file_name(title)
+                    url_title = __driver.fixed_file_name(page_url)
+                    target_path = f'{__title}：{url_title}.html'
+                    __driver.save_source(target_path)
+                    __image_url = last_image_url
                 __image_urls = self.__deployment(__image_url)
                 self.value_object = UrlDeploymentValue(value_object,
                                                        __selectors,
@@ -173,7 +210,7 @@ if __name__ == '__main__':  # インポート時には動かない
     irvine = IrvineHelper(url_list)
     irvine.download()
     fileDownloader = WebFileListHelper(url_list, folder_path)
-    for count in enumerate(fileDownloader.get_web_file_list()[0].ext_list):
+    for count in enumerate(fileDownloader.ext_list):
         if fileDownloader.is_exist():
             break
         # ダウンロードに失敗しているときは、失敗しているファイルの拡張子を変えてダウンロードしなおす
@@ -187,4 +224,4 @@ if __name__ == '__main__':  # インポート時には動かない
     if not fileDownloader.rename_zip_file(url_deployment.get_title()):
         if not fileDownloader.rename_zip_file(url_deployment.get_title() + '：' + url_deployment.value_object.url):
             sys.exit()
-    fileDownloader.delete_images()
+    fileDownloader.delete_local_files()

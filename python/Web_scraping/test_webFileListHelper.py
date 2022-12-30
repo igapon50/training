@@ -66,6 +66,30 @@ class MyTestCase(unittest.TestCase):
         test_target = WebFileListHelper(self.image_url_list)
         self.assertFalse(test_target.is_exist())
 
+    def test_download_requests(self):
+        """対象URLリストのファイルをrequestsでダウンロードする"""
+        test_target = WebFileListHelper(self.image_url_list)
+        test_target.download_requests()
+        self.assertTrue(test_target.is_exist())
+        # 後処理
+        test_target.delete_local_files()
+
+    def test_download_irvine(self):
+        """対象URLリストのファイルをirvineでダウンロードする"""
+        test_target = WebFileListHelper(self.image_url_list)
+        test_target.download_irvine()
+        self.assertTrue(test_target.is_exist())
+        # 後処理
+        test_target.delete_local_files()
+
+    def test_download_chrome_driver(self):
+        """対象URLリストのファイルをchromeDriverでダウンロードする"""
+        test_target = WebFileListHelper(self.image_url_list)
+        test_target.download_chrome_driver()
+        self.assertTrue(test_target.is_exist())
+        # 後処理
+        test_target.delete_local_files()
+
 
 if __name__ == '__main__':
     unittest.main()
