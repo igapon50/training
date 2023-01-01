@@ -1,28 +1,25 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import copy
-
-from webFileListHelper import *
 from crawling import *
 
 
 if __name__ == '__main__':  # インポート時には動かない
+    my_name = None
     # 引数チェック
-    my_name = 'カタマラン'
     if 2 == len(sys.argv):
         # Pythonに以下の2つ引数を渡す想定
         # 0は固定でスクリプト名
         # 1.エゴサ対象の名前
         my_name = sys.argv[1]
+        print('引数一つ', sys.argv[0], my_name)
     elif 1 == len(sys.argv):
         # 引数がなければ、クリップボードからURLを得る
         paste_str = pyperclip.paste()
-        if 0 < len(paste_str):
+        if paste_str:
             my_name = paste_str
-    # クリップボードが空なら、デフォルトURLを用いる
+        print('引数なし', sys.argv[0], paste_str)
     else:
         print('引数が不正です。')
-        print(msg_error_exit)
         sys.exit()
     site_url = f'https://www.google.com/search?q={my_name}'
     site_selectors = {
@@ -42,12 +39,6 @@ if __name__ == '__main__':  # インポート時には動かない
                       '//*[@id="REsRA"]',
                       lambda el: el.get_attribute("value")),
                      ],
-        'image_urls': [(By.XPATH,
-                       '//*[@id="islrg"]/div[1]/div/a[1]/div[1]/img',
-                        lambda el: el.get_attribute("src")),
-                       ],
-    }
-    image_selectors = {
         'image_urls': [(By.XPATH,
                        '//*[@id="islrg"]/div[1]/div/a[1]/div[1]/img',
                         lambda el: el.get_attribute("src")),
