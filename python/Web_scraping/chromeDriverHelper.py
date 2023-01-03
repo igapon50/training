@@ -24,12 +24,13 @@ Chrome.batを実行して、Chromeを起動しておくと、その続きから�
     close (画面遷移有)指定の画面か、現在の画面を閉じる
     save_image (画面依存)表示されている画像を保存する(Chromeデフォルトダウンロードフォルダに保存)
 
-参考ブログ
+参考記事
 https://note.nkmk.me/python/
 https://maku77.github.io/python/
 https://nikkie-ftnext.hatenablog.com/entry/value-object-python-dataclass
 https://blog.wotakky.net/2018/08/12/post-4829/
 https://www.zacoding.com/post/selenium-custom-wait/
+https://stackoverflow-com.translate.goog/questions/63421086/modulenotfounderror-no-module-named-webdriver-manager-error-even-after-instal?_x_tr_sl=en&_x_tr_tl=ja&_x_tr_hl=ja&_x_tr_pto=sc
 参考リファレンス
 https://selenium-python.readthedocs.io/
 https://www.seleniumqref.com/api/webdriver_gyaku.html

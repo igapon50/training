@@ -21,11 +21,11 @@ if __name__ == '__main__':  # インポート時には動かない
     }
     page_selectors = {
         'title_jp': [(By.XPATH,
-                      '//div/div/div/h2',  # //*[@id="info"]/h2
+                      '//div/div/div/h2',
                       lambda el: el.text),
                      ],
         'title_en': [(By.XPATH,
-                      '//div/div/div/h1',  # //*[@id="info"]/h1
+                      '//div/div/div/h1',
                       lambda el: el.text),
                      ],
         'languages': [(By.XPATH,
@@ -52,5 +52,8 @@ if __name__ == '__main__':  # インポート時には動かない
     crawling = None
     for site_url in site_url_list:
         crawling = Crawling(site_url, site_selectors)
-    crawling.crawling_url_deployment(page_selectors, image_selectors)
+    if 'image_url' in image_selectors:
+        crawling.crawling_url_deployment(page_selectors, image_selectors)
+    if 'image_urls' in image_selectors:
+        crawling.crawling_urls(page_selectors, image_selectors)
     print('crawling-end')
