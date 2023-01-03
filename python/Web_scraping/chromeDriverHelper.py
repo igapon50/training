@@ -57,6 +57,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
+from webdrivermanager import ChromeDriverManager
 from webdriver_manager.chrome import ChromeDriverManager
 from dataclasses import dataclass
 
@@ -267,7 +268,7 @@ class ChromeDriverHelper:
         """起動しているchromeに接続
         :return:
         """
-        self.__driver = Chrome(executable_path=self.driver_path, options=self.__options)
+        self.__driver = Chrome(executable_path=ChromeDriverManager().install(), options=self.__options)
 
     def __create(self):
         """chromeを起動する
