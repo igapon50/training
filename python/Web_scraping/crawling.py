@@ -177,6 +177,10 @@ class Crawling:
 
     def create_save_text(self):
         """保存用文字列の作成
+            * サイトURL
+            * セレクタ
+            * saveファイルのフルパス
+            * クローリング結果urls
         :return: str 保存用文字列の作成
         """
         __buff = json.dumps(self.get_site_url(), ensure_ascii=False) + '\n'  # サイトURL
@@ -192,11 +196,7 @@ class Crawling:
         return __buff
 
     def save_text(self):
-        """データをファイルに、以下の独自フォーマットで保存する
-            * サイトURL
-            * セレクタ
-            * saveファイルのフルパス
-            * クローリング結果urls
+        """クローリング情報をファイルに、保存する
         :return: bool 成功/失敗=True/False
         """
         with open(self.get_crawling_file_path(), 'w', encoding='utf-8') as __work_file:
@@ -206,7 +206,7 @@ class Crawling:
 
     def load_text(self):
         """独自フォーマットなファイルからデータを読み込み、value_objectを更新する
-        TODO: site_urlやselectorsが変わったらどうする？
+        TODO: site_urlやselectorsが変わるときは、crawling_file_pathを初期化してから実行すべきか？
         :return: bool 成功/失敗=True/False
         """
         __site_url2 = self.get_site_url()
