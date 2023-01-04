@@ -45,7 +45,7 @@ if __name__ == '__main__':  # インポート時には動かない
                         lambda el: el.get_attribute("src")),
                        ],
     }
-    crawling = Crawling(site_url, site_selectors, 'egoser_ziper.txt')
+    crawling = Crawling(site_url, site_selectors, 'egoser_zipper.txt')
     crawling_items = crawling.get_crawling_items()
     page_urls = []
     if 'page_urls' in crawling_items:
