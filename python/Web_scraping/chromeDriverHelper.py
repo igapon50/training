@@ -63,7 +63,6 @@ from webdrivermanager import ChromeDriverManager
 from webdriver_manager.chrome import ChromeDriverManager
 from dataclasses import dataclass
 
-from const import *
 from webFileHelper import *
 from webFileListHelper import *
 
@@ -270,7 +269,9 @@ class ChromeDriverHelper:
         """起動しているchromeに接続
         :return:
         """
-        self.__driver = Chrome(executable_path=ChromeDriverManager().install(), options=self.__options)
+        chrome_service = Service(executable_path=ChromeDriverManager().install())
+        self.__driver = webdriver.Chrome(service=chrome_service, options=self.__options)
+        # self.__driver = Chrome(executable_path=ChromeDriverManager().install(), options=self.__options)
 
     def __create(self):
         """chromeを起動する
