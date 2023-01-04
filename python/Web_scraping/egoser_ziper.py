@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from chromeDriverHelper import *
 from crawling import *
 
 
@@ -67,7 +68,7 @@ if __name__ == '__main__':  # インポート時には動かない
             if image_urls:
                 print(image_urls)
                 web_file_list = WebFileListHelper(image_urls)
-                web_file_list.download_chrome_driver()
+                crawling.download_chrome_driver(web_file_list)
                 if not web_file_list.make_zip_file():
                     sys.exit()
                 if not web_file_list.rename_zip_file(title):

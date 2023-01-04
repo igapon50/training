@@ -131,6 +131,15 @@ class Crawling:
                 title = title_sub
         return ChromeDriverHelper.fixed_file_name(title)
 
+    @staticmethod
+    def download_chrome_driver(web_file_list):
+        """selenium chromeDriverを用いて、画像をデフォルトダウンロードフォルダにダウンロードして、指定のフォルダに移動する
+        :return:
+        """
+        chromedriver = ChromeDriverHelper()
+        for url, path in zip(web_file_list.get_url_list(), web_file_list.get_path_list()):
+            chromedriver.download_image(url, path)
+
     def get_value_object(self):
         """値オブジェクトを取得する"""
         if self.value_object:

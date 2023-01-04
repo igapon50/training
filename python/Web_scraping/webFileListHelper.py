@@ -291,6 +291,9 @@ class WebFileListHelper:
             print('ローカルファイルが不足しているため、ファイルリストの移動を中止した')
 
     def update_value_object_by_deployment_url_list(self):
+        """ナンバリングされた末尾画像URL一つの時、全体のURLリストを生成してvalue_objectを再生成する
+        :return: bool 処理の実施/未実施
+        """
         if len(self.get_web_file_list()) != 1:
             return False
         __web_file = self.get_web_file_list()[0]
