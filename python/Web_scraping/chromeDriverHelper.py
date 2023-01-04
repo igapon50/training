@@ -1,15 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Selenium Chromeドライバのヘルパー
-Chrome.batを実行して、Chromeを起動しておくと、その続きから操作できる。
+先にChrome.batを実行して、Chromeを起動しておくと、その続きから操作できる。
 コンストラクタで引数を指定するとスクレイピングまで実施されてget_value_objectが有効になる
     fixed_path (staticmethod)フォルダ名の禁止文字を全角文字に置き換える
-    fixed_file_name ファイル名の禁止文字を全角文字に置き換える
+    fixed_file_name (staticmethod)ファイル名の禁止文字を全角文字に置き換える
+    scraping (staticmethod、画面依存)現在表示のURLにスクレイピングする
+    scroll_element (画面遷移有)指定のelementまでスクロールする
     get_value_object 値オブジェクトを取得する
     get_url URLを取得する
     get_selectors セレクタを取得する
     get_items スクレイピング結果を取得する
-    scraping 現在表示のURLにスクレイピングする
     destroy Chromeを閉じる
     get_source Chromeで表示しているタブのsourceを取得する
     save_source Chromeで表示しているタブのsourceをファイルに保存する
@@ -195,7 +196,7 @@ class ChromeDriverHelper:
         return ChromeDriverHelper.fixed_path(file_name)
 
     def scraping(self, selectors):
-        """現在表示のURLにスクレイピングする"""
+        """(画面依存)現在表示のURLにスクレイピングする"""
         selectors = copy.deepcopy(selectors)
         items = {}
         for key, selector_list in selectors.items():
@@ -203,7 +204,7 @@ class ChromeDriverHelper:
         return items
 
     def scroll_element(self, element):
-        """elementまでスクロールする"""
+        """(画面遷移有)elementまでスクロールする"""
         actions = ActionChains(self.__driver)
         actions.move_to_element(element)
         actions.perform()
@@ -315,7 +316,7 @@ class ChromeDriverHelper:
                     yield ret_list
 
     def __get_scraping_selector_list(self, selector_list):
-        """(画面依存)chromeで開いているサイトに対して、スクレイピング結果を返すジェネレータ
+        """(画面依存)chromeで開いているサイトに対して、スクレイピング結果を返す
         :param selector_list: list[tuple(by, selector, action)] スクレイピングの規則
         :return: list[str] スクレイピング結果をlistに入れて返す
         """
