@@ -131,6 +131,15 @@ class Crawling:
                 title = title_sub
         return ChromeDriverHelper.fixed_file_name(title)
 
+    @staticmethod
+    def download_chrome_driver(web_file_list):
+        """selenium chromeDriverを用いて、画像をデフォルトダウンロードフォルダにダウンロードして、指定のフォルダに移動する
+        :return:
+        """
+        chromedriver = ChromeDriverHelper()
+        for url, path in zip(web_file_list.get_url_list(), web_file_list.get_path_list()):
+            chromedriver.download_image(url, path)
+
     def get_value_object(self):
         """値オブジェクトを取得する"""
         if self.value_object:
@@ -168,6 +177,10 @@ class Crawling:
 
     def create_save_text(self):
         """保存用文字列の作成
+            * サイトURL
+            * セレクタ
+            * saveファイルのフルパス
+            * クローリング結果urls
         :return: str 保存用文字列の作成
         """
         __buff = json.dumps(self.get_site_url(), ensure_ascii=False) + '\n'  # サイトURL
@@ -183,11 +196,7 @@ class Crawling:
         return __buff
 
     def save_text(self):
-        """データをファイルに、以下の独自フォーマットで保存する
-            * サイトURL
-            * セレクタ
-            * saveファイルのフルパス
-            * クローリング結果urls
+        """クローリング情報をファイルに、保存する
         :return: bool 成功/失敗=True/False
         """
         with open(self.get_crawling_file_path(), 'w', encoding='utf-8') as __work_file:
@@ -197,7 +206,7 @@ class Crawling:
 
     def load_text(self):
         """独自フォーマットなファイルからデータを読み込み、value_objectを更新する
-        TODO: site_urlやselectorsが変わったらどうする？
+        TODO: site_urlやselectorsが変わるときは、crawling_file_pathを初期化してから実行すべきか？
         :return: bool 成功/失敗=True/False
         """
         __site_url2 = self.get_site_url()
@@ -296,6 +305,59 @@ class Crawling:
                 url_list = web_file_list.get_url_list()
                 print(url_list)
 
+                web_file_list.download_irvine()
+                for count in enumerate(WebFileHelper.ext_list):
+                    if web_file_list.is_exist():
+                        break
+                    # ダウンロードに失敗しているときは、失敗しているファイルの拡張子を変えてダウンロードしなおす
+                    web_file_list.rename_url_ext_shift()
+                    web_file_list.download_irvine()
+                if not web_file_list.make_zip_file():
+                    sys.exit()
+                if not web_file_list.rename_zip_file(title):
+                    if not web_file_list.rename_zip_file(f'{title}：{url_title}'):
+                        sys.exit()
+                web_file_list.delete_local_files()
+                # 成功したらチェック用ファイルを残す
+                ChromeDriverHelper().save_source(target_file_name)
+            # page_urlsからexclusion_urlsにURLを移して保存する
+            self.move_url_from_page_urls_to_exclusion_urls(page_url)
+            self.save_text()
+
+    def crawling_urls(self, page_selectors, image_selectors):
+        """各ページをスクレイピングして、画像ファイルをダウンロード＆圧縮する
+            # crawling_itemsに、page_urlsがあり、各page_urlをpage_selectorsでスクレイピングする
+            # タイトルとURLでダウンロード除外または済みかをチェックして、
+            # ダウンロードしない場合は、以降の処理をスキップする
+            # 各page_urlをimage_selectorsでスクレイピングしてダウンロードする画像URLリストを作る。
+            # 画像URLリストをirvineHelperでダウンロードして、zipファイルにする
+        :param page_selectors:
+        :param image_selectors:
+        :return:
+        """
+        crawling_items = self.get_crawling_items()
+        page_urls = []
+        if 'page_urls' in crawling_items:
+            page_urls = crawling_items['page_urls']
+        for page_url in page_urls:
+            print(page_url)
+            if self.is_url_included_exclusion_list(page_url):
+                self.move_url_from_page_urls_to_exclusion_urls(page_url)
+                self.save_text()
+                continue
+            items = self.scraping(page_url, page_selectors)
+            title = Crawling.validate_title(items, 'title_jp', 'title_en')
+            url_title = ChromeDriverHelper.fixed_file_name(page_url)
+
+            # フォルダがなかったらフォルダを作る
+            os.makedirs(WebFileListHelper.work_path, exist_ok=True)
+            target_file_name = os.path.join(WebFileListHelper.work_path, f'{title}：{url_title}.html')
+            print(title)
+            if not os.path.exists(target_file_name):
+                image_items = self.scraping(page_url, image_selectors)
+                image_urls = self.take_out(image_items, 'image_urls')
+                print(image_urls)
+                web_file_list = WebFileListHelper(image_urls)
                 web_file_list.download_irvine()
                 for count in enumerate(WebFileHelper.ext_list):
                     if web_file_list.is_exist():
