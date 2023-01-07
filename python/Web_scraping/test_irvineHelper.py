@@ -7,22 +7,14 @@ class MyTestCase(unittest.TestCase):
 
     def setUp(self):
         print("setup")
-        # テスト　若者 | かわいいフリー素材集 いらすとや
+        # TODO: gitに画像アップロードして、その画像ダウンロードに変更する
         self.image_url_list = [
-            'https://1.bp.blogspot.com/-tzoOQwlaRac/X1LskKZtKEI/AAAAAAABa_M/'
-            '89phuGIVDkYGY_uNKvFB6ZiNHxR7bQYcgCNcBGAsYHQ/'
-            's180-c/fashion_dekora.png',
-            'https://1.bp.blogspot.com/-gTf4sWnRdDw/X0B4RSQQLrI/AAAAAAABarI/'
-            'MJ9DW90dSVwtMjuUoErxemnN4nPXBnXUwCNcBGAsYHQ/'
-            's180-c/otaku_girl_fashion.png',
-            'https://1.bp.blogspot.com/-K8DEj7le73Y/XuhW_wO41mI/AAAAAAABZjQ/'
-            'NMEk02WcUBEVBDsEJpCxTN6T0NmqG20qwCNcBGAsYHQ/'
-            's180-c/kesyou_jirai_make.png',
+            'https://・・・/画像1.png',
+            'https://・・・/画像2.png',
         ]
         self.download_file_name = [
             '0000.png',
             '0001.png',
-            '0002.png',
         ]
 
     def tearDown(self):
