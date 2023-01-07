@@ -180,7 +180,7 @@ pip install numpy
 - chromeDriverHelper: selenium chromeドライバーのヘルパークラス
 - crawling: クローリングヘルパークラス
   - web巡回して、スクレイピングして、ファイルダウンロードして、zipファイルにまとめる
-- egoser_ziper: google 画像検索でエゴサーチして、20ファイルをzipにまとめる
+- egoser_zipper: google 画像検索して、先頭20サムネイル画像をzipにまとめる
 - irvineHelper: Irvineを操作するヘルパークラス
 - uriHelper: URLのヘルパークラス
   - URLのパス、ファイル名、拡張子、DataURIのデータ、ファイルの存在確認など
