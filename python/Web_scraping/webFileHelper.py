@@ -231,8 +231,8 @@ class WebFileHelper:
         """現在の拡張子を得る
         :return: str ファイルの拡張子(ドットを含む)
         """
-        start_ext = self.value_object.url.get_ext()
-        return copy.deepcopy(start_ext)
+        ext = self.value_object.url.get_ext()
+        return copy.deepcopy(ext)
 
     def rename_url_ext_shift(self):
         """urlの画像拡張子を、ext_listの次の拡張子にシフトする
@@ -245,6 +245,7 @@ class WebFileHelper:
             __index = self.ext_dict[self.get_start_ext()].index(self.get_ext())
             __index = (__index + 1) % len(self.ext_dict[self.get_start_ext()])
             __ext = self.ext_dict[self.get_start_ext()][__index]
+            # [::-1] 配列を逆順にする
             __url = self.get_url()[::-1].replace(self.get_ext()[::-1], __ext[::-1])[::-1]
             self.value_object = WebFileHelperValue(UriHelper(__url),
                                                    self.get_filename(),
