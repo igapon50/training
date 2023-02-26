@@ -1,15 +1,35 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""
+使う前に定義を修正すること。
+page_root_urlに、クローリングするページのURLを指定する。
+例. 1ページクローリングして、スクレイピングしたURLリストに対して、巡回ダウンロードする
+> python crawling_template.py 1
+例. 10ページクローリングして、スクレイピングしたURLリストに対して、巡回ダウンロードする
+> python crawling_template.py 10
+"""
 import copy
 
 from crawling import *
 
 
-# 検証コード
 if __name__ == '__main__':  # インポート時には動かない
     page_root_url = ''  # TODO: ページ番号を除いたURLを指定する
     start_page_number = 1
-    end_page_number = 20
+    # 引数チェック
+    if 2 == len(sys.argv):
+        # Pythonに以下の2つ引数を渡す想定
+        # 0は固定でスクリプト名
+        # 1.クローリングするページ数
+        page_number = int(sys.argv[1])
+        print('引数一つ', sys.argv[0], page_number)
+    elif 1 == len(sys.argv):
+        # 引数がなければ、デフォルト10ページ
+        page_number = 10
+    else:
+        print('引数が不正です。')
+        sys.exit()
+    end_page_number = page_number
     site_url_list = [page_root_url + str(x) for x in range(start_page_number, end_page_number + 1)]
     site_selectors = {
         'page_urls': [
