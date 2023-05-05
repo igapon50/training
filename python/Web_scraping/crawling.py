@@ -261,6 +261,7 @@ class Crawling:
             if url in crawling_items['page_urls']:
                 crawling_items['page_urls'].remove(url)
         self.value_object = CrawlingValue(site_url, selectors, crawling_items, crawling_file_path)
+        self.save_text()
 
     def crawling_url_deployment(self, page_selectors, image_selectors):
         """各ページをスクレイピングして、末尾画像のナンバーから、URLを予測して、画像ファイルをダウンロード＆圧縮する
@@ -281,7 +282,6 @@ class Crawling:
             print(page_url)
             if self.is_url_included_exclusion_list(page_url):
                 self.move_url_from_page_urls_to_exclusion_urls(page_url)
-                self.save_text()
                 continue
             items = self.scraping(page_url, page_selectors)
             languages = self.take_out(items, 'languages')
@@ -322,7 +322,6 @@ class Crawling:
                 ChromeDriverHelper().save_source(target_file_name)
             # page_urlsからexclusion_urlsにURLを移して保存する
             self.move_url_from_page_urls_to_exclusion_urls(page_url)
-            self.save_text()
 
     def crawling_urls(self, page_selectors, image_selectors):
         """各ページをスクレイピングして、画像ファイルをダウンロード＆圧縮する
@@ -343,7 +342,6 @@ class Crawling:
             print(page_url)
             if self.is_url_included_exclusion_list(page_url):
                 self.move_url_from_page_urls_to_exclusion_urls(page_url)
-                self.save_text()
                 continue
             items = self.scraping(page_url, page_selectors)
             title = Crawling.validate_title(items, 'title_jp', 'title_en')
@@ -375,7 +373,6 @@ class Crawling:
                 ChromeDriverHelper().save_source(target_file_name)
             # page_urlsからexclusion_urlsにURLを移して保存する
             self.move_url_from_page_urls_to_exclusion_urls(page_url)
-            self.save_text()
 
 
 # 検証コード

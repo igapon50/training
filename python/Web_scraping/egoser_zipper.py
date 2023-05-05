@@ -54,7 +54,6 @@ if __name__ == '__main__':  # インポート時には動かない
         print(page_url)
         if crawling.is_url_included_exclusion_list(page_url):
             crawling.move_url_from_page_urls_to_exclusion_urls(page_url)
-            crawling.save_text()
             continue
         items = crawling.scraping(page_url, page_selectors)
         image_urls = crawling.take_out(items, 'image_urls')[0:20]  # 先頭の20個は、DataURIで表示される
@@ -79,5 +78,4 @@ if __name__ == '__main__':  # インポート時には動かない
                 ChromeDriverHelper().save_source(target_file_name)
             # page_urlsからexclusion_urlsにURLを移して保存する
         crawling.move_url_from_page_urls_to_exclusion_urls(page_url)
-        crawling.save_text()
     print('crawling-end')
