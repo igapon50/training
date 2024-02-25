@@ -21,6 +21,7 @@ import os  # ファイルパス分解
 import shutil  # 高水準のファイル操作
 import glob  # ファイル一覧取得
 import datetime  # 日付時刻変換
+import inspect
 from urllib.parse import urlparse  # URLパーサー
 from urllib.parse import urljoin  # URL結合
 
@@ -48,13 +49,13 @@ from const import *
 def get_bucket_filelist(bucket, result_path, bucket_dic):
     # 引数チェック
     if bucket is None:
-        print(sys._getframe().f_code.co_name + 'bucket')
+        print(inspect.stack()[1].function + 'bucket')
         return False
     if 0 == len(result_path):
-        print(sys._getframe().f_code.co_name + 'result_path')
+        print(inspect.stack()[1].function + 'result_path')
         return False
     if bucket_dic is None:
-        print(sys._getframe().f_code.co_name + 'bucket_dic')
+        print(inspect.stack()[1].function + 'bucket_dic')
         return False
 
     print(bucket.name)
@@ -86,13 +87,13 @@ def get_bucket_filelist(bucket, result_path, bucket_dic):
 # @note
 def get_local_filelist(target_path, result_path, local_dic):
     if 0 == len(target_path):
-        print(sys._getframe().f_code.co_name + 'target_path')
+        print(inspect.stack()[1].function + 'target_path')
         return False
     if 0 == len(result_path):
-        print(sys._getframe().f_code.co_name + 'result_path')
+        print(inspect.stack()[1].function + 'result_path')
         return False
     if local_dic is None:
-        print(sys._getframe().f_code.co_name + 'local_dic')
+        print(inspect.stack()[1].function + 'local_dic')
         return False
 
     local_dic.clear()
@@ -140,13 +141,13 @@ def listup_files(temp_path):
 def bucket_upload(bucket_dic, local_dic, result_path):
     # 引数チェック
     if bucket_dic is None:
-        print(sys._getframe().f_code.co_name + 'bucket_dic')
+        print(inspect.stack()[1].function + 'bucket_dic')
         return False
     if local_dic is None:
-        print(sys._getframe().f_code.co_name + 'local_dic')
+        print(inspect.stack()[1].function + 'local_dic')
         return False
     if 0 == len(result_path):
-        print(sys._getframe().f_code.co_name + 'result_path')
+        print(inspect.stack()[1].function + 'result_path')
         return False
 
     with open(result_path, 'w', encoding='utf-8') as write_file:

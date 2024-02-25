@@ -9,6 +9,7 @@ https://qiita.com/TsubasaSato/items/908d4f5c241091ecbf9b
 """
 import copy
 import sys
+import inspect
 
 # 3rd party packages
 from urllib.parse import *  # URLパーサー
@@ -26,10 +27,10 @@ class UriHelperValue:
                  ):
         """完全コンストラクタパターン"""
         if not uri:
-            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+            raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                              f"引数エラー:uri=None")
         if not self.is_uri_only(uri):
-            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+            raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                              f"引数エラー:uriがURIではない[{uri}]")
         object.__setattr__(self, "uri", uri)
 
@@ -57,10 +58,10 @@ class UriHelper:
                 uri = value_object
                 self.value_object = UriHelperValue(uri)
             else:
-                raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                                  f"引数エラー:value_objectの型")
         else:
-            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+            raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                              f"引数エラー:value_object=None")
 
     @staticmethod

@@ -38,8 +38,8 @@ class MyTestCase(unittest.TestCase):
         del self.image_url_list
 
     def test___init___00(self):
-        with self.assertRaisesRegex(ValueError, f'^{self.__class__.__name__}.{sys._getframe().f_code.co_name}$'):
-            raise ValueError(f'{self.__class__.__name__}.{sys._getframe().f_code.co_name}')
+        with self.assertRaisesRegex(ValueError, f'^{self.__class__.__name__}.{inspect.stack()[1].function}$'):
+            raise ValueError(f'{self.__class__.__name__}.{inspect.stack()[1].function}')
 
     def test___init___01(self):
         """引数無コンストラクタ"""

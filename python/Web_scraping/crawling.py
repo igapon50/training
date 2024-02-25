@@ -23,28 +23,28 @@ class CrawlingValue:
     def __init__(self, site_url, site_selectors, crawling_items, crawling_file_path=crawling_file_path):
         """完全コンストラクタパターン"""
         if not site_url:
-            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+            raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                              f"引数エラー:site_url=None")
         if not site_selectors:
-            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+            raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                              f"引数エラー:site_selectors=None")
         if crawling_items is None:
-            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+            raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                              f"引数エラー:crawling_items=None")
         if not crawling_file_path:
-            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+            raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                              f"引数エラー:crawling_file_path=None")
         if not isinstance(site_url, str):
-            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+            raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                              f"引数エラー:site_urlがstrではない")
         if not isinstance(site_selectors, dict):
-            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+            raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                              f"引数エラー:site_selectorsがdictではない")
         if not isinstance(crawling_items, dict):
-            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+            raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                              f"引数エラー:crawling_itemsがdictではない")
         if not isinstance(crawling_file_path, str):
-            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+            raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                              f"引数エラー:crawling_file_pathがstrではない")
         object.__setattr__(self, "site_url", site_url)
         object.__setattr__(self, "site_selectors", site_selectors)
@@ -77,13 +77,13 @@ class Crawling:
                     self.load_text()
                     self.save_text()
                 else:
-                    raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                    raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                                      f"引数エラー:site_selectors=None")
             else:
-                raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                                  f"引数エラー:value_objectの型")
         else:
-            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+            raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                              f"引数エラー:value_object=None")
 
     @staticmethod
@@ -144,35 +144,35 @@ class Crawling:
         """値オブジェクトを取得する"""
         if self.value_object:
             return copy.deepcopy(self.value_object)
-        raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+        raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                          f"オブジェクトエラー:value_object")
 
     def get_site_url(self):
         """値オブジェクトのプロパティsite_url取得"""
         if self.get_value_object().site_url:
             return copy.deepcopy(self.get_value_object().site_url)
-        raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+        raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                          f"オブジェクトエラー:site_url")
 
     def get_site_selectors(self):
         """値オブジェクトのプロパティsite_selectors取得"""
         if self.get_value_object().site_selectors:
             return copy.deepcopy(self.get_value_object().site_selectors)
-        raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+        raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                          f"オブジェクトエラー:site_selectors")
 
     def get_crawling_items(self):
         """値オブジェクトのプロパティcrawling_items取得"""
         if self.get_value_object().crawling_items:
             return copy.deepcopy(self.get_value_object().crawling_items)
-        raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+        raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                          f"オブジェクトエラー:crawling_items")
 
     def get_crawling_file_path(self):
         """値オブジェクトのプロパティcrawling_file_path取得"""
         if self.get_value_object().crawling_file_path:
             return copy.deepcopy(self.get_value_object().crawling_file_path)
-        raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+        raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                          f"オブジェクトエラー:crawling_file_path")
 
     def create_save_text(self):

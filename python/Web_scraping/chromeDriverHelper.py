@@ -81,25 +81,25 @@ class ChromeDriverHelperValue:
         :param items: dict スクレイピングして取得した値の辞書
         """
         if not url:
-            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+            raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                              f"引数エラー:urlが不正[{url}]")
         if not selectors:
-            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+            raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                              f"引数エラー:selectorsが不正[{selectors}]")
         if not items:
-            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+            raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                              f"引数エラー:itemsが不正[{items}]")
         if not isinstance(url, str):
-            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+            raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                              f"引数エラー:urlがstrではない")
         if not isinstance(selectors, dict):
-            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+            raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                              f"引数エラー:selectorsがdictではない")
         if not isinstance(items, dict):
-            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+            raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                              f"引数エラー:itemsがdictではない")
         if not self.is_url_only(url):
-            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+            raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                              f"引数エラー:urlがURLではない[{url}]")
         object.__setattr__(self, "url", url)
         object.__setattr__(self, "selectors", selectors)
@@ -163,10 +163,10 @@ class ChromeDriverHelper:
                     items = self.scraping(selectors)
                     self.value_object = ChromeDriverHelperValue(url, selectors, items)
                 else:
-                    raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                    raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                                      f"引数エラー:selectorsが不正[{selectors}]")
             else:
-                raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                                  f"引数エラー:value_objectが不正[{value_object}]")
 
     @staticmethod
@@ -212,28 +212,28 @@ class ChromeDriverHelper:
         """値オブジェクトを取得する"""
         if self.value_object:
             return copy.deepcopy(self.value_object)
-        raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+        raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                          f"オブジェクトエラー:value_object")
 
     def get_url(self):
         """URLを取得する"""
         if self.get_value_object():
             return copy.deepcopy(self.get_value_object().url)
-        raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+        raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                          f"オブジェクトエラー:url")
 
     def get_selectors(self):
         """セレクタを取得する"""
         if self.get_value_object():
             return copy.deepcopy(self.get_value_object().selectors)
-        raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+        raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                          f"オブジェクトエラー:selectors")
 
     def get_items(self):
         """スクレイピング結果を取得する"""
         if self.get_value_object():
             return copy.deepcopy(self.get_value_object().items)
-        raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+        raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                          f"オブジェクトエラー:items")
 
     def __add_options(self, *args):
@@ -309,7 +309,7 @@ class ChromeDriverHelper:
                         if ret_parse.scheme:
                             self.open_new_tab(url)
                         else:
-                            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                            raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                                              f"引数エラー:urlが不正[{url}]")
                 else:
                     for _ in self.__window_handle_list:
@@ -332,7 +332,7 @@ class ChromeDriverHelper:
                     if ret_parse.scheme:
                         self.open_new_tab(url)
                     else:
-                        raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                        raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                                          f"引数エラー:urlが不正[{url}]")
             else:
                 for _ in self.__window_handle_list:

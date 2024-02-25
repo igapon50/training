@@ -11,6 +11,7 @@ import zipfile  # zipファイル
 import os  # ファイルパス分解
 import shutil  # 高水準のファイル操作
 import glob  # ファイル一覧取得
+import inspect
 from urllib.parse import urlparse  # URLパーサー
 from urllib.parse import urljoin  # URL結合
 
@@ -36,10 +37,10 @@ def getfilenamefromurl(file_urllist, dst_file_namelist):
     """
     # 引数チェック
     if 0 == len(file_urllist):
-        print(sys._getframe().f_code.co_name + '引数file_urllistが空です。')
+        print(inspect.stack()[1].function + '引数file_urllistが空です。')
         return False
     if not isinstance(dst_file_namelist, list):
-        print(sys._getframe().f_code.co_name + '引数dst_file_namelistがlistではないです。')
+        print(inspect.stack()[1].function + '引数dst_file_namelistがlistではないです。')
         return False
 
     for src_img_url in file_urllist:
@@ -80,10 +81,10 @@ def renameimg(src_file_pathlist, dst_file_pathlist):
     """
     # 引数チェック
     if 0 == len(src_file_pathlist):
-        print(sys._getframe().f_code.co_name + '引数src_file_pathlistが空です。')
+        print(inspect.stack()[1].function + '引数src_file_pathlistが空です。')
         return False
     if not isinstance(dst_file_pathlist, list):
-        print(sys._getframe().f_code.co_name + '引数dst_file_pathlistがlistではないです。')
+        print(inspect.stack()[1].function + '引数dst_file_pathlistがlistではないです。')
         return False
 
     count = 0
@@ -110,10 +111,10 @@ def makezipfile(zipfile_path, file_pathlist):
     """
     # 引数チェック
     if 0 == len(zipfile_path):
-        print(sys._getframe().f_code.co_name + '引数zipfile_pathが空です。')
+        print(inspect.stack()[1].function + '引数zipfile_pathが空です。')
         return False
     if not isinstance(file_pathlist, list):
-        print(sys._getframe().f_code.co_name + '引数file_pathlistがlistではないです。')
+        print(inspect.stack()[1].function + '引数file_pathlistがlistではないです。')
         return False
 
     zip = zipfile.ZipFile(zipfile_path, 'w', zipfile.ZIP_DEFLATED)

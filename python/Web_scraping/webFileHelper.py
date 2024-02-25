@@ -28,16 +28,16 @@ class WebFileHelperValue:
                  ):
         """完全コンストラクタパターン"""
         if not url:
-            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+            raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                              f"引数エラー:url=None")
         if not download_file_name:
-            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+            raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                              f"引数エラー:download_file_name=None")
         if not start_ext:
-            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+            raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                              f"引数エラー:start_ext=None")
         if not download_path:
-            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+            raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                              f"引数エラー:download_path=None")
         object.__setattr__(self, "url", url)
         object.__setattr__(self, "download_file_name", download_file_name)
@@ -78,16 +78,16 @@ class WebFileHelper:
                     if uri.is_enable_filename():
                         download_file_name = uri.get_filename()
                     else:
-                        raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                        raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                                          f"引数エラー:download_file_name=None")
                 if not start_ext:
                     if uri.is_enable_filename():
                         start_ext = uri.get_ext()
                     else:
-                        raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                        raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                                          f"引数エラー:start_ext=None")
                 if not download_path:
-                    raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                    raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                                      f"引数エラー:download_path=None")
                 self.value_object = WebFileHelperValue(uri, download_file_name, start_ext, download_path)
             elif isinstance(value_object, str):
@@ -97,23 +97,23 @@ class WebFileHelper:
                     if uri.is_enable_filename():
                         download_file_name = uri.get_filename()
                     else:
-                        raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                        raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                                          f"引数エラー:download_file_name=None")
                 if not start_ext:
                     if uri.is_enable_filename():
                         start_ext = uri.get_ext()
                     else:
-                        raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                        raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                                          f"引数エラー:start_ext=None")
                 if not download_path:
-                    raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                    raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                                      f"引数エラー:download_path=None")
                 self.value_object = WebFileHelperValue(uri, download_file_name, start_ext, download_path)
             else:
-                raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+                raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                                  f"引数エラー:value_objectの型")
         else:
-            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+            raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                              f"引数エラー:value_object=None")
 
     @staticmethod
@@ -355,7 +355,7 @@ class WebFileHelper:
         print(__base_name)
         print(__extend_name)
         if not __base_name.isdecimal():
-            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+            raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                              f"エラー:urlがナンバリングされていない[{__base_name}]")
         __count = int(__base_name)
         url_list = []

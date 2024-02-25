@@ -61,6 +61,7 @@ import sys  # 終了時のエラー有無
 import os  # ファイルパス分解
 import copy
 import subprocess
+import inspect
 from itertools import zip_longest
 
 # 3rd party packages
@@ -84,10 +85,10 @@ class IrvineHelperValue:
         :param list_path: str Irvineでダウンロードするファイルリストのファイルパス
         """
         if not exe_path or not os.path.isfile(exe_path):
-            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+            raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                              f"引数エラー:exe_path=[{exe_path}]")
         if not list_path or not os.path.isfile(list_path):
-            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+            raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                              f"引数エラー:list_path=[{list_path}]")
         if exe_path:
             object.__setattr__(self, "exe_path", exe_path.replace(os.sep, '/'))
@@ -142,7 +143,7 @@ class IrvineHelper:
                 work_file.write(buff)
             self.value_object = IrvineHelperValue(exe_path, list_path)
         else:
-            raise ValueError(f"{self.__class__.__name__}.{sys._getframe().f_code.co_name}"
+            raise ValueError(f"{self.__class__.__name__}.{inspect.stack()[1].function}"
                              f"引数エラー:value_object=[{self.value_object}]")
 
     def download(self):

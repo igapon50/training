@@ -11,6 +11,7 @@ import zipfile  # zipファイル
 import os  # ファイルパス分解
 import shutil  # 高水準のファイル操作
 import glob  # ファイル一覧取得
+import inspect
 from urllib.parse import urlparse  # URLパーサー
 from urllib.parse import urljoin  # URL結合
 
@@ -50,10 +51,10 @@ def HTML2imglist_SeleniumFireFox(base_url, imglist_filepath, title, file_urllist
     """
     # 引数チェック
     if 0 == len(base_url):
-        print(sys._getframe().f_code.co_name + '引数base_urlが空です。')
+        print(inspect.stack()[1].function + '引数base_urlが空です。')
         return False
     if not isinstance(file_urllist, list):
-        print(sys._getframe().f_code.co_name + '引数file_urllistがlistではないです。')
+        print(inspect.stack()[1].function + '引数file_urllistがlistではないです。')
         return False
 
     # ブラウザの起動
