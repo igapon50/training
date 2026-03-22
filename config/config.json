@@ -1,6 +1,7 @@
 {
     "folders": [
-        "E:\\git\\igaponr\\training\\python\\Web_scraping"
+        "E:\\git\\igaponr\\training\\python\\Web_scraping",
+        "E:\\git\\igaponr\\training\\python\\Web_scraping\\helper"
     ],
     "extensions": [
         ".ps1",

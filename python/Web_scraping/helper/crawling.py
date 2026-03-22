@@ -132,8 +132,33 @@ class Crawling:
     def scraping(url, selectors):
         """ChromeDriverを使ってスクレイピングする"""
         selectors = copy.deepcopy(selectors)
-        chrome_driver = helper.chromeDriver.ChromeDriver(url, selectors)
-        return chrome_driver.get_items()
+        # インスタンス化。これだけではページは開かれない（あるいは空のタブ）
+        chrome_driver = helper.chromeDriver.ChromeDriver()
+
+        try:
+            # 0. まず対象のURLを開く
+            chrome_driver.open_current_tab(url)
+
+            # 1. ロボットチェックが出ていないか確認
+            if 'bot_check' in selectors:
+                for by, path, func in selectors['bot_check']:
+                    # chrome_driver._driver を直接参照して要素を探す
+                    elements = chrome_driver._driver.find_elements(by, path)
+                    if len(elements) > 0:
+                        # ロボットチェック検知。例外を投げて failure_urls に回す
+                        raise ValueError(f"Bot detection (last_image_urlが不正): {url}")
+
+            # 2. スクレイピングを実行（ここで内部の value_object が生成される）
+            items = chrome_driver.scraping(selectors)
+
+            # 3. Cloudflare 等の「タイトルがドメイン名だけ」のケースを失敗扱いにする
+            title_jp = Crawling.take_out(items, 'title_jp')
+            if title_jp == "nhentai.net":
+                raise ValueError(f"Cloudflare blocking (last_image_urlが不正): {url}")
+            return items
+        except Exception as e:
+            # エラーが発生した場合は例外を再送して上位の failure_urls 処理に任せる
+            raise e
 
     @staticmethod
     def dict_merge(dict1, dict2):
@@ -400,6 +425,9 @@ class Crawling:
                     items = self.scraping(page_url, page_selectors)
                     languages = self.take_out(items, 'languages')
                     title = Crawling.validate_title(items, 'title_jp', 'title_en')
+                    # ロボットチェック等でタイトルが取得できていない、あるいは言語が空の場合
+                    if not languages:
+                        raise ValueError(f"データ取得失敗（言語情報なし）: {page_url}")
                     url_title = helper.chromeDriver.ChromeDriver.fixed_file_name(page_url)
                     # フォルダがなかったらフォルダを作る
                     os.makedirs(helper.webFileList.WebFileList.work_path, exist_ok=True)
@@ -462,7 +490,6 @@ class Crawling:
                         self.move_url_from_page_urls_to_failure_urls(page_url)
                         break # リトライせず次のURLへ
                 except Exception as e:
-                    # その他の予期せぬエラー（ネットワークエラーなど）
                     print(f"予期せぬエラーが発生しました: {e}")
                     if attempt < max_retries - 1:
                         print(f"{retry_delay}秒後にリトライします... (試行 {attempt + 2}/{max_retries})")

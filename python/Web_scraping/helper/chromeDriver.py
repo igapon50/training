@@ -451,9 +451,12 @@ class ChromeDriver:
             for _ in range(count):
                 elements = self._driver.find_elements(by=by, value=selector)
                 for elem in elements:
-                    self.scroll_element(elem)
-                    text = action(elem)
-                    ret_list.append(text)
+                    try:
+                        self.scroll_element(elem)
+                        text = action(elem)
+                        ret_list.append(text)
+                    except Exception as inner_e:
+                        print(f"Element process error: {inner_e}")
                 if count != 1:
                     self.close()
             return ret_list
