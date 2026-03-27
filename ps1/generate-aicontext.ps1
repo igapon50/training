@@ -2,12 +2,10 @@
 # 1. スクリプトがあるフォルダのパスを取得
 $ScriptRoot = $PSScriptRoot
 if (-not $ScriptRoot) {
-    # $PSScriptRoot が空の場合（古い環境など）のフォールバック
     $ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Definition
 }
 
-# 2. 設定ファイルと出力ファイルのパスをスクリプト基準で作成
-# configフォルダの中のconfig.jsonを指定
+# 2. パスの設定
 $configFile = Join-Path $ScriptRoot "..\config\config.json"
 $outputFile = Join-Path $ScriptRoot "ai_context.md"
 
